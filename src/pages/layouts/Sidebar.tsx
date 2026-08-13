@@ -30,7 +30,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between border-b border-[#D9D9D9] px-5 py-5">
+        <div className="flex items-center justify-between px-5 py-5">
           <div className="flex items-center gap-2.5">
             <Fingerprint className="size-8 text-[#2B8CE5]" strokeWidth={1.5} />
             <span className="text-lg font-semibold tracking-tight">
