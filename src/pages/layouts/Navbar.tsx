@@ -1,5 +1,6 @@
 import { Bell, ChevronDown, Home, LogOut, Menu, KeyRound } from "lucide-react"
-import { Link, useLocation } from "react-router-dom"
+import { useState } from "react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +11,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { menuGroups } from "@/router/menuItems"
+import { logoutRequest } from "@/services/auth/auth.service"
+import { storage } from "@/lib/storage"
 
 interface NavbarProps {
   onMenuToggle: () => void
@@ -29,6 +32,39 @@ function useBreadcrumb() {
 
 export function Navbar({ onMenuToggle }: NavbarProps) {
   const breadcrumb = useBreadcrumb()
+  const navigate = useNavigate()
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState("")
+
+  function openLogoutDialog() {
+    setLogoutError("")
+    setIsLogoutDialogOpen(true)
+  }
+
+  async function handleLogout() {
+    setIsLoggingOut(true)
+    setLogoutError("")
+
+    try {
+      const response = await logoutRequest()
+      if (!response.status) {
+        setLogoutError(response.message || "Logout gagal. Silakan coba lagi.")
+        return
+      }
+
+      storage.clearAuth()
+      navigate("/login", { replace: true })
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } }
+      setLogoutError(
+        axiosError.response?.data?.message ||
+          "Terjadi kesalahan saat logout. Silakan coba lagi."
+      )
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-[#D9D9D9] bg-white px-4 shadow-sm md:px-6">
@@ -99,13 +135,67 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               Reset Password
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-[#D9D9D9]" />
-            <DropdownMenuItem className="cursor-pointer gap-2.5 text-red-500 hover:text-red-600 focus:bg-red-50 focus:text-red-600">
+            <DropdownMenuItem
+              className="cursor-pointer gap-2.5 text-red-500 hover:text-red-600 focus:bg-red-50 focus:text-red-600"
+              onClick={openLogoutDialog}
+            >
               <LogOut className="size-4" />
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {isLogoutDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="presentation"
+          onMouseDown={() => !isLoggingOut && setIsLogoutDialogOpen(false)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-dialog-title"
+            className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <h2
+              id="logout-dialog-title"
+              className="text-base font-semibold text-gray-900"
+            >
+              Konfirmasi logout
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Anda yakin ingin keluar dari akun ini?
+            </p>
+
+            {logoutError && (
+              <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+                {logoutError}
+              </p>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isLoggingOut}
+                onClick={() => setIsLogoutDialogOpen(false)}
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                disabled={isLoggingOut}
+                onClick={handleLogout}
+                className="bg-red-500 text-white hover:bg-red-600"
+              >
+                {isLoggingOut ? "Memproses..." : "Logout"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
     </header>
   )
 }

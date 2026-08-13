@@ -10,3 +10,13 @@ export async function loginRequest(
   )
   return data
 }
+
+export async function logoutRequest(): Promise<{
+  status: boolean
+  message?: string
+}> {
+  const { data } = await api.post<{ status: boolean; message?: string }>(
+    "api/reference/auth/revoke-session"
+  )
+  return data
+}
