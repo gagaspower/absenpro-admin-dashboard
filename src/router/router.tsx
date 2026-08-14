@@ -4,6 +4,7 @@ import { LoginPage } from "@/pages/auth/login"
 import { DashboardLayout } from "@/pages/layouts/DashboardLayout"
 import { DashboardPage } from "@/pages/dashboard/DashboardPage"
 import { PlaceholderPage } from "@/pages/dashboard/PlaceholderPage"
+import { BranchPage } from "@/pages/branch/BranchPage"
 import { GuestRoute, ProtectedRoute } from "./guard"
 
 export function AppRouter() {
@@ -24,10 +25,7 @@ export function AppRouter() {
             path="departemen"
             element={<PlaceholderPage title="Departemen" />}
           />
-          <Route
-            path="wilayah-kerja"
-            element={<PlaceholderPage title="Wilayah Kerja / Branch" />}
-          />
+          <Route path="wilayah-kerja" element={<BranchPage />} />
           <Route path="jabatan" element={<PlaceholderPage title="Jabatan" />} />
           <Route
             path="jam-kerja"
