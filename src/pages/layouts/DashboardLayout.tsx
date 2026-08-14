@@ -16,7 +16,7 @@ export function DashboardLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
 
-        <main className="flex-1 overflow-y-auto bg-white p-5 md:p-6">
+        <main className="flex-1 overflow-y-auto bg-[#F8F8F8] p-5 md:p-6">
           <Outlet />
         </main>
       </div>

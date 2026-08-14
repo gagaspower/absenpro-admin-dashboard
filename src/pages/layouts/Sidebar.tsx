@@ -22,9 +22,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}
 
       {/* Sidebar */}
+      {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-[#D9D9D9] bg-[#F9FBFC] transition-transform duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-[#D9D9D9] bg-[#FFFFFF] transition-transform duration-300 ease-in-out",
           "lg:static lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
@@ -71,14 +72,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                         className={cn(
                           "flex items-center gap-3 rounded-[5px] px-3 py-2.5 text-sm font-medium transition-all duration-150",
                           isActive
-                            ? "bg-white/60 text-[#2B8CE5] shadow-sm"
-                            : "text-gray-600 hover:bg-white/40 hover:text-gray-800"
+                            ? "bg-[#3A877D] text-white shadow-sm"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
                         )}
                       >
                         <item.icon
                           className={cn(
                             "size-4 shrink-0",
-                            isActive ? "text-[#2B8CE5]" : "text-gray-500"
+                            isActive ? "text-white" : "text-gray-500"
                           )}
                           strokeWidth={1.75}
                         />
