@@ -3,6 +3,10 @@ import * as yup from "yup"
 import { LoaderCircle, X } from "lucide-react"
 
 import { BranchMapPreview } from "@/components/branch/BranchMapPreview"
+import {
+  AlertModal,
+  type AlertModalType,
+} from "@/components/feedback/AlertModal"
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -32,6 +36,11 @@ type FormValues = {
 }
 
 type FormErrors = Partial<Record<keyof FormValues, string>>
+
+interface SubmitAlert {
+  type: AlertModalType
+  message: string
+}
 
 const EMPTY_VALUES: FormValues = {
   name: "",
@@ -92,7 +101,7 @@ interface BranchFormDrawerProps {
   open: boolean
   branch: BranchRow | null
   onOpenChange: (open: boolean) => void
-  onCreated: () => void
+  onCreated: (message: string) => void
 }
 
 export function BranchFormDrawer({
@@ -105,7 +114,7 @@ export function BranchFormDrawer({
   const isEdit = branch !== null
   const [values, setValues] = useState<FormValues>(() => initialValues(branch))
   const [errors, setErrors] = useState<FormErrors>({})
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitAlert, setSubmitAlert] = useState<SubmitAlert | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -122,7 +131,7 @@ export function BranchFormDrawer({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    setSubmitError(null)
+    setSubmitAlert(null)
     try {
       await branchSchema.validate(values, {
         abortEarly: false,
@@ -144,7 +153,7 @@ export function BranchFormDrawer({
       if (!response.success) throw new Error(response.message)
 
       onOpenChange(false)
-      onCreated()
+      onCreated(response.message || "Lokasi kerja berhasil disimpan.")
     } catch (error) {
       if (error instanceof yup.ValidationError) {
         const nextErrors: FormErrors = {}
@@ -155,11 +164,13 @@ export function BranchFormDrawer({
         })
         setErrors(nextErrors)
       } else {
-        setSubmitError(
-          error instanceof Error
-            ? error.message
-            : "Gagal menyimpan lokasi kerja. Coba lagi."
-        )
+        setSubmitAlert({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Gagal menyimpan lokasi kerja. Coba lagi.",
+        })
       }
     } finally {
       setIsSubmitting(false)
@@ -266,11 +277,6 @@ export function BranchFormDrawer({
                 radiusMeter={values.radius_meter}
               />
             </div>
-            {submitError && (
-              <p className="rounded-[5px] bg-red-50 px-3 py-2 text-sm text-red-600">
-                {submitError}
-              </p>
-            )}
           </div>
           <div className="flex shrink-0 gap-3 border-t border-[#EAEAEA] bg-white px-5 py-4">
             <DrawerClose
@@ -295,6 +301,16 @@ export function BranchFormDrawer({
           </div>
         </form>
       </DrawerContent>
+      {submitAlert && (
+        <AlertModal
+          open
+          type={submitAlert.type}
+          message={submitAlert.message}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setSubmitAlert(null)
+          }}
+        />
+      )}
     </Drawer>
   )
 }

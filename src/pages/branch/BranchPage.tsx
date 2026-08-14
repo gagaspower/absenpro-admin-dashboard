@@ -37,6 +37,10 @@ import {
   PerPageSelect,
   TablePagination,
 } from "@/components/data-table/TableFooter"
+import {
+  AlertModal,
+  type AlertModalType,
+} from "@/components/feedback/AlertModal"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
 import { BranchFormDrawer } from "@/components/branch/BranchFormDrawer"
 import { useDebounce } from "@/hooks/useDebounce"
@@ -62,6 +66,11 @@ const FILTER_OPTIONS: FilterCheckboxOption[] = [
 
 const SEARCH_DEBOUNCE_MS = 400
 
+interface PageAlert {
+  type: AlertModalType
+  message: string
+}
+
 export function BranchPage() {
   const [bulkValue, setBulkValue] = useState("")
   const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
@@ -72,6 +81,7 @@ export function BranchPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingBranch, setEditingBranch] = useState<BranchRow | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
 
   const [rows, setRows] = useState<BranchRow[]>([])
   const [total, setTotal] = useState(0)
@@ -345,9 +355,23 @@ export function BranchPage() {
           open={drawerOpen}
           branch={editingBranch}
           onOpenChange={setDrawerOpen}
-          onCreated={() => {
+          onCreated={(message) => {
             setSelectedIds(new Set())
             setRefreshKey((key) => key + 1)
+            setPageAlert({
+              type: "success",
+              message,
+            })
+          }}
+        />
+      )}
+      {pageAlert && (
+        <AlertModal
+          open
+          type={pageAlert.type}
+          message={pageAlert.message}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setPageAlert(null)
           }}
         />
       )}
