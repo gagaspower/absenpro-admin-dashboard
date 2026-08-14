@@ -41,6 +41,10 @@ import {
   AlertModal,
   type AlertModalType,
 } from "@/components/feedback/AlertModal"
+import {
+  ConfirmDialog,
+  type ConfirmDialogType,
+} from "@/components/feedback/ConfirmDialog"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
 import { BranchFormDrawer } from "@/components/branch/BranchFormDrawer"
 import { useDebounce } from "@/hooks/useDebounce"
@@ -82,6 +86,10 @@ export function BranchPage() {
   const [editingBranch, setEditingBranch] = useState<BranchRow | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
+  const [confirmState, setConfirmState] = useState<{
+    type: ConfirmDialogType
+    onConfirm: () => void
+  } | null>(null)
 
   const [rows, setRows] = useState<BranchRow[]>([])
   const [total, setTotal] = useState(0)
@@ -181,14 +189,34 @@ export function BranchPage() {
         label: "Hapus",
         icon: Trash2,
         destructive: true,
-        onClick: () => console.log("delete", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "delete",
+            onConfirm: () => {
+              console.log("delete", row.id)
+              setPageAlert({
+                type: "success",
+                message: "Data berhasil dihapus.",
+              })
+            },
+          }),
         hidden: row.is_trashed,
       },
       {
         key: "restore",
         label: "Restore",
         icon: RotateCcw,
-        onClick: () => console.log("restore", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "restore",
+            onConfirm: () => {
+              console.log("restore", row.id)
+              setPageAlert({
+                type: "success",
+                message: "Data berhasil direstore.",
+              })
+            },
+          }),
         hidden: !row.is_trashed,
       },
       {
@@ -196,7 +224,17 @@ export function BranchPage() {
         label: "Hapus Permanen",
         icon: Trash,
         destructive: true,
-        onClick: () => console.log("delete-permanent", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "delete_permanent",
+            onConfirm: () => {
+              console.log("delete-permanent", row.id)
+              setPageAlert({
+                type: "error",
+                message: "Data berhasil dihapus permanen.",
+              })
+            },
+          }),
         // Selalu tampil sesuai ketentuan (tidak bergantung is_trashed)
       },
     ]
@@ -362,6 +400,19 @@ export function BranchPage() {
               type: "success",
               message,
             })
+          }}
+        />
+      )}
+      {confirmState && (
+        <ConfirmDialog
+          open
+          type={confirmState.type}
+          onOpenChange={(open) => {
+            if (!open) setConfirmState(null)
+          }}
+          onConfirm={() => {
+            confirmState.onConfirm()
+            setConfirmState(null)
           }}
         />
       )}

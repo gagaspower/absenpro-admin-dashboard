@@ -120,7 +120,7 @@ export function BranchFormDrawer({
   useEffect(() => {
     setValues(initialValues(branch))
     setErrors({})
-    setSubmitError(null)
+    setSubmitAlert(null)
   }, [branch])
 
   function changeValue(field: keyof FormValues, value: string) {
