@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   Eye,
   Pencil,
@@ -39,6 +39,10 @@ import {
 } from "@/components/data-table/TableFooter"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
 
+import {
+  fetchBranches,
+  type BranchStatusFilter,
+} from "@/services/branch/branch.service"
 import type { BranchRow } from "@/types/branch/branch.types"
 
 const BULK_OPTIONS: BulkActionOption[] = [
@@ -47,53 +51,83 @@ const BULK_OPTIONS: BulkActionOption[] = [
   { value: "delete_permanent", label: "Hapus Permanen" },
 ]
 
+// Status branch sekarang 3 pilihan yang saling eksklusif (bukan checkbox gabungan lagi)
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
-  { id: "all", label: "Tampilkan semua" },
-  { id: "deleted", label: "Sudah dihapus" },
+  { id: "all", label: "Semua" },
+  { id: "active", label: "Aktif" },
+  { id: "trashed", label: "Sudah dihapus" },
 ]
 
-// TODO: ganti mock data ini dgn fetch ke endpoint branch (masih tahap develop)
-const MOCK_ROWS: BranchRow[] = Array.from({ length: 28 }, (_, i) => ({
-  id: `branch-${i + 1}`,
-  name: i === 0 ? "Rumah Laptop" : `Cabang ${i + 1}`,
-  address:
-    "Jl. Jend. Gatot Subroto No.16A, Purwokerto Tim., Kab. Banyumas, Jawa Tengah",
-  latitude: "-7.4195060",
-  longitude: "109.2289891",
-  radius_meter: 100,
-  is_trashed: i % 4 === 1,
-}))
+// Debounce search supaya tidak fetch di setiap ketikan
+const SEARCH_DEBOUNCE_MS = 400
 
 export function BranchPage() {
   const [bulkValue, setBulkValue] = useState("")
-  const [filterSelected, setFilterSelected] = useState<string[]>(["all"])
+  const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-  const filteredRows = useMemo(() => {
-    const showDeletedOnly =
-      filterSelected.includes("deleted") && !filterSelected.includes("all")
-    return MOCK_ROWS.filter((row) => {
-      if (showDeletedOnly && !row.is_trashed) return false
-      if (search && !row.name.toLowerCase().includes(search.toLowerCase()))
-        return false
-      return true
-    })
-  }, [search, filterSelected])
+  const [rows, setRows] = useState<BranchRow[]>([])
+  const [total, setTotal] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / perPage))
-  const pagedRows = filteredRows.slice((page - 1) * perPage, page * perPage)
+  // TableFilterPopover masih berbasis array, tapi ketiga opsi ini saling
+  // eksklusif — ambil pilihan pertama, default ke "active" kalau kosong.
+  const statusFilter: BranchStatusFilter =
+    (filterSelected[0] as BranchStatusFilter) ?? "active"
 
-  const allChecked =
-    pagedRows.length > 0 && pagedRows.every((r) => selectedIds.has(r.id))
-  const someChecked = pagedRows.some((r) => selectedIds.has(r.id))
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPage(1)
+    }, SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  // Fetch data dari backend setiap kali page/perPage/search/filter berubah
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function load() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const res = await fetchBranches({
+          limit: perPage,
+          offset: (page - 1) * perPage,
+          search: debouncedSearch || undefined,
+          is_trash: statusFilter,
+        })
+        setRows(res.rows)
+        setTotal(res.total)
+      } catch (err) {
+        if (controller.signal.aborted) return
+        setError("Gagal memuat data branch. Coba lagi.")
+        setRows([])
+        setTotal(0)
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false)
+      }
+    }
+
+    load()
+    return () => controller.abort()
+  }, [page, perPage, debouncedSearch, statusFilter])
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage))
+
+  const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
+  const someChecked = rows.some((r) => selectedIds.has(r.id))
 
   function toggleAll(checked: boolean) {
     setSelectedIds((prev) => {
       const next = new Set(prev)
-      pagedRows.forEach((r) => (checked ? next.add(r.id) : next.delete(r.id)))
+      rows.forEach((r) => (checked ? next.add(r.id) : next.delete(r.id)))
       return next
     })
   }
@@ -111,7 +145,7 @@ export function BranchPage() {
   }
 
   function handleBulkSubmit() {
-    // TODO: panggil endpoint bulk action dgn [...selectedIds] & bulkValue
+    // TODO: panggil endpoint bulk action dgn [...selectedIds] & bulkValue (menyusul)
     console.log("bulk action", bulkValue, [...selectedIds])
   }
 
@@ -156,7 +190,7 @@ export function BranchPage() {
         icon: Trash,
         destructive: true,
         onClick: () => console.log("delete-permanent", row.id),
-        hidden: !row.is_trashed,
+        // Selalu tampil sesuai ketentuan (tidak bergantung is_trashed)
       },
     ]
   }
@@ -202,10 +236,7 @@ export function BranchPage() {
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
             <Input
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari nama lokasi"
               className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
             />
@@ -237,7 +268,25 @@ export function BranchPage() {
             </TableHeader>
 
             <TableBody>
-              {pagedRows.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="py-10 text-center text-sm text-gray-400"
+                  >
+                    Memuat data...
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="py-10 text-center text-sm text-red-500"
+                  >
+                    {error}
+                  </TableCell>
+                </TableRow>
+              ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={6}
@@ -247,7 +296,7 @@ export function BranchPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                pagedRows.map((row) => (
+                rows.map((row) => (
                   <TableRow key={row.id} className="border-[#EAEAEA]">
                     <TableCell className="px-5">
                       <Checkbox
