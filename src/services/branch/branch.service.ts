@@ -3,6 +3,8 @@ import type {
   BranchListResponse,
   CreateBranchPayload,
   CreateBranchResponse,
+  UpdateBranchPayload,
+  UpdateBranchResponse,
 } from "@/types/branch/branch.types"
 
 export type BranchStatusFilter = "all" | "active" | "trashed"
@@ -48,6 +50,18 @@ export async function createBranch(
 ): Promise<CreateBranchResponse> {
   const { data } = await api.post<CreateBranchResponse>(
     "api/reference/lokasi-kerja",
+    payload
+  )
+
+  return data
+}
+
+export async function updateBranch(
+  id: string,
+  payload: UpdateBranchPayload
+): Promise<UpdateBranchResponse> {
+  const { data } = await api.put<UpdateBranchResponse>(
+    `api/reference/lokasi-kerja/${id}`,
     payload
   )
 
