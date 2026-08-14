@@ -13,6 +13,20 @@ export interface BranchListResponse {
   rows: BranchRow[]
 }
 
+export interface CreateBranchPayload {
+  name: string
+  address?: string
+  latitude: string
+  longitude: string
+  radius_meter: number
+}
+
+export interface CreateBranchResponse {
+  success: boolean
+  message: string
+  data: BranchRow
+}
+
 export type BulkActionValue = "restore" | "delete" | "delete_permanent"
 
 export interface BranchFilterState {

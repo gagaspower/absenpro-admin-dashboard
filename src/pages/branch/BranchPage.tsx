@@ -38,6 +38,7 @@ import {
   TablePagination,
 } from "@/components/data-table/TableFooter"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
+import { BranchFormDrawer } from "@/components/branch/BranchFormDrawer"
 import { useDebounce } from "@/hooks/useDebounce"
 
 import {
@@ -68,6 +69,9 @@ export function BranchPage() {
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingBranch, setEditingBranch] = useState<BranchRow | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const [rows, setRows] = useState<BranchRow[]>([])
   const [total, setTotal] = useState(0)
@@ -96,7 +100,7 @@ export function BranchPage() {
         })
         setRows(res.rows)
         setTotal(res.total)
-      } catch (err) {
+      } catch {
         if (controller.signal.aborted) return
         setError("Gagal memuat data branch. Coba lagi.")
         setRows([])
@@ -108,12 +112,11 @@ export function BranchPage() {
 
     load()
     return () => controller.abort()
-  }, [page, perPage, debouncedSearch, statusFilter])
+  }, [page, perPage, debouncedSearch, statusFilter, refreshKey])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
 
   const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
-  const someChecked = rows.some((r) => selectedIds.has(r.id))
 
   function toggleAll(checked: boolean) {
     setSelectedIds((prev) => {
@@ -157,7 +160,10 @@ export function BranchPage() {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        onClick: () => console.log("edit", row.id),
+        onClick: () => {
+          setEditingBranch(row)
+          setDrawerOpen(true)
+        },
         hidden: row.is_trashed,
       },
       {
@@ -196,7 +202,10 @@ export function BranchPage() {
         <Button
           type="button"
           variant="outline"
-          onClick={() => console.log("tambah branch")}
+          onClick={() => {
+            setEditingBranch(null)
+            setDrawerOpen(true)
+          }}
           className="h-10 gap-2 rounded-[5px] border-[#EAEAEA] bg-white text-sm font-normal text-[#374957] hover:bg-gray-50"
         >
           <Plus className="size-4" />
@@ -247,9 +256,7 @@ export function BranchPage() {
               <TableRow className="border-[#EAEAEA] bg-[#F7FCFA] hover:bg-[#F7FCFA]">
                 <TableHead className="w-12 px-5">
                   <Checkbox
-                    checked={
-                      allChecked ? true : someChecked ? "indeterminate" : false
-                    }
+                    checked={allChecked}
                     onCheckedChange={(checked) => toggleAll(checked === true)}
                     aria-label="Pilih semua"
                   />
@@ -332,6 +339,18 @@ export function BranchPage() {
           onPageChange={setPage}
         />
       </div>
+
+      {drawerOpen && (
+        <BranchFormDrawer
+          open={drawerOpen}
+          branch={editingBranch}
+          onOpenChange={setDrawerOpen}
+          onCreated={() => {
+            setSelectedIds(new Set())
+            setRefreshKey((key) => key + 1)
+          }}
+        />
+      )}
     </div>
   )
 }

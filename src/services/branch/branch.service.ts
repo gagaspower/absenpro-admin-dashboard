@@ -1,5 +1,9 @@
 import { api } from "@/lib/axios"
-import type { BranchListResponse } from "@/types/branch/branch.types"
+import type {
+  BranchListResponse,
+  CreateBranchPayload,
+  CreateBranchResponse,
+} from "@/types/branch/branch.types"
 
 export type BranchStatusFilter = "all" | "active" | "trashed"
 
@@ -34,6 +38,17 @@ export async function fetchBranches(
         ...(search ? { search } : {}),
       },
     }
+  )
+
+  return data
+}
+
+export async function createBranch(
+  payload: CreateBranchPayload
+): Promise<CreateBranchResponse> {
+  const { data } = await api.post<CreateBranchResponse>(
+    "api/reference/lokasi-kerja",
+    payload
   )
 
   return data
