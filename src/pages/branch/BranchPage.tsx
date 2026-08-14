@@ -51,6 +51,7 @@ import { useDebounce } from "@/hooks/useDebounce"
 
 import {
   fetchBranches,
+  deleteBranch,
   type BranchStatusFilter,
 } from "@/services/branch/branch.service"
 import type { BranchRow } from "@/types/branch/branch.types"
@@ -95,6 +96,7 @@ export function BranchPage() {
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isActionLoading, setIsActionLoading] = useState(false)
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
   // TableFilterPopover masih berbasis array, tapi ketiga opsi ini saling
@@ -192,12 +194,27 @@ export function BranchPage() {
         onClick: () =>
           setConfirmState({
             type: "delete",
-            onConfirm: () => {
-              console.log("delete", row.id)
-              setPageAlert({
-                type: "success",
-                message: "Data berhasil dihapus.",
-              })
+            onConfirm: async () => {
+              try {
+                await deleteBranch(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil dihapus.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal menghapus data. Coba lagi.",
+                })
+              } finally {
+                setConfirmState(null)
+              }
             },
           }),
         hidden: row.is_trashed,
@@ -411,8 +428,7 @@ export function BranchPage() {
             if (!open) setConfirmState(null)
           }}
           onConfirm={() => {
-            confirmState.onConfirm()
-            setConfirmState(null)
+            confirmState.onConfirm() // async, setConfirmState(null) ada di finally-nya
           }}
         />
       )}

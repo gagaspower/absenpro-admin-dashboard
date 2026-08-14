@@ -67,3 +67,7 @@ export async function updateBranch(
 
   return data
 }
+
+export async function deleteBranch(id: string): Promise<void> {
+  await api.delete(`api/reference/lokasi-kerja/${id}`)
+}
