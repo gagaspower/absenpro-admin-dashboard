@@ -30,17 +30,19 @@ export function RowActionsMenu({ actions }: RowActionsMenuProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          aria-label="Aksi baris"
-        >
-          <MoreVertical className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            aria-label="Aksi baris"
+          >
+            <MoreVertical className="size-4" />
+          </Button>
+        }
+      />
 
       <DropdownMenuContent
         align="end"

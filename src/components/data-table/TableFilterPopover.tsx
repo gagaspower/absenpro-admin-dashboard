@@ -17,6 +17,8 @@ interface TableFilterPopoverProps {
   options: FilterCheckboxOption[]
   selected: string[]
   onSubmit: (selected: string[]) => void
+  /** Batasi pilihan ke satu checkbox, misalnya untuk filter status. */
+  singleSelect?: boolean
 }
 
 /**
@@ -27,6 +29,7 @@ export function TableFilterPopover({
   options,
   selected,
   onSubmit,
+  singleSelect = false,
 }: TableFilterPopoverProps) {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<string[]>(selected)
@@ -39,7 +42,13 @@ export function TableFilterPopover({
   }
 
   function toggle(id: string, checked: boolean) {
-    setDraft((prev) => (checked ? [...prev, id] : prev.filter((v) => v !== id)))
+    setDraft((prev) => {
+      if (singleSelect) {
+        return checked ? [id] : prev
+      }
+
+      return checked ? [...prev, id] : prev.filter((v) => v !== id)
+    })
   }
 
   function handleReset() {
@@ -55,17 +64,19 @@ export function TableFilterPopover({
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-10 w-10 shrink-0 rounded-[5px] border-[#EAEAEA] bg-white text-[#374957] hover:bg-gray-50"
-          aria-label="Filter"
-        >
-          <Filter className="size-4" />
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 shrink-0 rounded-[5px] border-[#EAEAEA] bg-white text-[#374957] hover:bg-gray-50"
+            aria-label="Filter"
+          >
+            <Filter className="size-4" />
+          </Button>
+        }
+      />
 
       <PopoverContent align="start" className="w-56 rounded-[5px] p-3">
         <div className="flex flex-col gap-2.5">

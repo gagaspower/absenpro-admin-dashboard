@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Eye,
   Pencil,
@@ -38,6 +38,7 @@ import {
   TablePagination,
 } from "@/components/data-table/TableFooter"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
+import { useDebounce } from "@/hooks/useDebounce"
 
 import {
   fetchBranches,
@@ -58,14 +59,12 @@ const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "trashed", label: "Sudah dihapus" },
 ]
 
-// Debounce search supaya tidak fetch di setiap ketikan
 const SEARCH_DEBOUNCE_MS = 400
 
 export function BranchPage() {
   const [bulkValue, setBulkValue] = useState("")
   const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
   const [search, setSearch] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -74,20 +73,12 @@ export function BranchPage() {
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
   // TableFilterPopover masih berbasis array, tapi ketiga opsi ini saling
   // eksklusif — ambil pilihan pertama, default ke "active" kalau kosong.
   const statusFilter: BranchStatusFilter =
     (filterSelected[0] as BranchStatusFilter) ?? "active"
-
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search)
-      setPage(1)
-    }, SEARCH_DEBOUNCE_MS)
-    return () => clearTimeout(timer)
-  }, [search])
 
   // Fetch data dari backend setiap kali page/perPage/search/filter berubah
   useEffect(() => {
@@ -227,8 +218,9 @@ export function BranchPage() {
           <TableFilterPopover
             options={FILTER_OPTIONS}
             selected={filterSelected}
+            singleSelect
             onSubmit={(sel) => {
-              setFilterSelected(sel)
+              setFilterSelected(sel.length > 0 ? [sel[0]] : ["active"])
               setPage(1)
             }}
           />
@@ -236,7 +228,10 @@ export function BranchPage() {
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setPage(1)
+              }}
               placeholder="Cari nama lokasi"
               className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
             />
