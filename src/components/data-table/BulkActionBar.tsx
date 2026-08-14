@@ -44,7 +44,9 @@ export function BulkActionBar({
         onValueChange={(nextValue) => onValueChange(nextValue ?? "")}
       >
         <SelectTrigger className="h-10 w-44 rounded-[5px] border-[#D9D9D9] text-sm text-[#374957] focus:ring-0 focus:ring-offset-0">
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder}>
+            {options.find((opt) => opt.value === value)?.label ?? placeholder}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {options.map((opt) => (
