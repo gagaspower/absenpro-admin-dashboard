@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import * as yup from "yup"
 import { LoaderCircle, X } from "lucide-react"
 
@@ -14,7 +14,10 @@ import {
 } from "@/components/ui/drawer"
 import { Input } from "@/components/ui/input"
 import { useMobile } from "@/hooks/use-mobile"
-import { createBranch } from "@/services/branch/branch.service"
+import {
+  createBranch,
+  updateBranch,
+} from "@/services/branch/branch.service"
 import type {
   BranchRow,
   CreateBranchPayload,
@@ -105,6 +108,12 @@ export function BranchFormDrawer({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  useEffect(() => {
+    setValues(initialValues(branch))
+    setErrors({})
+    setSubmitError(null)
+  }, [branch])
+
   function changeValue(field: keyof FormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
@@ -112,7 +121,6 @@ export function BranchFormDrawer({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (isEdit) return
 
     setSubmitError(null)
     try {
@@ -128,7 +136,11 @@ export function BranchFormDrawer({
         radius_meter: Number(values.radius_meter),
         ...(values.address.trim() ? { address: values.address.trim() } : {}),
       }
-      const response = await createBranch(payload)
+
+      const response = isEdit
+        ? await updateBranch(branch!.id, payload)
+        : await createBranch(payload)
+
       if (!response.success) throw new Error(response.message)
 
       onOpenChange(false)
@@ -186,19 +198,12 @@ export function BranchFormDrawer({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-            {isEdit && (
-              <div className="rounded-[5px] border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                Penyimpanan perubahan belum tersedia karena endpoint edit belum
-                disediakan backend.
-              </div>
-            )}
             <Field label="Nama Lokasi" error={errors.name} required>
               <Input
                 value={values.name}
                 onChange={(event) => changeValue("name", event.target.value)}
                 placeholder="Contoh: Kantor Pusat"
                 maxLength={255}
-                disabled={isEdit}
                 aria-invalid={Boolean(errors.name)}
                 className="h-10 rounded-[5px] border-[#DDE3E6]"
               />
@@ -208,7 +213,6 @@ export function BranchFormDrawer({
                 value={values.address}
                 onChange={(event) => changeValue("address", event.target.value)}
                 placeholder="Alamat lengkap (opsional)"
-                disabled={isEdit}
                 className="min-h-20 w-full rounded-[5px] border border-[#DDE3E6] bg-white px-3 py-2 text-sm text-[#374957] outline-none placeholder:text-gray-400 focus:border-[#30CCD5] disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-70"
               />
             </Field>
@@ -221,7 +225,6 @@ export function BranchFormDrawer({
                   }
                   inputMode="decimal"
                   placeholder="-6.2088"
-                  disabled={isEdit}
                   aria-invalid={Boolean(errors.latitude)}
                   className="h-10 rounded-[5px] border-[#DDE3E6]"
                 />
@@ -234,7 +237,6 @@ export function BranchFormDrawer({
                   }
                   inputMode="decimal"
                   placeholder="106.8456"
-                  disabled={isEdit}
                   aria-invalid={Boolean(errors.longitude)}
                   className="h-10 rounded-[5px] border-[#DDE3E6]"
                 />
@@ -252,7 +254,6 @@ export function BranchFormDrawer({
                 }
                 inputMode="numeric"
                 placeholder="Contoh: 100"
-                disabled={isEdit}
                 aria-invalid={Boolean(errors.radius_meter)}
                 className="h-10 rounded-[5px] border-[#DDE3E6]"
               />
@@ -285,11 +286,11 @@ export function BranchFormDrawer({
             </DrawerClose>
             <Button
               type="submit"
-              disabled={isEdit || isSubmitting}
+              disabled={isSubmitting}
               className="h-10 flex-1 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0]"
             >
               {isSubmitting && <LoaderCircle className="size-4 animate-spin" />}
-              {isEdit ? "Simpan belum tersedia" : "Simpan"}
+              {isEdit ? "Perbarui" : "Simpan"}
             </Button>
           </div>
         </form>

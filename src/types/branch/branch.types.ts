@@ -21,11 +21,15 @@ export interface CreateBranchPayload {
   radius_meter: number
 }
 
+export type UpdateBranchPayload = CreateBranchPayload
+
 export interface CreateBranchResponse {
   success: boolean
   message: string
   data: BranchRow
 }
+
+export type UpdateBranchResponse = CreateBranchResponse
 
 export type BulkActionValue = "restore" | "delete" | "delete_permanent"
 
