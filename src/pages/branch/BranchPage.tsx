@@ -54,6 +54,9 @@ import {
   deleteBranch,
   restoreBranch,
   forceDeleteBranch,
+  restoreMultipleBranches,
+  deleteMultipleBranches,
+  forceDeleteMultipleBranches,
   type BranchStatusFilter,
 } from "@/services/branch/branch.service"
 import type { BranchRow } from "@/types/branch/branch.types"
@@ -64,7 +67,6 @@ const BULK_OPTIONS: BulkActionOption[] = [
   { value: "delete_permanent", label: "Hapus Permanen" },
 ]
 
-// Status branch sekarang 3 pilihan yang saling eksklusif (bukan checkbox gabungan lagi)
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
   { id: "active", label: "Aktif" },
@@ -101,12 +103,9 @@ export function BranchPage() {
   const [isActionLoading, setIsActionLoading] = useState(false)
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
-  // TableFilterPopover masih berbasis array, tapi ketiga opsi ini saling
-  // eksklusif — ambil pilihan pertama, default ke "active" kalau kosong.
   const statusFilter: BranchStatusFilter =
     (filterSelected[0] as BranchStatusFilter) ?? "active"
 
-  // Fetch data dari backend setiap kali page/perPage/search/filter berubah
   useEffect(() => {
     const controller = new AbortController()
 
@@ -161,8 +160,54 @@ export function BranchPage() {
   }
 
   function handleBulkSubmit() {
-    // TODO: panggil endpoint bulk action dgn [...selectedIds] & bulkValue (menyusul)
-    console.log("bulk action", bulkValue, [...selectedIds])
+    if (!bulkValue || selectedIds.size === 0) return
+
+    const ids = [...selectedIds]
+
+    const confirmTypeMap: Record<string, ConfirmDialogType> = {
+      restore: "restore",
+      delete: "delete",
+      delete_permanent: "delete_permanent",
+    }
+
+    const confirmType = confirmTypeMap[bulkValue]
+    if (!confirmType) return
+
+    setConfirmState({
+      type: confirmType,
+      onConfirm: async () => {
+        setIsActionLoading(true)
+        try {
+          if (bulkValue === "restore") {
+            await restoreMultipleBranches(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil direstore.",
+            })
+          } else if (bulkValue === "delete") {
+            await deleteMultipleBranches(ids)
+            setPageAlert({ type: "success", message: "Data berhasil dihapus." })
+          } else if (bulkValue === "delete_permanent") {
+            await forceDeleteMultipleBranches(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil dihapus permanen.",
+            })
+          }
+          setSelectedIds(new Set())
+          setBulkValue("")
+          setRefreshKey((k) => k + 1)
+          setConfirmState(null)
+        } catch {
+          setPageAlert({
+            type: "error",
+            message: "Gagal menjalankan aksi. Coba lagi.",
+          })
+        } finally {
+          setIsActionLoading(false)
+        }
+      },
+    })
   }
 
   function handlePerPageChange(value: number) {
@@ -466,7 +511,7 @@ export function BranchPage() {
             if (!open) setConfirmState(null)
           }}
           onConfirm={() => {
-            confirmState.onConfirm() // async, setConfirmState(null) ada di finally-nya
+            confirmState.onConfirm()
           }}
         />
       )}

@@ -2,7 +2,7 @@ import axios from "axios"
 import { storage } from "./storage"
 
 export const api = axios.create({
-  baseURL: "https://literally-characterized-manitoba-containers.trycloudflare.com",
+  baseURL: "https://terrain-together-awesome-county.trycloudflare.com",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",

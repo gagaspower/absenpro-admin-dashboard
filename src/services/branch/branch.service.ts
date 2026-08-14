@@ -79,3 +79,21 @@ export async function restoreBranch(id: string): Promise<void> {
 export async function forceDeleteBranch(id: string): Promise<void> {
   await api.delete(`api/reference/lokasi-kerja/force-delete/${id}`)
 }
+
+// ── Bulk actions ─────────────────────────────────────────────────────────────
+
+export async function restoreMultipleBranches(ids: string[]): Promise<void> {
+  await api.post("api/reference/lokasi-kerja/restore-multiple", { ids })
+}
+
+export async function deleteMultipleBranches(ids: string[]): Promise<void> {
+  await api.delete("api/reference/lokasi-kerja/multiple", { data: { ids } })
+}
+
+export async function forceDeleteMultipleBranches(
+  ids: string[]
+): Promise<void> {
+  await api.delete("api/reference/lokasi-kerja/force-delete-multiple", {
+    data: { ids },
+  })
+}
