@@ -18,6 +18,7 @@ interface ConfirmDialogProps {
   message?: string
   confirmLabel?: string
   cancelLabel?: string
+  isLoading?: boolean
 }
 
 const CONFIRM_CONTENT: Record<
@@ -56,12 +57,12 @@ export function ConfirmDialog({
   message,
   confirmLabel,
   cancelLabel = "Batal",
+  isLoading,
 }: ConfirmDialogProps) {
   const content = CONFIRM_CONTENT[type]
 
   function handleConfirm() {
     onConfirm()
-    onOpenChange(false)
   }
 
   return (
@@ -93,9 +94,35 @@ export function ConfirmDialog({
           <Button
             type="button"
             onClick={handleConfirm}
-            className="h-10 flex-1 rounded-[5px] bg-[#F64C31] text-sm font-medium text-white hover:bg-[#E6442A]"
+            disabled={isLoading}
+            className="h-10 flex-1 rounded-[5px] bg-[#F64C31] text-sm font-medium text-white hover:bg-[#E6442A] disabled:opacity-70"
           >
-            {confirmLabel ?? content.confirmLabel}
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <svg
+                  className="size-4 animate-spin"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+                Memproses...
+              </span>
+            ) : (
+              (confirmLabel ?? content.confirmLabel)
+            )}
           </Button>
         </div>
       </DialogContent>

@@ -195,6 +195,7 @@ export function BranchPage() {
           setConfirmState({
             type: "delete",
             onConfirm: async () => {
+              setIsActionLoading(true)
               try {
                 await deleteBranch(row.id)
                 setSelectedIds((prev) => {
@@ -203,6 +204,7 @@ export function BranchPage() {
                   return next
                 })
                 setRefreshKey((k) => k + 1)
+                setConfirmState(null)
                 setPageAlert({
                   type: "success",
                   message: "Data berhasil dihapus.",
@@ -213,7 +215,7 @@ export function BranchPage() {
                   message: "Gagal menghapus data. Coba lagi.",
                 })
               } finally {
-                setConfirmState(null)
+                setIsActionLoading(false)
               }
             },
           }),
@@ -424,6 +426,7 @@ export function BranchPage() {
         <ConfirmDialog
           open
           type={confirmState.type}
+          isLoading={isActionLoading}
           onOpenChange={(open) => {
             if (!open) setConfirmState(null)
           }}
