@@ -9,7 +9,7 @@ export function PageCard({ children, className, ...props }: PageCardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-[#EFEFEF] bg-white p-5 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] md:p-6",
+        "rounded-2xl border border-[#F1F3F2] bg-[#FEFEFE] p-5 shadow-[0_2px_8px_rgba(16,24,40,0.04)] transition-shadow duration-200 md:p-6",
         className
       )}
       {...props}
@@ -19,7 +19,10 @@ export function PageCard({ children, className, ...props }: PageCardProps) {
   )
 }
 
-interface PageCardHeaderProps extends HTMLAttributes<HTMLDivElement> {
+interface PageCardHeaderProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "title"
+> {
   title: ReactNode
   description?: ReactNode
   actions?: ReactNode
@@ -35,13 +38,13 @@ export function PageCardHeader({
   return (
     <div
       className={cn(
-        "mb-5 flex flex-col gap-3 border-b border-[#F2F2F2] pb-4 sm:flex-row sm:items-center sm:justify-between",
+        "mb-5 flex flex-col gap-3 border-b border-[#F5F6F5] pb-4 sm:flex-row sm:items-center sm:justify-between",
         className
       )}
       {...props}
     >
       <div>
-        <h2 className="text-base font-semibold text-[#1F2A37]">{title}</h2>
+        <h2 className="text-base font-semibold text-[#2E3A46]">{title}</h2>
         {description && (
           <p className="mt-0.5 text-sm text-gray-400">{description}</p>
         )}

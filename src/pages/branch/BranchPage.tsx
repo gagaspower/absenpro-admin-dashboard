@@ -47,6 +47,7 @@ import {
 } from "@/components/feedback/ConfirmDialog"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
 import { BranchFormDrawer } from "@/components/branch/BranchFormDrawer"
+import { PageCard, PageCardHeader } from "@/components/PageCard"
 import { useDebounce } from "@/hooks/useDebounce"
 
 import {
@@ -341,151 +342,154 @@ export function BranchPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-[#374957]">
-          Wilayah Kerja / Branch
-        </h1>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setEditingBranch(null)
-            setDrawerOpen(true)
-          }}
-          className="h-10 gap-2 rounded-[5px] border-[#EAEAEA] bg-white text-sm font-normal text-[#374957] hover:bg-gray-50"
-        >
-          <Plus className="size-4" />
-          Tambah
-        </Button>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <BulkActionBar
-          options={BULK_OPTIONS}
-          value={bulkValue}
-          onValueChange={(value) => setBulkValue(value)}
-          onSubmit={handleBulkSubmit}
-          disabled={selectedIds.size === 0}
+      <PageCard>
+        <PageCardHeader
+          title="Wilayah Kerja / Branch"
+          actions={
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setEditingBranch(null)
+                setDrawerOpen(true)
+              }}
+              className="h-10 gap-2 rounded-[5px] border-[#EAEAEA] bg-white text-sm font-normal text-[#374957] hover:bg-gray-50"
+            >
+              <Plus className="size-4" />
+              Tambah
+            </Button>
+          }
         />
 
-        <div className="flex items-center gap-2">
-          <TableFilterPopover
-            options={FILTER_OPTIONS}
-            selected={filterSelected}
-            singleSelect
-            onSubmit={(sel) => {
-              setFilterSelected(sel.length > 0 ? [sel[0]] : ["active"])
-              setPage(1)
-            }}
+        {/* Toolbar */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <BulkActionBar
+            options={BULK_OPTIONS}
+            value={bulkValue}
+            onValueChange={(value) => setBulkValue(value)}
+            onSubmit={handleBulkSubmit}
+            disabled={selectedIds.size === 0}
           />
-          <div className="relative w-full min-w-[220px] md:w-64">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
-            <Input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
+
+          <div className="flex items-center gap-2">
+            <TableFilterPopover
+              options={FILTER_OPTIONS}
+              selected={filterSelected}
+              singleSelect
+              onSubmit={(sel) => {
+                setFilterSelected(sel.length > 0 ? [sel[0]] : ["active"])
                 setPage(1)
               }}
-              placeholder="Cari nama lokasi"
-              className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
             />
+            <div className="relative w-full min-w-[220px] md:w-64">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
+                placeholder="Cari nama lokasi"
+                className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-[5px] border border-[#EAEAEA] bg-white">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-[#EAEAEA] bg-[#F7FCFA] hover:bg-[#F7FCFA]">
-                <TableHead className="w-12 px-5">
-                  <Checkbox
-                    checked={allChecked}
-                    onCheckedChange={(checked) => toggleAll(checked === true)}
-                    aria-label="Pilih semua"
-                  />
-                </TableHead>
-                <TableHead className="text-[#374957]">Nama Lokasi</TableHead>
-                <TableHead className="text-[#374957]">Latitude</TableHead>
-                <TableHead className="text-[#374957]">Longitude</TableHead>
-                <TableHead className="text-[#374957]">Status</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
+        {/* Table */}
+        <div className="mt-4 overflow-hidden rounded-[5px] border border-[#EAEAEA] bg-white">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[#EAEAEA] bg-[#F7FCFA] hover:bg-[#F7FCFA]">
+                  <TableHead className="w-12 px-5">
+                    <Checkbox
+                      checked={allChecked}
+                      onCheckedChange={(checked) => toggleAll(checked === true)}
+                      aria-label="Pilih semua"
+                    />
+                  </TableHead>
+                  <TableHead className="text-[#374957]">Nama Lokasi</TableHead>
+                  <TableHead className="text-[#374957]">Latitude</TableHead>
+                  <TableHead className="text-[#374957]">Longitude</TableHead>
+                  <TableHead className="text-[#374957]">Status</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
 
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-10 text-center text-sm text-gray-400"
-                  >
-                    Memuat data...
-                  </TableCell>
-                </TableRow>
-              ) : error ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-10 text-center text-sm text-red-500"
-                  >
-                    {error}
-                  </TableCell>
-                </TableRow>
-              ) : rows.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-10 text-center text-sm text-gray-400"
-                  >
-                    Tidak ada data.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                rows.map((row) => (
-                  <TableRow key={row.id} className="border-[#EAEAEA]">
-                    <TableCell className="px-5">
-                      <Checkbox
-                        checked={selectedIds.has(row.id)}
-                        onCheckedChange={(checked) =>
-                          toggleRow(row.id, checked === true)
-                        }
-                        aria-label={`Pilih ${row.name}`}
-                      />
-                    </TableCell>
-                    <TableCell className="text-[#374957]">{row.name}</TableCell>
-                    <TableCell className="text-[#374957]">
-                      {row.latitude}
-                    </TableCell>
-                    <TableCell className="text-[#374957]">
-                      {row.longitude}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge active={!row.is_trashed} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <RowActionsMenu actions={rowActions(row)} />
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-10 text-center text-sm text-gray-400"
+                    >
+                      Memuat data...
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-10 text-center text-sm text-red-500"
+                    >
+                      {error}
+                    </TableCell>
+                  </TableRow>
+                ) : rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-10 text-center text-sm text-gray-400"
+                    >
+                      Tidak ada data.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rows.map((row) => (
+                    <TableRow key={row.id} className="border-[#EAEAEA]">
+                      <TableCell className="px-5">
+                        <Checkbox
+                          checked={selectedIds.has(row.id)}
+                          onCheckedChange={(checked) =>
+                            toggleRow(row.id, checked === true)
+                          }
+                          aria-label={`Pilih ${row.name}`}
+                        />
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {row.name}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {row.latitude}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {row.longitude}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge active={!row.is_trashed} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <RowActionsMenu actions={rowActions(row)} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div className="flex flex-col-reverse items-center justify-between gap-3 md:flex-row">
-        <PerPageSelect value={perPage} onChange={handlePerPageChange} />
-        <TablePagination
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-        />
-      </div>
+        {/* Footer */}
+        <div className="mt-4 flex flex-col-reverse items-center justify-between gap-3 md:flex-row">
+          <PerPageSelect value={perPage} onChange={handlePerPageChange} />
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </div>
+      </PageCard>
 
       {drawerOpen && (
         <BranchFormDrawer
