@@ -71,3 +71,11 @@ export async function updateBranch(
 export async function deleteBranch(id: string): Promise<void> {
   await api.delete(`api/reference/lokasi-kerja/${id}`)
 }
+
+export async function restoreBranch(id: string): Promise<void> {
+  await api.post(`api/reference/lokasi-kerja/restore/${id}`)
+}
+
+export async function forceDeleteBranch(id: string): Promise<void> {
+  await api.delete(`api/reference/lokasi-kerja/force-delete/${id}`)
+}

@@ -52,6 +52,8 @@ import { useDebounce } from "@/hooks/useDebounce"
 import {
   fetchBranches,
   deleteBranch,
+  restoreBranch,
+  forceDeleteBranch,
   type BranchStatusFilter,
 } from "@/services/branch/branch.service"
 import type { BranchRow } from "@/types/branch/branch.types"
@@ -228,12 +230,29 @@ export function BranchPage() {
         onClick: () =>
           setConfirmState({
             type: "restore",
-            onConfirm: () => {
-              console.log("restore", row.id)
-              setPageAlert({
-                type: "success",
-                message: "Data berhasil direstore.",
-              })
+            onConfirm: async () => {
+              setIsActionLoading(true)
+              try {
+                await restoreBranch(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setConfirmState(null)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil direstore.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal merestore data. Coba lagi.",
+                })
+              } finally {
+                setIsActionLoading(false)
+              }
             },
           }),
         hidden: !row.is_trashed,
@@ -246,15 +265,31 @@ export function BranchPage() {
         onClick: () =>
           setConfirmState({
             type: "delete_permanent",
-            onConfirm: () => {
-              console.log("delete-permanent", row.id)
-              setPageAlert({
-                type: "error",
-                message: "Data berhasil dihapus permanen.",
-              })
+            onConfirm: async () => {
+              setIsActionLoading(true)
+              try {
+                await forceDeleteBranch(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setConfirmState(null)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil dihapus permanen.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal menghapus permanen. Coba lagi.",
+                })
+              } finally {
+                setIsActionLoading(false)
+              }
             },
           }),
-        // Selalu tampil sesuai ketentuan (tidak bergantung is_trashed)
       },
     ]
   }
