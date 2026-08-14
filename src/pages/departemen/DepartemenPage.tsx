@@ -1,16 +1,6 @@
 import { useEffect, useState } from "react"
-import {
-  Eye,
-  Pencil,
-  Plus,
-  RotateCcw,
-  Search,
-  Trash,
-  Trash2,
-} from "lucide-react"
+import { Eye, Pencil, RotateCcw, Search, Trash, Trash2 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -21,10 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-import {
-  BulkActionBar,
-  type BulkActionOption,
-} from "@/components/data-table/BulkActionBar"
 import {
   TableFilterPopover,
   type FilterCheckboxOption,
@@ -37,75 +23,33 @@ import {
   PerPageSelect,
   TablePagination,
 } from "@/components/data-table/TableFooter"
-import {
-  AlertModal,
-  type AlertModalType,
-} from "@/components/feedback/AlertModal"
-import {
-  ConfirmDialog,
-  type ConfirmDialogType,
-} from "@/components/feedback/ConfirmDialog"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
-import { BranchFormDrawer } from "@/components/branch/BranchFormDrawer"
 import { PageCard, PageCardHeader } from "@/components/PageCard"
 import { useDebounce } from "@/hooks/useDebounce"
 
-import {
-  fetchBranches,
-  deleteBranch,
-  restoreBranch,
-  forceDeleteBranch,
-  restoreMultipleBranches,
-  deleteMultipleBranches,
-  forceDeleteMultipleBranches,
-  type BranchStatusFilter,
-} from "@/services/branch/branch.service"
-import type { BranchRow } from "@/types/branch/branch.types"
-
-const BULK_OPTIONS: BulkActionOption[] = [
-  { value: "restore", label: "Restore" },
-  { value: "delete", label: "Hapus" },
-  { value: "delete_permanent", label: "Hapus Permanen" },
-]
+import { fetchDepartemen } from "@/services/departemen/departemen.service"
+import type { DepartemenRow } from "@/types/departemen/departemen.types"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
-  { id: "all", label: "Semua" },
-  { id: "active", label: "Aktif" },
-  { id: "trashed", label: "Sudah dihapus" },
+  { id: "false", label: "Aktif" },
+  { id: "true", label: "Sudah dihapus" },
 ]
 
 const SEARCH_DEBOUNCE_MS = 400
 
-interface PageAlert {
-  type: AlertModalType
-  message: string
-}
-
 export function DepartemenPage() {
-  const [bulkValue, setBulkValue] = useState("")
-  const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
+  const [filterSelected, setFilterSelected] = useState<string[]>(["false"])
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editingBranch, setEditingBranch] = useState<BranchRow | null>(null)
-  const [refreshKey, setRefreshKey] = useState(0)
-  const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
-  const [confirmState, setConfirmState] = useState<{
-    type: ConfirmDialogType
-    onConfirm: () => void
-  } | null>(null)
 
-  const [rows, setRows] = useState<BranchRow[]>([])
+  const [rows, setRows] = useState<DepartemenRow[]>([])
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isActionLoading, setIsActionLoading] = useState(false)
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
-  const statusFilter: BranchStatusFilter =
-    (filterSelected[0] as BranchStatusFilter) ?? "active"
+  const isTrash = filterSelected[0] === "true"
 
   useEffect(() => {
     const controller = new AbortController()
@@ -114,17 +58,17 @@ export function DepartemenPage() {
       setIsLoading(true)
       setError(null)
       try {
-        const res = await fetchBranches({
+        const res = await fetchDepartemen({
           limit: perPage,
           offset: (page - 1) * perPage,
           search: debouncedSearch || undefined,
-          is_trash: statusFilter,
+          is_trash: isTrash,
         })
         setRows(res.rows)
         setTotal(res.total)
       } catch {
         if (controller.signal.aborted) return
-        setError("Gagal memuat data branch. Coba lagi.")
+        setError("Gagal memuat data departemen. Coba lagi.")
         setRows([])
         setTotal(0)
       } finally {
@@ -134,89 +78,16 @@ export function DepartemenPage() {
 
     load()
     return () => controller.abort()
-  }, [page, perPage, debouncedSearch, statusFilter, refreshKey])
+  }, [page, perPage, debouncedSearch, isTrash])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
-
-  const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
-
-  function toggleAll(checked: boolean) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      rows.forEach((r) => (checked ? next.add(r.id) : next.delete(r.id)))
-      return next
-    })
-  }
-
-  function toggleRow(id: string, checked: boolean) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (checked) {
-        next.add(id)
-      } else {
-        next.delete(id)
-      }
-      return next
-    })
-  }
-
-  function handleBulkSubmit() {
-    if (!bulkValue || selectedIds.size === 0) return
-
-    const ids = [...selectedIds]
-
-    const confirmTypeMap: Record<string, ConfirmDialogType> = {
-      restore: "restore",
-      delete: "delete",
-      delete_permanent: "delete_permanent",
-    }
-
-    const confirmType = confirmTypeMap[bulkValue]
-    if (!confirmType) return
-
-    setConfirmState({
-      type: confirmType,
-      onConfirm: async () => {
-        setIsActionLoading(true)
-        try {
-          if (bulkValue === "restore") {
-            await restoreMultipleBranches(ids)
-            setPageAlert({
-              type: "success",
-              message: "Data berhasil direstore.",
-            })
-          } else if (bulkValue === "delete") {
-            await deleteMultipleBranches(ids)
-            setPageAlert({ type: "success", message: "Data berhasil dihapus." })
-          } else if (bulkValue === "delete_permanent") {
-            await forceDeleteMultipleBranches(ids)
-            setPageAlert({
-              type: "success",
-              message: "Data berhasil dihapus permanen.",
-            })
-          }
-          setSelectedIds(new Set())
-          setBulkValue("")
-          setRefreshKey((k) => k + 1)
-          setConfirmState(null)
-        } catch {
-          setPageAlert({
-            type: "error",
-            message: "Gagal menjalankan aksi. Coba lagi.",
-          })
-        } finally {
-          setIsActionLoading(false)
-        }
-      },
-    })
-  }
 
   function handlePerPageChange(value: number) {
     setPerPage(value)
     setPage(1)
   }
 
-  function rowActions(row: BranchRow): RowAction[] {
+  function rowActions(row: DepartemenRow): RowAction[] {
     return [
       {
         key: "detail",
@@ -228,10 +99,7 @@ export function DepartemenPage() {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        onClick: () => {
-          setEditingBranch(row)
-          setDrawerOpen(true)
-        },
+        onClick: () => console.log("edit", row.id),
         hidden: row.is_trashed,
       },
       {
@@ -239,68 +107,14 @@ export function DepartemenPage() {
         label: "Hapus",
         icon: Trash2,
         destructive: true,
-        onClick: () =>
-          setConfirmState({
-            type: "delete",
-            onConfirm: async () => {
-              setIsActionLoading(true)
-              try {
-                await deleteBranch(row.id)
-                setSelectedIds((prev) => {
-                  const next = new Set(prev)
-                  next.delete(row.id)
-                  return next
-                })
-                setRefreshKey((k) => k + 1)
-                setConfirmState(null)
-                setPageAlert({
-                  type: "success",
-                  message: "Data berhasil dihapus.",
-                })
-              } catch {
-                setPageAlert({
-                  type: "error",
-                  message: "Gagal menghapus data. Coba lagi.",
-                })
-              } finally {
-                setIsActionLoading(false)
-              }
-            },
-          }),
+        onClick: () => console.log("delete", row.id),
         hidden: row.is_trashed,
       },
       {
         key: "restore",
         label: "Restore",
         icon: RotateCcw,
-        onClick: () =>
-          setConfirmState({
-            type: "restore",
-            onConfirm: async () => {
-              setIsActionLoading(true)
-              try {
-                await restoreBranch(row.id)
-                setSelectedIds((prev) => {
-                  const next = new Set(prev)
-                  next.delete(row.id)
-                  return next
-                })
-                setRefreshKey((k) => k + 1)
-                setConfirmState(null)
-                setPageAlert({
-                  type: "success",
-                  message: "Data berhasil direstore.",
-                })
-              } catch {
-                setPageAlert({
-                  type: "error",
-                  message: "Gagal merestore data. Coba lagi.",
-                })
-              } finally {
-                setIsActionLoading(false)
-              }
-            },
-          }),
+        onClick: () => console.log("restore", row.id),
         hidden: !row.is_trashed,
       },
       {
@@ -308,34 +122,7 @@ export function DepartemenPage() {
         label: "Hapus Permanen",
         icon: Trash,
         destructive: true,
-        onClick: () =>
-          setConfirmState({
-            type: "delete_permanent",
-            onConfirm: async () => {
-              setIsActionLoading(true)
-              try {
-                await forceDeleteBranch(row.id)
-                setSelectedIds((prev) => {
-                  const next = new Set(prev)
-                  next.delete(row.id)
-                  return next
-                })
-                setRefreshKey((k) => k + 1)
-                setConfirmState(null)
-                setPageAlert({
-                  type: "success",
-                  message: "Data berhasil dihapus permanen.",
-                })
-              } catch {
-                setPageAlert({
-                  type: "error",
-                  message: "Gagal menghapus permanen. Coba lagi.",
-                })
-              } finally {
-                setIsActionLoading(false)
-              }
-            },
-          }),
+        onClick: () => console.log("delete-permanent", row.id),
       },
     ]
   }
@@ -343,41 +130,16 @@ export function DepartemenPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageCard>
-        <PageCardHeader
-          title="Wilayah Kerja / Branch"
-          actions={
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setEditingBranch(null)
-                setDrawerOpen(true)
-              }}
-              className="h-10 gap-2 rounded-[5px] border-[#EAEAEA] bg-white text-sm font-normal text-[#374957] hover:bg-gray-50"
-            >
-              <Plus className="size-4" />
-              Tambah
-            </Button>
-          }
-        />
+        <PageCardHeader title="Departemen" />
 
-        {/* Toolbar */}
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <BulkActionBar
-            options={BULK_OPTIONS}
-            value={bulkValue}
-            onValueChange={(value) => setBulkValue(value)}
-            onSubmit={handleBulkSubmit}
-            disabled={selectedIds.size === 0}
-          />
-
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
           <div className="flex items-center gap-2">
             <TableFilterPopover
               options={FILTER_OPTIONS}
               selected={filterSelected}
               singleSelect
               onSubmit={(sel) => {
-                setFilterSelected(sel.length > 0 ? [sel[0]] : ["active"])
+                setFilterSelected(sel.length > 0 ? [sel[0]] : ["false"])
                 setPage(1)
               }}
             />
@@ -389,29 +151,20 @@ export function DepartemenPage() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                placeholder="Cari nama lokasi"
+                placeholder="Cari nama departemen"
                 className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
               />
             </div>
           </div>
         </div>
 
-        {/* Table */}
         <div className="mt-4 overflow-hidden rounded-[5px] border border-[#EAEAEA] bg-white">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-[#EAEAEA] bg-[#F7FCFA] hover:bg-[#F7FCFA]">
-                  <TableHead className="w-12 px-5">
-                    <Checkbox
-                      checked={allChecked}
-                      onCheckedChange={(checked) => toggleAll(checked === true)}
-                      aria-label="Pilih semua"
-                    />
-                  </TableHead>
-                  <TableHead className="text-[#374957]">Nama Lokasi</TableHead>
-                  <TableHead className="text-[#374957]">Latitude</TableHead>
-                  <TableHead className="text-[#374957]">Longitude</TableHead>
+                  <TableHead className="text-[#374957]">Nama</TableHead>
+                  <TableHead className="text-[#374957]">Deskripsi</TableHead>
                   <TableHead className="text-[#374957]">Status</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
@@ -421,7 +174,7 @@ export function DepartemenPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={4}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Memuat data...
@@ -430,7 +183,7 @@ export function DepartemenPage() {
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={4}
                       className="py-10 text-center text-sm text-red-500"
                     >
                       {error}
@@ -439,7 +192,7 @@ export function DepartemenPage() {
                 ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={4}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Tidak ada data.
@@ -448,23 +201,11 @@ export function DepartemenPage() {
                 ) : (
                   rows.map((row) => (
                     <TableRow key={row.id} className="border-[#EAEAEA]">
-                      <TableCell className="px-5">
-                        <Checkbox
-                          checked={selectedIds.has(row.id)}
-                          onCheckedChange={(checked) =>
-                            toggleRow(row.id, checked === true)
-                          }
-                          aria-label={`Pilih ${row.name}`}
-                        />
-                      </TableCell>
                       <TableCell className="text-[#374957]">
                         {row.name}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.latitude}
-                      </TableCell>
-                      <TableCell className="text-[#374957]">
-                        {row.longitude}
+                        {row.desc ?? "-"}
                       </TableCell>
                       <TableCell>
                         <StatusBadge active={!row.is_trashed} />
@@ -480,7 +221,6 @@ export function DepartemenPage() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mt-4 flex flex-col-reverse items-center justify-between gap-3 md:flex-row">
           <PerPageSelect value={perPage} onChange={handlePerPageChange} />
           <TablePagination
@@ -490,47 +230,6 @@ export function DepartemenPage() {
           />
         </div>
       </PageCard>
-
-      {drawerOpen && (
-        <BranchFormDrawer
-          open={drawerOpen}
-          branch={editingBranch}
-          onOpenChange={setDrawerOpen}
-          onCreated={(message) => {
-            setSelectedIds(new Set())
-            setRefreshKey((key) => key + 1)
-            setPageAlert({
-              type: "success",
-              message,
-            })
-          }}
-        />
-      )}
-      {confirmState && (
-        <ConfirmDialog
-          open
-          type={confirmState.type}
-          isLoading={isActionLoading}
-          onOpenChange={(open) => {
-            if (!open) setConfirmState(null)
-          }}
-          onConfirm={() => {
-            confirmState.onConfirm()
-          }}
-        />
-      )}
-      {pageAlert && (
-        <AlertModal
-          open
-          type={pageAlert.type}
-          message={pageAlert.message}
-          onOpenChange={(nextOpen) => {
-            if (!nextOpen) setPageAlert(null)
-          }}
-        />
-      )}
     </div>
   )
 }
-
-export default BranchPage

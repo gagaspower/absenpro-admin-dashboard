@@ -1,37 +1,20 @@
 import { api } from "@/lib/axios"
-import type {
-  BranchListResponse,
-  CreateBranchPayload,
-  CreateBranchResponse,
-  UpdateBranchPayload,
-  UpdateBranchResponse,
-} from "@/types/branch/branch.types"
+import type { DepartemenListResponse } from "@/types/departemen/departemen.types"
 
-export type BranchStatusFilter = "all" | "active" | "trashed"
-
-export interface FetchBranchesParams {
+export interface FetchDepartemenParams {
   limit?: number
   offset?: number
   search?: string
-  is_trash?: BranchStatusFilter
+  is_trash?: boolean
 }
 
-/**
- * Ambil daftar branch / lokasi kerja dari backend.
- *
- * Paginasi pakai limit & offset (bukan page), sort & order sengaja
- * tidak dikirim dari FE — biarkan backend yang menentukan default-nya.
- *
- * is_trash sekarang berupa pilihan "all" | "active" | "trashed",
- * bukan boolean lagi.
- */
-export async function fetchBranches(
-  params: FetchBranchesParams = {}
-): Promise<BranchListResponse> {
-  const { limit = 10, offset = 0, search, is_trash = "active" } = params
+export async function fetchDepartemen(
+  params: FetchDepartemenParams = {}
+): Promise<DepartemenListResponse> {
+  const { limit = 10, offset = 0, search, is_trash = false } = params
 
-  const { data } = await api.get<BranchListResponse>(
-    "api/reference/lokasi-kerja",
+  const { data } = await api.get<DepartemenListResponse>(
+    "api/reference/departemen",
     {
       params: {
         limit,
@@ -43,57 +26,4 @@ export async function fetchBranches(
   )
 
   return data
-}
-
-export async function createBranch(
-  payload: CreateBranchPayload
-): Promise<CreateBranchResponse> {
-  const { data } = await api.post<CreateBranchResponse>(
-    "api/reference/lokasi-kerja",
-    payload
-  )
-
-  return data
-}
-
-export async function updateBranch(
-  id: string,
-  payload: UpdateBranchPayload
-): Promise<UpdateBranchResponse> {
-  const { data } = await api.put<UpdateBranchResponse>(
-    `api/reference/lokasi-kerja/${id}`,
-    payload
-  )
-
-  return data
-}
-
-export async function deleteBranch(id: string): Promise<void> {
-  await api.delete(`api/reference/lokasi-kerja/${id}`)
-}
-
-export async function restoreBranch(id: string): Promise<void> {
-  await api.post(`api/reference/lokasi-kerja/restore/${id}`)
-}
-
-export async function forceDeleteBranch(id: string): Promise<void> {
-  await api.delete(`api/reference/lokasi-kerja/force-delete/${id}`)
-}
-
-// ── Bulk actions ─────────────────────────────────────────────────────────────
-
-export async function restoreMultipleBranches(ids: string[]): Promise<void> {
-  await api.post("api/reference/lokasi-kerja/restore-multiple", { ids })
-}
-
-export async function deleteMultipleBranches(ids: string[]): Promise<void> {
-  await api.delete("api/reference/lokasi-kerja/multiple", { data: { ids } })
-}
-
-export async function forceDeleteMultipleBranches(
-  ids: string[]
-): Promise<void> {
-  await api.delete("api/reference/lokasi-kerja/force-delete-multiple", {
-    data: { ids },
-  })
 }
