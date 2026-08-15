@@ -68,23 +68,25 @@ export async function deleteJabatan(id: string): Promise<void> {
 }
 
 export async function restoreJabatan(id: string): Promise<void> {
-  console.log("[jabatan] restore belum tersedia endpoint", id)
+  await api.post(`api/reference/jabatan/restore/${id}`)
 }
 
 export async function forceDeleteJabatan(id: string): Promise<void> {
-  console.log("[jabatan] force-delete belum tersedia endpoint", id)
+  await api.delete(`api/reference/jabatan/force-delete/${id}`)
 }
 
 export async function restoreMultipleJabatans(ids: string[]): Promise<void> {
-  console.log("[jabatan] restore-multiple belum tersedia endpoint", ids)
+  await api.post("api/reference/jabatan/restore-multiple", { ids })
 }
 
 export async function deleteMultipleJabatans(ids: string[]): Promise<void> {
-  console.log("[jabatan] delete-multiple belum tersedia endpoint", ids)
+  await api.delete("api/reference/jabatan/multiple", { data: { ids } })
 }
 
 export async function forceDeleteMultipleJabatans(
   ids: string[]
 ): Promise<void> {
-  console.log("[jabatan] force-delete-multiple belum tersedia endpoint", ids)
+  await api.delete("api/reference/jabatan/force-delete-multiple", {
+    data: { ids },
+  })
 }

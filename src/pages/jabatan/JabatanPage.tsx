@@ -183,18 +183,29 @@ export function JabatanPage() {
         try {
           if (bulkValue === "restore") {
             await restoreMultipleJabatans(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil direstore.",
+            })
           } else if (bulkValue === "delete") {
             await deleteMultipleJabatans(ids)
+            setPageAlert({ type: "success", message: "Data berhasil dihapus." })
           } else if (bulkValue === "delete_permanent") {
             await forceDeleteMultipleJabatans(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil dihapus permanen.",
+            })
           }
-          setPageAlert({
-            type: "success",
-            message: "Aksi tercatat (endpoint bulk belum tersedia).",
-          })
           setSelectedIds(new Set())
           setBulkValue("")
+          setRefreshKey((k) => k + 1)
           setConfirmState(null)
+        } catch {
+          setPageAlert({
+            type: "error",
+            message: "Gagal menjalankan aksi. Coba lagi.",
+          })
         } finally {
           setIsActionLoading(false)
         }
@@ -251,9 +262,10 @@ export function JabatanPage() {
                 await deleteJabatan(row.id)
                 setPageAlert({
                   type: "success",
-                  message: "Aksi tercatat (endpoint hapus belum tersedia).",
+                  message: "Data berhasil dihapus.",
                 })
                 setConfirmState(null)
+                setRefreshKey((k) => k + 1)
               } finally {
                 setIsActionLoading(false)
               }
@@ -274,9 +286,10 @@ export function JabatanPage() {
                 await restoreJabatan(row.id)
                 setPageAlert({
                   type: "success",
-                  message: "Aksi tercatat (endpoint restore belum tersedia).",
+                  message: "Data berhasil di restore",
                 })
                 setConfirmState(null)
+                setRefreshKey((k) => k + 1)
               } finally {
                 setIsActionLoading(false)
               }
@@ -298,10 +311,10 @@ export function JabatanPage() {
                 await forceDeleteJabatan(row.id)
                 setPageAlert({
                   type: "success",
-                  message:
-                    "Aksi tercatat (endpoint hapus permanen belum tersedia).",
+                  message: "Data telah dihapus permanen.",
                 })
                 setConfirmState(null)
+                setRefreshKey((k) => k + 1)
               } finally {
                 setIsActionLoading(false)
               }
