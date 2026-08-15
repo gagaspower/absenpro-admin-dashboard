@@ -6,17 +6,19 @@ import type {
   UpdateDepartemenPayload,
 } from "@/types/departemen/departemen.types"
 
+export type DepartemenStatusFilter = "all" | "active" | "trashed"
+
 export interface FetchDepartemenParams {
   limit?: number
   offset?: number
   search?: string
-  is_trash?: boolean
+  is_trash?: DepartemenStatusFilter
 }
 
 export async function fetchDepartemen(
   params: FetchDepartemenParams = {}
 ): Promise<DepartemenListResponse> {
-  const { limit = 10, offset = 0, search, is_trash = false } = params
+  const { limit = 10, offset = 0, search, is_trash = "active" } = params
 
   const { data } = await api.get<DepartemenListResponse>(
     "api/reference/departemen",
@@ -24,7 +26,7 @@ export async function fetchDepartemen(
       params: {
         limit,
         offset,
-        is_trash,
+        ...(is_trash !== "all" ? { is_trash: is_trash === "trashed" } : {}),
         ...(search ? { search } : {}),
       },
     }
