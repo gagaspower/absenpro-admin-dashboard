@@ -1,7 +1,16 @@
-import { useEffect, useState } from "react"
-import { Eye, Pencil, RotateCcw, Search, Trash, Trash2 } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import {
+  Eye,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash,
+  Trash2,
+} from "lucide-react"
 
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -25,8 +34,10 @@ import {
 } from "@/components/data-table/TableFooter"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
 import { PageCard, PageCardHeader } from "@/components/PageCard"
+import { AlertModal } from "@/components/feedback/AlertModal"
 import { useDebounce } from "@/hooks/useDebounce"
 
+import { DepartemenFormDrawer } from "@/components/departemen/DepartemenFormDrawer"
 import { fetchDepartemen } from "@/services/departemen/departemen.service"
 import type { DepartemenRow } from "@/types/departemen/departemen.types"
 
@@ -47,8 +58,13 @@ export function DepartemenPage() {
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
+  const [reloadToken, setReloadToken] = useState(0)
 
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingRow, setEditingRow] = useState<DepartemenRow | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
   const isTrash = filterSelected[0] === "true"
 
   useEffect(() => {
@@ -78,7 +94,7 @@ export function DepartemenPage() {
 
     load()
     return () => controller.abort()
-  }, [page, perPage, debouncedSearch, isTrash])
+  }, [page, perPage, debouncedSearch, isTrash, reloadToken])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
 
@@ -86,6 +102,21 @@ export function DepartemenPage() {
     setPerPage(value)
     setPage(1)
   }
+
+  const openCreateDrawer = useCallback(() => {
+    setEditingRow(null)
+    setDrawerOpen(true)
+  }, [])
+
+  const openEditDrawer = useCallback((row: DepartemenRow) => {
+    setEditingRow(row)
+    setDrawerOpen(true)
+  }, [])
+
+  const handleSaved = useCallback((message: string) => {
+    setSuccessMessage(message)
+    setReloadToken((t) => t + 1)
+  }, [])
 
   function rowActions(row: DepartemenRow): RowAction[] {
     return [
@@ -99,7 +130,7 @@ export function DepartemenPage() {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        onClick: () => console.log("edit", row.id),
+        onClick: () => openEditDrawer(row),
         hidden: row.is_trashed,
       },
       {
@@ -132,7 +163,16 @@ export function DepartemenPage() {
       <PageCard>
         <PageCardHeader title="Departemen" />
 
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <Button
+            type="button"
+            onClick={openCreateDrawer}
+            className="h-10 gap-2 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0]"
+          >
+            <Plus className="size-4" />
+            Tambah Departemen
+          </Button>
+
           <div className="flex items-center gap-2">
             <TableFilterPopover
               options={FILTER_OPTIONS}
@@ -230,6 +270,24 @@ export function DepartemenPage() {
           />
         </div>
       </PageCard>
+
+      <DepartemenFormDrawer
+        open={drawerOpen}
+        departemen={editingRow}
+        onOpenChange={setDrawerOpen}
+        onCreated={handleSaved}
+      />
+
+      {successMessage && (
+        <AlertModal
+          open
+          type="success"
+          message={successMessage}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setSuccessMessage(null)
+          }}
+        />
+      )}
     </div>
   )
 }

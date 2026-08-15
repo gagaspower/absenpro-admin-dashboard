@@ -1,5 +1,10 @@
 import { api } from "@/lib/axios"
-import type { DepartemenListResponse } from "@/types/departemen/departemen.types"
+import type {
+  CreateDepartemenPayload,
+  DepartemenListResponse,
+  DepartemenMutationResponse,
+  UpdateDepartemenPayload,
+} from "@/types/departemen/departemen.types"
 
 export interface FetchDepartemenParams {
   limit?: number
@@ -25,5 +30,26 @@ export async function fetchDepartemen(
     }
   )
 
+  return data
+}
+
+export async function createDepartemen(
+  payload: CreateDepartemenPayload
+): Promise<DepartemenMutationResponse> {
+  const { data } = await api.post<DepartemenMutationResponse>(
+    "api/reference/departemen",
+    payload
+  )
+  return data
+}
+
+export async function updateDepartemen(
+  id: string,
+  payload: UpdateDepartemenPayload
+): Promise<DepartemenMutationResponse> {
+  const { data } = await api.put<DepartemenMutationResponse>(
+    `api/reference/departemen/${id}`,
+    payload
+  )
   return data
 }
