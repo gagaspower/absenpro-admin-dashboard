@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { menuGroups } from "@/router/menuItems"
 import { logoutRequest } from "@/services/auth/auth.service"
 import { storage } from "@/lib/storage"
+import { BACKEND_URL } from "@/lib/config"
 
 interface NavbarProps {
   onMenuToggle: () => void
@@ -30,12 +31,26 @@ function useBreadcrumb() {
   return matched?.label ?? "Dashboard"
 }
 
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
 export function Navbar({ onMenuToggle }: NavbarProps) {
   const breadcrumb = useBreadcrumb()
   const navigate = useNavigate()
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState("")
+
+  const auth = storage.getAuth()
+  const employee = auth?.user.employee
+  const fullName = employee?.full_name ?? "User"
+  const avatarUrl = employee?.face_profile?.reference_photo_path
+    ? `${BACKEND_URL}${employee.face_profile.reference_photo_path}`
+    : ""
+  const initials = getInitials(fullName)
 
   function openLogoutDialog() {
     setLogoutError("")
@@ -117,12 +132,12 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 rounded-full px-2 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B8CE5]">
             <Avatar className="h-8 w-8 border border-[#D9D9D9]">
-              <AvatarImage src="" alt="John Doe" />
+              <AvatarImage src={avatarUrl} alt={fullName} />
               <AvatarFallback className="bg-gray-200 text-xs font-medium text-gray-600">
-                JD
+                {initials}
               </AvatarFallback>
             </Avatar>
-            <span className="hidden font-medium sm:block">John Doe</span>
+            <span className="hidden font-medium sm:block">{fullName}</span>
             <ChevronDown className="size-3.5 text-gray-400" />
           </DropdownMenuTrigger>
 
