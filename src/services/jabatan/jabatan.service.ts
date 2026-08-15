@@ -64,7 +64,7 @@ export async function updateJabatan(
 }
 
 export async function deleteJabatan(id: string): Promise<void> {
-  await api.delete(`api/reference/jataban/${id}`)
+  await api.delete(`api/reference/jabatan/${id}`)
 }
 
 export async function restoreJabatan(id: string): Promise<void> {

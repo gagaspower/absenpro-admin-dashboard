@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/drawer"
 import { Input } from "@/components/ui/input"
 import { useMobile } from "@/hooks/use-mobile"
-import { DepartemenCombobox } from "@/components/jabatan/DepartemenCombobox"
+import { DepartemenFormCombobox } from "@/components/jabatan/DepartemenFormCombobox"
 import {
   createJabatan,
   updateJabatan,
@@ -61,6 +61,7 @@ interface JabatanFormDrawerProps {
   jabatan: JabatanRow | null
   onOpenChange: (open: boolean) => void
   onCreated: (message: string) => void
+  onError?: (message: string) => void
 }
 
 export function JabatanFormDrawer({
@@ -68,18 +69,17 @@ export function JabatanFormDrawer({
   jabatan,
   onOpenChange,
   onCreated,
+  onError,
 }: JabatanFormDrawerProps) {
   const isMobile = useMobile()
   const isEdit = jabatan !== null
   const [values, setValues] = useState<FormValues>(() => initialValues(jabatan))
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     setValues(initialValues(jabatan))
     setErrors({})
-    setSubmitError(null)
   }, [jabatan])
 
   function changeValue(field: keyof FormValues, value: string) {
@@ -89,7 +89,6 @@ export function JabatanFormDrawer({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setSubmitError(null)
 
     try {
       await jabatanSchema.validate(values, { abortEarly: false })
@@ -105,13 +104,8 @@ export function JabatanFormDrawer({
       }
 
       const res = isEdit
-        ? await updateJabatan(jabatan.id, payload)
+        ? await updateJabatan(jabatan!.id, payload)
         : await createJabatan(payload)
-
-      if (!res.success) {
-        setSubmitError(res.message || "Gagal menyimpan jabatan.")
-        return
-      }
 
       onOpenChange(false)
       onCreated(
@@ -129,9 +123,11 @@ export function JabatanFormDrawer({
           }
         })
         setErrors(nextErrors)
-        return
+      } else {
+        onError?.(
+          isEdit ? "Gagal memperbarui jabatan." : "Gagal menyimpan jabatan."
+        )
       }
-      setSubmitError("Gagal menyimpan jabatan. Coba lagi.")
     } finally {
       setIsSubmitting(false)
     }
@@ -167,11 +163,6 @@ export function JabatanFormDrawer({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-            {submitError && (
-              <div className="rounded-[5px] border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                {submitError}
-              </div>
-            )}
             <Field label="Nama Jabatan" error={errors.name} required>
               <Input
                 value={values.name}
@@ -183,7 +174,7 @@ export function JabatanFormDrawer({
               />
             </Field>
             <Field label="Departemen" error={errors.department_id} required>
-              <DepartemenCombobox
+              <DepartemenFormCombobox
                 value={values.department_id}
                 onChange={(value) => changeValue("department_id", value)}
                 error={Boolean(errors.department_id)}
@@ -218,7 +209,7 @@ export function JabatanFormDrawer({
               className="h-10 flex-1 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0]"
             >
               {isSubmitting && <LoaderCircle className="size-4 animate-spin" />}
-              {isSubmitting ? "Menyimpan..." : isEdit ? "Perbarui" : "Simpan"}
+              {isEdit ? "Perbarui" : "Simpan"}
             </Button>
           </div>
         </form>

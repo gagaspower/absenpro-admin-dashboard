@@ -12,15 +12,14 @@ export interface JabatanListResponse {
   rows: JabatanRow[]
 }
 
-// Payload create/update belum bisa dipastikan bentuknya (endpoint belum ada).
-// Disiapkan minimal, dipakai form drawer yang stub console.log dulu.
 export interface CreateJabatanPayload {
   name: string
-  description?: string
-  department_id?: string
+  description?: string | null
+  department_id: string
 }
 
 export type UpdateJabatanPayload = CreateJabatanPayload
+
 export interface JabatanMutationResponse {
   success: boolean
   message: string
@@ -28,5 +27,6 @@ export interface JabatanMutationResponse {
     id: string
     name: string
     description: string | null
+    department_id: string
   }
 }

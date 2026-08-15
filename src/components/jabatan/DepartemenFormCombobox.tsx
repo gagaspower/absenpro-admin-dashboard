@@ -19,17 +19,17 @@ import {
 import type { DepartemenOption } from "@/types/departemen/departemen.types"
 import { fetchDepartemenAllData } from "@/services/departemen/departemen.service"
 
-interface DepartemenComboboxProps {
-  value: string // departemen id | ""
+interface DepartemenFormComboboxProps {
+  value: string // departemen id, "" jika belum dipilih
   onChange: (value: string) => void
   error?: boolean
 }
 
-export function DepartemenCombobox({
+export function DepartemenFormCombobox({
   value,
   onChange,
   error = false,
-}: DepartemenComboboxProps) {
+}: DepartemenFormComboboxProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<DepartemenOption[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -52,7 +52,12 @@ export function DepartemenCombobox({
     }
   }, [])
 
-  const selectedLabel = options.find((o) => o.id === value)?.name ?? ""
+  const selected = options.find((o) => o.id === value)
+  const selectedLabel = selected
+    ? selected.name
+    : value
+      ? "Memuat..."
+      : "Pilih Departemen"
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -65,21 +70,21 @@ export function DepartemenCombobox({
             aria-expanded={open}
             aria-invalid={error}
             className={cn(
-              "h-10 w-full justify-between rounded-[5px] border-[#DDE3E6] text-sm font-normal text-[#374957]",
-              !selectedLabel && "text-gray-400",
+              "h-10 w-full justify-between rounded-[5px] border-[#DDE3E6] text-sm font-normal",
+              selected ? "text-[#374957]" : "text-gray-400",
               error && "border-red-500"
             )}
           />
         }
       >
-        <span className="truncate">{selectedLabel || "Pilih departemen"}</span>
+        <span className="truncate">{selectedLabel}</span>
         {isLoading ? (
           <Loader2 className="size-4 shrink-0 animate-spin opacity-50" />
         ) : (
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
         )}
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[260px] rounded-[5px] p-0">
+      <PopoverContent className="w-[260px] rounded-[5px] p-0">
         <Command>
           <CommandInput placeholder="Cari departemen..." />
           <CommandList>

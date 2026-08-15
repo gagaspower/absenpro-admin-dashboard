@@ -458,6 +458,7 @@ export function JabatanPage() {
         jabatan={editingRow}
         onOpenChange={setDrawerOpen}
         onCreated={handleSaved}
+        onError={(message) => setPageAlert({ type: "error", message })}
       />
 
       {confirmState && (
