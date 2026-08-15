@@ -43,14 +43,16 @@ import {
   fetchDepartemen,
   forceDeleteDepartemen,
   restoreDepartemen,
+  type DepartemenStatusFilter,
 } from "@/services/departemen/departemen.service"
 import type { DepartemenRow } from "@/types/departemen/departemen.types"
 import { AddButton } from "@/components/AddButton"
 import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
-  { id: "false", label: "Aktif" },
-  { id: "true", label: "Sudah dihapus" },
+  { id: "all", label: "Semua" },
+  { id: "active", label: "Aktif" },
+  { id: "trashed", label: "Sudah dihapus" },
 ]
 
 // Bulk action API belum tersedia. UI disiapkan lebih dulu sesuai scope.
@@ -69,7 +71,7 @@ interface PageAlert {
 
 export function DepartemenPage() {
   const [bulkValue, setBulkValue] = useState("")
-  const [filterSelected, setFilterSelected] = useState<string[]>(["false"])
+  const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
@@ -91,7 +93,8 @@ export function DepartemenPage() {
   } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
-  const isTrash = filterSelected[0] === "true"
+  const statusFilter: DepartemenStatusFilter =
+    (filterSelected[0] as DepartemenStatusFilter) ?? "active"
 
   useEffect(() => {
     const controller = new AbortController()
@@ -104,7 +107,7 @@ export function DepartemenPage() {
           limit: perPage,
           offset: (page - 1) * perPage,
           search: debouncedSearch || undefined,
-          is_trash: isTrash,
+          is_trash: statusFilter,
         })
         setRows(res.rows)
         setTotal(res.total)
@@ -120,7 +123,7 @@ export function DepartemenPage() {
 
     load()
     return () => controller.abort()
-  }, [page, perPage, debouncedSearch, isTrash, reloadToken])
+  }, [page, perPage, debouncedSearch, statusFilter, refreshKey])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
 
@@ -168,8 +171,8 @@ export function DepartemenPage() {
   }, [])
 
   const handleSaved = useCallback((message: string) => {
-    setSuccessMessage(message)
-    setReloadToken((t) => t + 1)
+    setPageAlert({ type: "success", message })
+    setRefreshKey((k) => k + 1)
   }, [])
 
   function rowActions(row: DepartemenRow): RowAction[] {
@@ -186,9 +189,7 @@ export function DepartemenPage() {
         icon: Pencil,
         onClick: () => {
           openEditDrawer(row)
-          setDrawerOpen(true)
         },
-
         hidden: row.is_trashed,
       },
       {
@@ -208,7 +209,7 @@ export function DepartemenPage() {
                   next.delete(row.id)
                   return next
                 })
-                setReloadToken((t) => t + 1)
+                setRefreshKey((k) => k + 1)
                 setConfirmState(null)
                 setPageAlert({
                   type: "success",
@@ -242,7 +243,7 @@ export function DepartemenPage() {
                   next.delete(row.id)
                   return next
                 })
-                setReloadToken((t) => t + 1)
+                setRefreshKey((k) => k + 1)
                 setConfirmState(null)
                 setPageAlert({
                   type: "success",
@@ -277,7 +278,7 @@ export function DepartemenPage() {
                   next.delete(row.id)
                   return next
                 })
-                setReloadToken((t) => t + 1)
+                setRefreshKey((k) => k + 1)
                 setConfirmState(null)
                 setPageAlert({
                   type: "success",
@@ -320,7 +321,7 @@ export function DepartemenPage() {
               selected={filterSelected}
               singleSelect
               onSubmit={(sel) => {
-                setFilterSelected(sel.length > 0 ? [sel[0]] : ["false"])
+                setFilterSelected(sel.length > 0 ? [sel[0]] : ["active"])
                 setPage(1)
               }}
             />
@@ -456,17 +457,6 @@ export function DepartemenPage() {
           message={pageAlert.message}
           onOpenChange={(nextOpen) => {
             if (!nextOpen) setPageAlert(null)
-          }}
-        />
-      )}
-
-      {successMessage && (
-        <AlertModal
-          open
-          type="success"
-          message={successMessage}
-          onOpenChange={(nextOpen) => {
-            if (!nextOpen) setSuccessMessage(null)
           }}
         />
       )}

@@ -26,7 +26,7 @@ export async function fetchDepartemen(
       params: {
         limit,
         offset,
-        ...(is_trash !== "all" ? { is_trash: is_trash === "trashed" } : {}),
+        is_trash,
         ...(search ? { search } : {}),
       },
     }
@@ -66,4 +66,22 @@ export async function restoreDepartemen(id: string): Promise<void> {
 
 export async function forceDeleteDepartemen(id: string): Promise<void> {
   await api.delete(`api/reference/departemen/force-delete/${id}`)
+}
+
+// ── Bulk actions ─────────────────────────────────────────────────────────────
+
+export async function restoreMultipleDepartemens(ids: string[]): Promise<void> {
+  await api.post("api/reference/departemen/restore-multiple", { ids })
+}
+
+export async function deleteMultipleDepartemens(ids: string[]): Promise<void> {
+  await api.delete("api/reference/departemen/multiple", { data: { ids } })
+}
+
+export async function forceDeleteMultipleDepartemens(
+  ids: string[]
+): Promise<void> {
+  await api.delete("api/reference/departemen/force-delete-multiple", {
+    data: { ids },
+  })
 }
