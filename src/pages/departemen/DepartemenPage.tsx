@@ -40,9 +40,12 @@ import { useDebounce } from "@/hooks/useDebounce"
 import { DepartemenFormDrawer } from "@/components/departemen/DepartemenFormDrawer"
 import {
   deleteDepartemen,
+  deleteMultipleDepartemens,
   fetchDepartemen,
   forceDeleteDepartemen,
+  forceDeleteMultipleDepartemens,
   restoreDepartemen,
+  restoreMultipleDepartemens,
   type DepartemenStatusFilter,
 } from "@/services/departemen/departemen.service"
 import type { DepartemenRow } from "@/types/departemen/departemen.types"
@@ -151,8 +154,53 @@ export function DepartemenPage() {
 
   function handleBulkSubmit() {
     if (!bulkValue || selectedIds.size === 0) return
-    // TODO: sambungkan ke endpoint bulk action departemen saat API tersedia.
-    console.log("bulk action", bulkValue, [...selectedIds])
+
+    const ids = [...selectedIds]
+
+    const confirmTypeMap: Record<string, ConfirmDialogType> = {
+      restore: "restore",
+      delete: "delete",
+      delete_permanent: "delete_permanent",
+    }
+
+    const confirmType = confirmTypeMap[bulkValue]
+    if (!confirmType) return
+
+    setConfirmState({
+      type: confirmType,
+      onConfirm: async () => {
+        setIsActionLoading(true)
+        try {
+          if (bulkValue === "restore") {
+            await restoreMultipleDepartemens(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil direstore.",
+            })
+          } else if (bulkValue === "delete") {
+            await deleteMultipleDepartemens(ids)
+            setPageAlert({ type: "success", message: "Data berhasil dihapus." })
+          } else if (bulkValue === "delete_permanent") {
+            await forceDeleteMultipleDepartemens(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil dihapus permanen.",
+            })
+          }
+          setSelectedIds(new Set())
+          setBulkValue("")
+          setRefreshKey((k) => k + 1)
+          setConfirmState(null)
+        } catch {
+          setPageAlert({
+            type: "error",
+            message: "Gagal menjalankan aksi. Coba lagi.",
+          })
+        } finally {
+          setIsActionLoading(false)
+        }
+      },
+    })
   }
 
   function handlePerPageChange(value: number) {
