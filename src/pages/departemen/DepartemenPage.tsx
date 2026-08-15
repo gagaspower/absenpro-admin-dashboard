@@ -73,7 +73,7 @@ interface PageAlert {
 
 export function DepartemenPage() {
   const [bulkValue, setBulkValue] = useState("")
-  const [filterSelected, setFilterSelected] = useState<string[]>(["false"])
+  const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
