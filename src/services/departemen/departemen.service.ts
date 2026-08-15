@@ -53,3 +53,15 @@ export async function updateDepartemen(
   )
   return data
 }
+
+export async function deleteDepartemen(id: string): Promise<void> {
+  await api.delete(`api/reference/departemen/${id}`)
+}
+
+export async function restoreDepartemen(id: string): Promise<void> {
+  await api.post(`api/reference/departemen/restore/${id}`)
+}
+
+export async function forceDeleteDepartemen(id: string): Promise<void> {
+  await api.delete(`api/reference/departemen/force-delete/${id}`)
+}

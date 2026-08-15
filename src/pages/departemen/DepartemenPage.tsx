@@ -1,16 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
-import {
-  Eye,
-  Pencil,
-  Plus,
-  RotateCcw,
-  Search,
-  Trash,
-  Trash2,
-} from "lucide-react"
+import { Eye, Pencil, RotateCcw, Search, Trash, Trash2 } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Table,
   TableBody,
@@ -20,6 +12,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
+import {
+  BulkActionBar,
+  type BulkActionOption,
+} from "@/components/data-table/BulkActionBar"
 import {
   TableFilterPopover,
   type FilterCheckboxOption,
@@ -38,21 +34,37 @@ import { AlertModal } from "@/components/feedback/AlertModal"
 import { useDebounce } from "@/hooks/useDebounce"
 
 import { DepartemenFormDrawer } from "@/components/departemen/DepartemenFormDrawer"
-import { fetchDepartemen } from "@/services/departemen/departemen.service"
+import {
+  deleteDepartemen,
+  fetchDepartemen,
+  forceDeleteDepartemen,
+  restoreDepartemen,
+} from "@/services/departemen/departemen.service"
 import type { DepartemenRow } from "@/types/departemen/departemen.types"
+import { AddButton } from "@/components/AddButton"
+import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "false", label: "Aktif" },
   { id: "true", label: "Sudah dihapus" },
 ]
 
+// Bulk action API belum tersedia. UI disiapkan lebih dulu sesuai scope.
+const BULK_OPTIONS: BulkActionOption[] = [
+  { value: "restore", label: "Restore" },
+  { value: "delete", label: "Hapus" },
+  { value: "delete_permanent", label: "Hapus Permanen" },
+]
+
 const SEARCH_DEBOUNCE_MS = 400
 
 export function DepartemenPage() {
+  const [bulkValue, setBulkValue] = useState("")
   const [filterSelected, setFilterSelected] = useState<string[]>(["false"])
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const [rows, setRows] = useState<DepartemenRow[]>([])
   const [total, setTotal] = useState(0)
@@ -63,6 +75,13 @@ export function DepartemenPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingRow, setEditingRow] = useState<DepartemenRow | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isActionLoading, setIsActionLoading] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
+  const [confirmState, setConfirmState] = useState<{
+    type: ConfirmDialogType
+    onConfirm: () => void
+  } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
   const isTrash = filterSelected[0] === "true"
@@ -98,6 +117,34 @@ export function DepartemenPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
 
+  const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
+
+  function toggleAll(checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      rows.forEach((r) => (checked ? next.add(r.id) : next.delete(r.id)))
+      return next
+    })
+  }
+
+  function toggleRow(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) {
+        next.add(id)
+      } else {
+        next.delete(id)
+      }
+      return next
+    })
+  }
+
+  function handleBulkSubmit() {
+    if (!bulkValue || selectedIds.size === 0) return
+    // TODO: sambungkan ke endpoint bulk action departemen saat API tersedia.
+    console.log("bulk action", bulkValue, [...selectedIds])
+  }
+
   function handlePerPageChange(value: number) {
     setPerPage(value)
     setPage(1)
@@ -130,7 +177,11 @@ export function DepartemenPage() {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        onClick: () => openEditDrawer(row),
+        onClick: () => {
+          openEditDrawer(row)
+          setDrawerOpen(true)
+        },
+
         hidden: row.is_trashed,
       },
       {
@@ -138,14 +189,68 @@ export function DepartemenPage() {
         label: "Hapus",
         icon: Trash2,
         destructive: true,
-        onClick: () => console.log("delete", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "delete",
+            onConfirm: async () => {
+              setIsActionLoading(true)
+              try {
+                await deleteDepartemen(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setConfirmState(null)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil dihapus.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal menghapus data. Coba lagi.",
+                })
+              } finally {
+                setIsActionLoading(false)
+              }
+            },
+          }),
         hidden: row.is_trashed,
       },
       {
         key: "restore",
         label: "Restore",
         icon: RotateCcw,
-        onClick: () => console.log("restore", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "restore",
+            onConfirm: async () => {
+              setIsActionLoading(true)
+              try {
+                await restoreDepartemen(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setConfirmState(null)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil direstore.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal merestore data. Coba lagi.",
+                })
+              } finally {
+                setIsActionLoading(false)
+              }
+            },
+          }),
         hidden: !row.is_trashed,
       },
       {
@@ -153,7 +258,34 @@ export function DepartemenPage() {
         label: "Hapus Permanen",
         icon: Trash,
         destructive: true,
-        onClick: () => console.log("delete-permanent", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "delete_permanent",
+            onConfirm: async () => {
+              setIsActionLoading(true)
+              try {
+                await forceDeleteDepartemen(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setConfirmState(null)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil dihapus permanen.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal menghapus permanen. Coba lagi.",
+                })
+              } finally {
+                setIsActionLoading(false)
+              }
+            },
+          }),
       },
     ]
   }
@@ -161,17 +293,19 @@ export function DepartemenPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageCard>
-        <PageCardHeader title="Departemen" />
+        <PageCardHeader
+          title="Departemen"
+          actions={<AddButton onClick={openCreateDrawer} />}
+        />
 
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <Button
-            type="button"
-            onClick={openCreateDrawer}
-            className="h-10 gap-2 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0]"
-          >
-            <Plus className="size-4" />
-            Tambah Departemen
-          </Button>
+          <BulkActionBar
+            options={BULK_OPTIONS}
+            value={bulkValue}
+            onValueChange={(value) => setBulkValue(value)}
+            onSubmit={handleBulkSubmit}
+            disabled={selectedIds.size === 0}
+          />
 
           <div className="flex items-center gap-2">
             <TableFilterPopover
@@ -203,6 +337,13 @@ export function DepartemenPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-[#EAEAEA] bg-[#F7FCFA] hover:bg-[#F7FCFA]">
+                  <TableHead className="w-12 px-5">
+                    <Checkbox
+                      checked={allChecked}
+                      onCheckedChange={(checked) => toggleAll(checked === true)}
+                      aria-label="Pilih semua"
+                    />
+                  </TableHead>
                   <TableHead className="text-[#374957]">Nama</TableHead>
                   <TableHead className="text-[#374957]">Deskripsi</TableHead>
                   <TableHead className="text-[#374957]">Status</TableHead>
@@ -214,7 +355,7 @@ export function DepartemenPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Memuat data...
@@ -223,7 +364,7 @@ export function DepartemenPage() {
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="py-10 text-center text-sm text-red-500"
                     >
                       {error}
@@ -232,7 +373,7 @@ export function DepartemenPage() {
                 ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Tidak ada data.
@@ -241,6 +382,15 @@ export function DepartemenPage() {
                 ) : (
                   rows.map((row) => (
                     <TableRow key={row.id} className="border-[#EAEAEA]">
+                      <TableCell className="px-5">
+                        <Checkbox
+                          checked={selectedIds.has(row.id)}
+                          onCheckedChange={(checked) =>
+                            toggleRow(row.id, checked === true)
+                          }
+                          aria-label={`Pilih ${row.name}`}
+                        />
+                      </TableCell>
                       <TableCell className="text-[#374957]">
                         {row.name}
                       </TableCell>
