@@ -35,22 +35,23 @@ import {
   type AlertModalType,
 } from "@/components/feedback/AlertModal"
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog"
+import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 import { useDebounce } from "@/hooks/useDebounce"
 
-import { DepartemenFormDrawer } from "@/components/departemen/DepartemenFormDrawer"
+import { JabatanFormDrawer } from "@/components/jabatan/JabatanFormDrawer"
+import { DepartemenFilterCombobox } from "@/components/jabatan/DepartemenFilterCombobox"
 import {
-  deleteDepartemen,
-  deleteMultipleDepartemens,
-  fetchDepartemen,
-  forceDeleteDepartemen,
-  forceDeleteMultipleDepartemens,
-  restoreDepartemen,
-  restoreMultipleDepartemens,
-  type DepartemenStatusFilter,
-} from "@/services/departemen/departemen.service"
-import type { DepartemenRow } from "@/types/departemen/departemen.types"
+  deleteJabatan,
+  deleteMultipleJabatans,
+  fetchJabatan,
+  forceDeleteJabatan,
+  forceDeleteMultipleJabatans,
+  restoreJabatan,
+  restoreMultipleJabatans,
+  type JabatanStatusFilter,
+} from "@/services/jabatan/jabatan.service"
+import type { JabatanRow } from "@/types/jabatan/jabatan.types"
 import { AddButton } from "@/components/AddButton"
-import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -72,21 +73,22 @@ interface PageAlert {
   message: string
 }
 
-export function DepartemenPage() {
+export function JabatanPage() {
   const [bulkValue, setBulkValue] = useState("")
   const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
+  const [departemenFilter, setDepartemenFilter] = useState("all")
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-  const [rows, setRows] = useState<DepartemenRow[]>([])
+  const [rows, setRows] = useState<JabatanRow[]>([])
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editingRow, setEditingRow] = useState<DepartemenRow | null>(null)
+  const [editingRow, setEditingRow] = useState<JabatanRow | null>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
@@ -96,8 +98,8 @@ export function DepartemenPage() {
   } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
-  const statusFilter: DepartemenStatusFilter =
-    (filterSelected[0] as DepartemenStatusFilter) ?? "active"
+  const statusFilter: JabatanStatusFilter =
+    (filterSelected[0] as JabatanStatusFilter) ?? "active"
 
   useEffect(() => {
     const controller = new AbortController()
@@ -106,17 +108,18 @@ export function DepartemenPage() {
       setIsLoading(true)
       setError(null)
       try {
-        const res = await fetchDepartemen({
+        const res = await fetchJabatan({
           limit: perPage,
           offset: (page - 1) * perPage,
           search: debouncedSearch || undefined,
           is_trash: statusFilter,
+          departemen_id: departemenFilter,
         })
         setRows(res.rows)
         setTotal(res.total)
       } catch {
         if (controller.signal.aborted) return
-        setError("Gagal memuat data departemen. Coba lagi.")
+        setError("Gagal memuat data jabatan. Coba lagi.")
         setRows([])
         setTotal(0)
       } finally {
@@ -126,7 +129,14 @@ export function DepartemenPage() {
 
     load()
     return () => controller.abort()
-  }, [page, perPage, debouncedSearch, statusFilter, refreshKey])
+  }, [
+    page,
+    perPage,
+    debouncedSearch,
+    statusFilter,
+    departemenFilter,
+    refreshKey,
+  ])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
 
@@ -172,30 +182,19 @@ export function DepartemenPage() {
         setIsActionLoading(true)
         try {
           if (bulkValue === "restore") {
-            await restoreMultipleDepartemens(ids)
-            setPageAlert({
-              type: "success",
-              message: "Data berhasil direstore.",
-            })
+            await restoreMultipleJabatans(ids)
           } else if (bulkValue === "delete") {
-            await deleteMultipleDepartemens(ids)
-            setPageAlert({ type: "success", message: "Data berhasil dihapus." })
+            await deleteMultipleJabatans(ids)
           } else if (bulkValue === "delete_permanent") {
-            await forceDeleteMultipleDepartemens(ids)
-            setPageAlert({
-              type: "success",
-              message: "Data berhasil dihapus permanen.",
-            })
+            await forceDeleteMultipleJabatans(ids)
           }
+          setPageAlert({
+            type: "success",
+            message: "Aksi tercatat (endpoint bulk belum tersedia).",
+          })
           setSelectedIds(new Set())
           setBulkValue("")
-          setRefreshKey((k) => k + 1)
           setConfirmState(null)
-        } catch {
-          setPageAlert({
-            type: "error",
-            message: "Gagal menjalankan aksi. Coba lagi.",
-          })
         } finally {
           setIsActionLoading(false)
         }
@@ -213,7 +212,7 @@ export function DepartemenPage() {
     setDrawerOpen(true)
   }, [])
 
-  const openEditDrawer = useCallback((row: DepartemenRow) => {
+  const openEditDrawer = useCallback((row: JabatanRow) => {
     setEditingRow(row)
     setDrawerOpen(true)
   }, [])
@@ -223,21 +222,19 @@ export function DepartemenPage() {
     setRefreshKey((k) => k + 1)
   }, [])
 
-  function rowActions(row: DepartemenRow): RowAction[] {
+  function rowActions(row: JabatanRow): RowAction[] {
     return [
       {
         key: "detail",
         label: "View Detail",
         icon: Eye,
-        onClick: () => console.log("detail", row.id),
+        onClick: () => console.log("[jabatan] detail", row.id),
       },
       {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        onClick: () => {
-          openEditDrawer(row)
-        },
+        onClick: () => openEditDrawer(row),
         hidden: row.is_trashed,
       },
       {
@@ -251,23 +248,12 @@ export function DepartemenPage() {
             onConfirm: async () => {
               setIsActionLoading(true)
               try {
-                await deleteDepartemen(row.id)
-                setSelectedIds((prev) => {
-                  const next = new Set(prev)
-                  next.delete(row.id)
-                  return next
-                })
-                setRefreshKey((k) => k + 1)
-                setConfirmState(null)
+                await deleteJabatan(row.id)
                 setPageAlert({
                   type: "success",
-                  message: "Data berhasil dihapus.",
+                  message: "Aksi tercatat (endpoint hapus belum tersedia).",
                 })
-              } catch {
-                setPageAlert({
-                  type: "error",
-                  message: "Gagal menghapus data. Coba lagi.",
-                })
+                setConfirmState(null)
               } finally {
                 setIsActionLoading(false)
               }
@@ -285,23 +271,12 @@ export function DepartemenPage() {
             onConfirm: async () => {
               setIsActionLoading(true)
               try {
-                await restoreDepartemen(row.id)
-                setSelectedIds((prev) => {
-                  const next = new Set(prev)
-                  next.delete(row.id)
-                  return next
-                })
-                setRefreshKey((k) => k + 1)
-                setConfirmState(null)
+                await restoreJabatan(row.id)
                 setPageAlert({
                   type: "success",
-                  message: "Data berhasil direstore.",
+                  message: "Aksi tercatat (endpoint restore belum tersedia).",
                 })
-              } catch {
-                setPageAlert({
-                  type: "error",
-                  message: "Gagal merestore data. Coba lagi.",
-                })
+                setConfirmState(null)
               } finally {
                 setIsActionLoading(false)
               }
@@ -320,23 +295,13 @@ export function DepartemenPage() {
             onConfirm: async () => {
               setIsActionLoading(true)
               try {
-                await forceDeleteDepartemen(row.id)
-                setSelectedIds((prev) => {
-                  const next = new Set(prev)
-                  next.delete(row.id)
-                  return next
-                })
-                setRefreshKey((k) => k + 1)
-                setConfirmState(null)
+                await forceDeleteJabatan(row.id)
                 setPageAlert({
                   type: "success",
-                  message: "Data berhasil dihapus permanen.",
+                  message:
+                    "Aksi tercatat (endpoint hapus permanen belum tersedia).",
                 })
-              } catch {
-                setPageAlert({
-                  type: "error",
-                  message: "Gagal menghapus permanen. Coba lagi.",
-                })
+                setConfirmState(null)
               } finally {
                 setIsActionLoading(false)
               }
@@ -350,7 +315,7 @@ export function DepartemenPage() {
     <div className="flex flex-col gap-4">
       <PageCard>
         <PageCardHeader
-          title="Departemen"
+          title="Jabatan"
           actions={<AddButton onClick={openCreateDrawer} />}
         />
 
@@ -363,7 +328,14 @@ export function DepartemenPage() {
             disabled={selectedIds.size === 0}
           />
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <DepartemenFilterCombobox
+              value={departemenFilter}
+              onChange={(value) => {
+                setDepartemenFilter(value)
+                setPage(1)
+              }}
+            />
             <TableFilterPopover
               options={FILTER_OPTIONS}
               selected={filterSelected}
@@ -381,7 +353,7 @@ export function DepartemenPage() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                placeholder="Cari nama departemen"
+                placeholder="Cari nama jabatan"
                 className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
               />
             </div>
@@ -401,6 +373,7 @@ export function DepartemenPage() {
                     />
                   </TableHead>
                   <TableHead className="text-[#374957]">Nama</TableHead>
+                  <TableHead className="text-[#374957]">Departemen</TableHead>
                   <TableHead className="text-[#374957]">Deskripsi</TableHead>
                   <TableHead className="text-[#374957]">Status</TableHead>
                   <TableHead className="w-12" />
@@ -411,7 +384,7 @@ export function DepartemenPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={6}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Memuat data...
@@ -420,7 +393,7 @@ export function DepartemenPage() {
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={6}
                       className="py-10 text-center text-sm text-red-500"
                     >
                       {error}
@@ -429,7 +402,7 @@ export function DepartemenPage() {
                 ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={6}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Tidak ada data.
@@ -449,6 +422,9 @@ export function DepartemenPage() {
                       </TableCell>
                       <TableCell className="text-[#374957]">
                         {row.name}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {row.department_name ?? "-"}
                       </TableCell>
                       <TableCell className="text-[#374957]">
                         {row.desc ?? "-"}
@@ -477,9 +453,9 @@ export function DepartemenPage() {
         </div>
       </PageCard>
 
-      <DepartemenFormDrawer
+      <JabatanFormDrawer
         open={drawerOpen}
-        departemen={editingRow}
+        jabatan={editingRow}
         onOpenChange={setDrawerOpen}
         onCreated={handleSaved}
       />
@@ -512,4 +488,4 @@ export function DepartemenPage() {
   )
 }
 
-export default DepartemenPage
+export default JabatanPage

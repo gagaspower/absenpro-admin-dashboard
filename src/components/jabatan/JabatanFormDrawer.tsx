@@ -2,10 +2,6 @@ import { useEffect, useState } from "react"
 import * as yup from "yup"
 import { LoaderCircle, X } from "lucide-react"
 
-import {
-  AlertModal,
-  type AlertModalType,
-} from "@/components/feedback/AlertModal"
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -17,14 +13,10 @@ import {
 } from "@/components/ui/drawer"
 import { Input } from "@/components/ui/input"
 import { useMobile } from "@/hooks/use-mobile"
-import {
-  createDepartemen,
-  updateDepartemen,
-} from "@/services/departemen/departemen.service"
 import type {
-  CreateDepartemenPayload,
-  DepartemenRow,
-} from "@/types/departemen/departemen.types"
+  CreateJabatanPayload,
+  JabatanRow,
+} from "@/types/jabatan/jabatan.types"
 
 type FormValues = {
   name: string
@@ -33,25 +25,20 @@ type FormValues = {
 
 type FormErrors = Partial<Record<keyof FormValues, string>>
 
-interface SubmitAlert {
-  type: AlertModalType
-  message: string
-}
-
 const EMPTY_VALUES: FormValues = {
   name: "",
   description: "",
 }
 
-const departemenSchema = yup.object({
+const jabatanSchema = yup.object({
   name: yup
     .string()
-    .required("Nama Unit/Departemen wajib diisi.")
-    .max(255, "Nama Unit/Departemen maksimal 255 karakter."),
+    .required("Nama Jabatan wajib diisi.")
+    .max(255, "Nama Jabatan maksimal 255 karakter."),
   description: yup.string().optional(),
 })
 
-function initialValues(row: DepartemenRow | null): FormValues {
+function initialValues(row: JabatanRow | null): FormValues {
   return row
     ? {
         name: row.name,
@@ -60,33 +47,29 @@ function initialValues(row: DepartemenRow | null): FormValues {
     : EMPTY_VALUES
 }
 
-interface DepartemenFormDrawerProps {
+interface JabatanFormDrawerProps {
   open: boolean
-  departemen: DepartemenRow | null
+  jabatan: JabatanRow | null
   onOpenChange: (open: boolean) => void
   onCreated: (message: string) => void
 }
 
-export function DepartemenFormDrawer({
+export function JabatanFormDrawer({
   open,
-  departemen,
+  jabatan,
   onOpenChange,
   onCreated,
-}: DepartemenFormDrawerProps) {
+}: JabatanFormDrawerProps) {
   const isMobile = useMobile()
-  const isEdit = departemen !== null
-  const [values, setValues] = useState<FormValues>(() =>
-    initialValues(departemen)
-  )
+  const isEdit = jabatan !== null
+  const [values, setValues] = useState<FormValues>(() => initialValues(jabatan))
   const [errors, setErrors] = useState<FormErrors>({})
-  const [submitAlert, setSubmitAlert] = useState<SubmitAlert | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    setValues(initialValues(departemen))
+    setValues(initialValues(jabatan))
     setErrors({})
-    setSubmitAlert(null)
-  }, [departemen])
+  }, [jabatan])
 
   function changeValue(field: keyof FormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -96,27 +79,28 @@ export function DepartemenFormDrawer({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    setSubmitAlert(null)
     try {
-      await departemenSchema.validate(values, { abortEarly: false })
+      await jabatanSchema.validate(values, { abortEarly: false })
       setErrors({})
       setIsSubmitting(true)
 
-      const payload: CreateDepartemenPayload = {
+      const payload: CreateJabatanPayload = {
         name: values.name.trim(),
         ...(values.description.trim()
           ? { description: values.description.trim() }
           : {}),
       }
 
-      const response = isEdit
-        ? await updateDepartemen(departemen!.id, payload)
-        : await createDepartemen(payload)
-
-      if (!response.success) throw new Error(response.message)
+      // Endpoint create/update jabatan belum tersedia backend.
+      console.log(isEdit ? "[jabatan] update" : "[jabatan] create", {
+        id: jabatan?.id,
+        payload,
+      })
 
       onOpenChange(false)
-      onCreated(response.message || "Departemen berhasil disimpan.")
+      onCreated(
+        isEdit ? "Jabatan berhasil diperbarui." : "Jabatan berhasil disimpan."
+      )
     } catch (error) {
       if (error instanceof yup.ValidationError) {
         const nextErrors: FormErrors = {}
@@ -126,14 +110,6 @@ export function DepartemenFormDrawer({
           }
         })
         setErrors(nextErrors)
-      } else {
-        setSubmitAlert({
-          type: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Gagal menyimpan departemen. Coba lagi.",
-        })
       }
     } finally {
       setIsSubmitting(false)
@@ -152,12 +128,10 @@ export function DepartemenFormDrawer({
           <div className="flex items-start justify-between gap-4">
             <div>
               <DrawerTitle className="text-lg font-semibold text-[#374957]">
-                {isEdit ? "Edit Departemen" : "Tambah Departemen"}
+                {isEdit ? "Edit Jabatan" : "Tambah Jabatan"}
               </DrawerTitle>
               <DrawerDescription className="mt-1 text-sm text-[#71808B]">
-                {isEdit
-                  ? "Perbarui detail unit/departemen."
-                  : "Lengkapi data unit/departemen kerja."}
+                {isEdit ? "Perbarui detail jabatan." : "Lengkapi data jabatan."}
               </DrawerDescription>
             </div>
             <DrawerClose
@@ -172,11 +146,11 @@ export function DepartemenFormDrawer({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-            <Field label="Nama Unit/Departemen" error={errors.name} required>
+            <Field label="Nama Jabatan" error={errors.name} required>
               <Input
                 value={values.name}
                 onChange={(event) => changeValue("name", event.target.value)}
-                placeholder="Contoh: Human Resources"
+                placeholder="Contoh: Staff IT"
                 maxLength={255}
                 aria-invalid={Boolean(errors.name)}
                 className="h-10 rounded-[5px] border-[#DDE3E6]"
@@ -188,7 +162,7 @@ export function DepartemenFormDrawer({
                 onChange={(event) =>
                   changeValue("description", event.target.value)
                 }
-                placeholder="Deskripsi departemen (opsional)"
+                placeholder="Deskripsi jabatan (opsional)"
                 className="min-h-24 w-full rounded-[5px] border border-[#DDE3E6] bg-white px-3 py-2 text-sm text-[#374957] outline-none placeholder:text-gray-400 focus:border-[#30CCD5] disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-70"
               />
             </Field>
@@ -216,16 +190,6 @@ export function DepartemenFormDrawer({
           </div>
         </form>
       </DrawerContent>
-      {submitAlert && (
-        <AlertModal
-          open
-          type={submitAlert.type}
-          message={submitAlert.message}
-          onOpenChange={(nextOpen) => {
-            if (!nextOpen) setSubmitAlert(null)
-          }}
-        />
-      )}
     </Drawer>
   )
 }

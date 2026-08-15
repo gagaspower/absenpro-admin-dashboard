@@ -1,6 +1,7 @@
 import { api } from "@/lib/axios"
 import type {
   CreateDepartemenPayload,
+  DepartemenAllDataResponse,
   DepartemenListResponse,
   DepartemenMutationResponse,
   UpdateDepartemenPayload,
@@ -32,6 +33,13 @@ export async function fetchDepartemen(
     }
   )
 
+  return data
+}
+
+export async function fetchDepartemenAllData(): Promise<DepartemenAllDataResponse> {
+  const { data } = await api.get<DepartemenAllDataResponse>(
+    "api/reference/departemen/all-data"
+  )
   return data
 }
 

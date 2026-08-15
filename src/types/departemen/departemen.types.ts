@@ -26,3 +26,15 @@ export interface DepartemenMutationResponse {
     description: string | null
   }
 }
+
+// Untuk filter departemen (dari endpoint departemen/all-data)
+export interface DepartemenOption {
+  id: string
+  name: string
+  description: string | null
+  deleted_at: string | null
+}
+
+export interface DepartemenAllDataResponse {
+  rows: DepartemenOption[]
+}
