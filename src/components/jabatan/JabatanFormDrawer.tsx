@@ -13,6 +13,11 @@ import {
 } from "@/components/ui/drawer"
 import { Input } from "@/components/ui/input"
 import { useMobile } from "@/hooks/use-mobile"
+import { DepartemenCombobox } from "@/components/jabatan/DepartemenCombobox"
+import {
+  createJabatan,
+  updateJabatan,
+} from "@/services/jabatan/jabatan.service"
 import type {
   CreateJabatanPayload,
   JabatanRow,
@@ -21,6 +26,7 @@ import type {
 type FormValues = {
   name: string
   description: string
+  department_id: string
 }
 
 type FormErrors = Partial<Record<keyof FormValues, string>>
@@ -28,6 +34,7 @@ type FormErrors = Partial<Record<keyof FormValues, string>>
 const EMPTY_VALUES: FormValues = {
   name: "",
   description: "",
+  department_id: "",
 }
 
 const jabatanSchema = yup.object({
@@ -36,6 +43,7 @@ const jabatanSchema = yup.object({
     .required("Nama Jabatan wajib diisi.")
     .max(255, "Nama Jabatan maksimal 255 karakter."),
   description: yup.string().optional(),
+  department_id: yup.string().required("Departemen wajib dipilih."),
 })
 
 function initialValues(row: JabatanRow | null): FormValues {
@@ -43,6 +51,7 @@ function initialValues(row: JabatanRow | null): FormValues {
     ? {
         name: row.name,
         description: row.desc ?? "",
+        department_id: row.department_id,
       }
     : EMPTY_VALUES
 }
@@ -65,10 +74,12 @@ export function JabatanFormDrawer({
   const [values, setValues] = useState<FormValues>(() => initialValues(jabatan))
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     setValues(initialValues(jabatan))
     setErrors({})
+    setSubmitError(null)
   }, [jabatan])
 
   function changeValue(field: keyof FormValues, value: string) {
@@ -78,6 +89,7 @@ export function JabatanFormDrawer({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setSubmitError(null)
 
     try {
       await jabatanSchema.validate(values, { abortEarly: false })
@@ -86,20 +98,27 @@ export function JabatanFormDrawer({
 
       const payload: CreateJabatanPayload = {
         name: values.name.trim(),
+        department_id: values.department_id,
         ...(values.description.trim()
           ? { description: values.description.trim() }
           : {}),
       }
 
-      // Endpoint create/update jabatan belum tersedia backend.
-      console.log(isEdit ? "[jabatan] update" : "[jabatan] create", {
-        id: jabatan?.id,
-        payload,
-      })
+      const res = isEdit
+        ? await updateJabatan(jabatan.id, payload)
+        : await createJabatan(payload)
+
+      if (!res.success) {
+        setSubmitError(res.message || "Gagal menyimpan jabatan.")
+        return
+      }
 
       onOpenChange(false)
       onCreated(
-        isEdit ? "Jabatan berhasil diperbarui." : "Jabatan berhasil disimpan."
+        res.message ||
+          (isEdit
+            ? "Jabatan berhasil diperbarui."
+            : "Jabatan berhasil disimpan.")
       )
     } catch (error) {
       if (error instanceof yup.ValidationError) {
@@ -110,7 +129,9 @@ export function JabatanFormDrawer({
           }
         })
         setErrors(nextErrors)
+        return
       }
+      setSubmitError("Gagal menyimpan jabatan. Coba lagi.")
     } finally {
       setIsSubmitting(false)
     }
@@ -146,6 +167,11 @@ export function JabatanFormDrawer({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
+            {submitError && (
+              <div className="rounded-[5px] border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                {submitError}
+              </div>
+            )}
             <Field label="Nama Jabatan" error={errors.name} required>
               <Input
                 value={values.name}
@@ -154,6 +180,13 @@ export function JabatanFormDrawer({
                 maxLength={255}
                 aria-invalid={Boolean(errors.name)}
                 className="h-10 rounded-[5px] border-[#DDE3E6]"
+              />
+            </Field>
+            <Field label="Departemen" error={errors.department_id} required>
+              <DepartemenCombobox
+                value={values.department_id}
+                onChange={(value) => changeValue("department_id", value)}
+                error={Boolean(errors.department_id)}
               />
             </Field>
             <Field label="Deskripsi" error={errors.description}>
@@ -185,7 +218,7 @@ export function JabatanFormDrawer({
               className="h-10 flex-1 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0]"
             >
               {isSubmitting && <LoaderCircle className="size-4 animate-spin" />}
-              {isEdit ? "Perbarui" : "Simpan"}
+              {isSubmitting ? "Menyimpan..." : isEdit ? "Perbarui" : "Simpan"}
             </Button>
           </div>
         </form>
