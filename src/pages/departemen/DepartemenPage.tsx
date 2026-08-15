@@ -34,10 +34,7 @@ import {
   AlertModal,
   type AlertModalType,
 } from "@/components/feedback/AlertModal"
-import {
-  ConfirmDialog,
-  type ConfirmDialogType,
-} from "@/components/feedback/ConfirmDialog"
+import { ConfirmDialog } from "@/components/feedback/ConfirmDialog"
 import { useDebounce } from "@/hooks/useDebounce"
 
 import { DepartemenFormDrawer } from "@/components/departemen/DepartemenFormDrawer"
@@ -46,15 +43,14 @@ import {
   fetchDepartemen,
   forceDeleteDepartemen,
   restoreDepartemen,
-  type DepartemenStatusFilter,
 } from "@/services/departemen/departemen.service"
 import type { DepartemenRow } from "@/types/departemen/departemen.types"
 import { AddButton } from "@/components/AddButton"
+import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
-  { id: "all", label: "Semua" },
-  { id: "active", label: "Aktif" },
-  { id: "trashed", label: "Sudah dihapus" },
+  { id: "false", label: "Aktif" },
+  { id: "true", label: "Sudah dihapus" },
 ]
 
 // Bulk action API belum tersedia. UI disiapkan lebih dulu sesuai scope.
@@ -73,7 +69,7 @@ interface PageAlert {
 
 export function DepartemenPage() {
   const [bulkValue, setBulkValue] = useState("")
-  const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
+  const [filterSelected, setFilterSelected] = useState<string[]>(["false"])
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
@@ -95,8 +91,7 @@ export function DepartemenPage() {
   } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
-  const statusFilter: DepartemenStatusFilter =
-    (filterSelected[0] as DepartemenStatusFilter) ?? "active"
+  const isTrash = filterSelected[0] === "true"
 
   useEffect(() => {
     const controller = new AbortController()
@@ -109,7 +104,7 @@ export function DepartemenPage() {
           limit: perPage,
           offset: (page - 1) * perPage,
           search: debouncedSearch || undefined,
-          is_trash: statusFilter,
+          is_trash: isTrash,
         })
         setRows(res.rows)
         setTotal(res.total)
@@ -125,7 +120,7 @@ export function DepartemenPage() {
 
     load()
     return () => controller.abort()
-  }, [page, perPage, debouncedSearch, statusFilter, refreshKey])
+  }, [page, perPage, debouncedSearch, isTrash, reloadToken])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
 
@@ -173,8 +168,8 @@ export function DepartemenPage() {
   }, [])
 
   const handleSaved = useCallback((message: string) => {
-    setPageAlert({ type: "success", message })
-    setRefreshKey((k) => k + 1)
+    setSuccessMessage(message)
+    setReloadToken((t) => t + 1)
   }, [])
 
   function rowActions(row: DepartemenRow): RowAction[] {
@@ -189,7 +184,11 @@ export function DepartemenPage() {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        onClick: () => openEditDrawer(row),
+        onClick: () => {
+          openEditDrawer(row)
+          setDrawerOpen(true)
+        },
+
         hidden: row.is_trashed,
       },
       {
@@ -209,7 +208,7 @@ export function DepartemenPage() {
                   next.delete(row.id)
                   return next
                 })
-                setRefreshKey((k) => k + 1)
+                setReloadToken((t) => t + 1)
                 setConfirmState(null)
                 setPageAlert({
                   type: "success",
@@ -243,7 +242,7 @@ export function DepartemenPage() {
                   next.delete(row.id)
                   return next
                 })
-                setRefreshKey((k) => k + 1)
+                setReloadToken((t) => t + 1)
                 setConfirmState(null)
                 setPageAlert({
                   type: "success",
@@ -278,7 +277,7 @@ export function DepartemenPage() {
                   next.delete(row.id)
                   return next
                 })
-                setRefreshKey((k) => k + 1)
+                setReloadToken((t) => t + 1)
                 setConfirmState(null)
                 setPageAlert({
                   type: "success",
@@ -321,7 +320,7 @@ export function DepartemenPage() {
               selected={filterSelected}
               singleSelect
               onSubmit={(sel) => {
-                setFilterSelected(sel.length > 0 ? [sel[0]] : ["active"])
+                setFilterSelected(sel.length > 0 ? [sel[0]] : ["false"])
                 setPage(1)
               }}
             />
@@ -457,6 +456,17 @@ export function DepartemenPage() {
           message={pageAlert.message}
           onOpenChange={(nextOpen) => {
             if (!nextOpen) setPageAlert(null)
+          }}
+        />
+      )}
+
+      {successMessage && (
+        <AlertModal
+          open
+          type="success"
+          message={successMessage}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setSuccessMessage(null)
           }}
         />
       )}
