@@ -61,6 +61,7 @@ import {
   type BranchStatusFilter,
 } from "@/services/branch/branch.service"
 import type { BranchRow } from "@/types/branch/branch.types"
+import { AddButton } from "@/components/AddButton"
 
 const BULK_OPTIONS: BulkActionOption[] = [
   { value: "restore", label: "Restore" },
@@ -346,18 +347,12 @@ export function BranchPage() {
         <PageCardHeader
           title="Wilayah Kerja / Branch"
           actions={
-            <Button
-              type="button"
-              variant="outline"
+            <AddButton
               onClick={() => {
                 setEditingBranch(null)
                 setDrawerOpen(true)
               }}
-              className="h-10 gap-2 rounded-[5px] border-[#EAEAEA] bg-white text-sm font-normal text-[#374957] hover:bg-gray-50"
-            >
-              <Plus className="size-4" />
-              Tambah
-            </Button>
+            />
           }
         />
 
