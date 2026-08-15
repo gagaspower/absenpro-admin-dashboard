@@ -21,3 +21,12 @@ export interface CreateJabatanPayload {
 }
 
 export type UpdateJabatanPayload = CreateJabatanPayload
+export interface JabatanMutationResponse {
+  success: boolean
+  message: string
+  data?: {
+    id: string
+    name: string
+    description: string | null
+  }
+}

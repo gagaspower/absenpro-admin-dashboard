@@ -1,5 +1,10 @@
 import { api } from "@/lib/axios"
-import type { JabatanListResponse } from "@/types/jabatan/jabatan.types"
+import type {
+  CreateJabatanPayload,
+  JabatanListResponse,
+  JabatanMutationResponse,
+  UpdateJabatanPayload,
+} from "@/types/jabatan/jabatan.types"
 
 export type JabatanStatusFilter = "all" | "active" | "trashed"
 
@@ -37,19 +42,29 @@ export async function fetchJabatan(
 
 // ── Belum ada endpoint backend, stub console.log dulu ────────────────────────
 
-export async function createJabatan(payload: unknown): Promise<void> {
-  console.log("[jabatan] create belum tersedia endpoint", payload)
+export async function createJabatan(
+  payload: CreateJabatanPayload
+): Promise<JabatanMutationResponse> {
+  const { data } = await api.post<JabatanMutationResponse>(
+    "api/reference/jabatan",
+    payload
+  )
+  return data
 }
 
 export async function updateJabatan(
   id: string,
-  payload: unknown
-): Promise<void> {
-  console.log("[jabatan] update belum tersedia endpoint", id, payload)
+  payload: UpdateJabatanPayload
+): Promise<JabatanMutationResponse> {
+  const { data } = await api.put<JabatanMutationResponse>(
+    `api/reference/jabatan/${id}`,
+    payload
+  )
+  return data
 }
 
 export async function deleteJabatan(id: string): Promise<void> {
-  console.log("[jabatan] delete belum tersedia endpoint", id)
+  await api.delete(`api/reference/jataban/${id}`)
 }
 
 export async function restoreJabatan(id: string): Promise<void> {
