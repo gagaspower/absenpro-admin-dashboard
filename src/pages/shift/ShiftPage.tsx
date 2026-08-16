@@ -452,13 +452,13 @@ export function ShiftPage() {
                         {row.name}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {formatRange(row.start_time, row.end_time)}
+                        {row.jam_kerja || "-"}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {formatRange(row.check_in_start, row.check_in_end)}
+                        {row.jam_absen_masuk || "-"}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {formatRange(row.check_out_start, row.check_out_end)}
+                        {row.jam_absen_pulang || "-"}
                       </TableCell>
                       <TableCell className="text-[#374957]">
                         {row.late_tolerance_minutes} menit
