@@ -37,19 +37,23 @@ import {
   type ConfirmDialogType,
 } from "@/components/feedback/ConfirmDialog"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
+import { ShiftFormDrawer } from "@/components/shift/ShiftFormDrawer"
 import { PageCard, PageCardHeader } from "@/components/PageCard"
 import { useDebounce } from "@/hooks/useDebounce"
 
 import {
   fetchShift,
+  deleteShift,
   restoreShift,
   forceDeleteShift,
+  restoreMultipleShift,
+  deleteMultipleShift,
+  forceDeleteMultipleShift,
   type ShiftStatusFilter,
 } from "@/services/shift/shift.service"
 import type { ShiftRow } from "@/types/shift/shift.types"
 import { AddButton } from "@/components/AddButton"
 
-// Bulk action belum difungsikan (menyusul), opsi tetap tampil tapi disabled.
 const BULK_OPTIONS: BulkActionOption[] = [
   { value: "restore", label: "Restore" },
   { value: "delete", label: "Hapus" },
@@ -69,6 +73,11 @@ interface PageAlert {
   message: string
 }
 
+function formatRange(start?: string, end?: string) {
+  if (!start && !end) return "-"
+  return `${start ?? "-"} - ${end ?? "-"}`
+}
+
 export function ShiftPage() {
   const [bulkValue, setBulkValue] = useState("")
   const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
@@ -76,6 +85,8 @@ export function ShiftPage() {
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingShift, setEditingShift] = useState<ShiftRow | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
   const [confirmState, setConfirmState] = useState<{
@@ -110,7 +121,7 @@ export function ShiftPage() {
         setTotal(res.total)
       } catch {
         if (controller.signal.aborted) return
-        setError("Gagal memuat data jadwal kerja. Coba lagi.")
+        setError("Gagal memuat data shift. Coba lagi.")
         setRows([])
         setTotal(0)
       } finally {
@@ -146,10 +157,55 @@ export function ShiftPage() {
     })
   }
 
-  // Bulk action belum difungsikan ke backend, menyusul.
   function handleBulkSubmit() {
     if (!bulkValue || selectedIds.size === 0) return
-    console.log("bulk action (menyusul)", bulkValue, [...selectedIds])
+
+    const ids = [...selectedIds]
+
+    const confirmTypeMap: Record<string, ConfirmDialogType> = {
+      restore: "restore",
+      delete: "delete",
+      delete_permanent: "delete_permanent",
+    }
+
+    const confirmType = confirmTypeMap[bulkValue]
+    if (!confirmType) return
+
+    setConfirmState({
+      type: confirmType,
+      onConfirm: async () => {
+        setIsActionLoading(true)
+        try {
+          if (bulkValue === "restore") {
+            await restoreMultipleShift(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil direstore.",
+            })
+          } else if (bulkValue === "delete") {
+            await deleteMultipleShift(ids)
+            setPageAlert({ type: "success", message: "Data berhasil dihapus." })
+          } else if (bulkValue === "delete_permanent") {
+            await forceDeleteMultipleShift(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil dihapus permanen.",
+            })
+          }
+          setSelectedIds(new Set())
+          setBulkValue("")
+          setRefreshKey((k) => k + 1)
+          setConfirmState(null)
+        } catch {
+          setPageAlert({
+            type: "error",
+            message: "Gagal menjalankan aksi. Coba lagi.",
+          })
+        } finally {
+          setIsActionLoading(false)
+        }
+      },
+    })
   }
 
   function handlePerPageChange(value: number) {
@@ -163,15 +219,16 @@ export function ShiftPage() {
         key: "detail",
         label: "View Detail",
         icon: Eye,
-        // View menyusul
-        onClick: () => console.log("detail (menyusul)", row.id),
+        onClick: () => console.log("detail", row.id),
       },
       {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        // Edit form menyusul
-        onClick: () => console.log("edit (menyusul)", row.id),
+        onClick: () => {
+          setEditingShift(row)
+          setDrawerOpen(true)
+        },
         hidden: row.is_trashed,
       },
       {
@@ -179,8 +236,34 @@ export function ShiftPage() {
         label: "Hapus",
         icon: Trash2,
         destructive: true,
-        // Fungsi delete menyusul
-        onClick: () => console.log("delete (menyusul)", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "delete",
+            onConfirm: async () => {
+              setIsActionLoading(true)
+              try {
+                await deleteShift(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setConfirmState(null)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil dihapus.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal menghapus data. Coba lagi.",
+                })
+              } finally {
+                setIsActionLoading(false)
+              }
+            },
+          }),
         hidden: row.is_trashed,
       },
       {
@@ -258,21 +341,24 @@ export function ShiftPage() {
     <div className="flex flex-col gap-4">
       <PageCard>
         <PageCardHeader
-          title="Jadwal Kerja / Shift"
+          title="Shift / Jadwal Kerja"
           actions={
-            // Form tambah shift menyusul
-            <AddButton onClick={() => console.log("add shift (menyusul)")} />
+            <AddButton
+              onClick={() => {
+                setEditingShift(null)
+                setDrawerOpen(true)
+              }}
+            />
           }
         />
 
-        {/* Toolbar */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <BulkActionBar
             options={BULK_OPTIONS}
             value={bulkValue}
             onValueChange={(value) => setBulkValue(value)}
             onSubmit={handleBulkSubmit}
-            disabled
+            disabled={selectedIds.size === 0}
           />
 
           <div className="flex items-center gap-2">
@@ -293,14 +379,13 @@ export function ShiftPage() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                placeholder="Cari nama jadwal"
+                placeholder="Cari nama shift"
                 className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
               />
             </div>
           </div>
         </div>
 
-        {/* Table */}
         <div className="mt-4 overflow-hidden rounded-[5px] border border-[#EAEAEA] bg-white">
           <div className="overflow-x-auto">
             <Table>
@@ -313,17 +398,11 @@ export function ShiftPage() {
                       aria-label="Pilih semua"
                     />
                   </TableHead>
-                  <TableHead className="text-[#374957]">Jadwal</TableHead>
+                  <TableHead className="text-[#374957]">Nama Shift</TableHead>
                   <TableHead className="text-[#374957]">Jam Kerja</TableHead>
-                  <TableHead className="text-[#374957]">
-                    Waktu Absensi Dimulai
-                  </TableHead>
-                  <TableHead className="text-[#374957]">
-                    Waktu Absensi Pulang Dimulai
-                  </TableHead>
-                  <TableHead className="text-[#374957]">
-                    Toleransi Keterlambatan
-                  </TableHead>
+                  <TableHead className="text-[#374957]">Absen Masuk</TableHead>
+                  <TableHead className="text-[#374957]">Absen Pulang</TableHead>
+                  <TableHead className="text-[#374957]">Toleransi</TableHead>
                   <TableHead className="text-[#374957]">Status</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
@@ -373,13 +452,13 @@ export function ShiftPage() {
                         {row.name}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.jam_kerja}
+                        {formatRange(row.start_time, row.end_time)}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.jam_absen_masuk}
+                        {formatRange(row.check_in_start, row.check_in_end)}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.jam_absen_pulang}
+                        {formatRange(row.check_out_start, row.check_out_end)}
                       </TableCell>
                       <TableCell className="text-[#374957]">
                         {row.late_tolerance_minutes} menit
@@ -398,7 +477,6 @@ export function ShiftPage() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mt-4 flex flex-col-reverse items-center justify-between gap-3 md:flex-row">
           <PerPageSelect value={perPage} onChange={handlePerPageChange} />
           <TablePagination
@@ -409,6 +487,21 @@ export function ShiftPage() {
         </div>
       </PageCard>
 
+      {drawerOpen && (
+        <ShiftFormDrawer
+          open={drawerOpen}
+          shift={editingShift}
+          onOpenChange={setDrawerOpen}
+          onCreated={(message) => {
+            setSelectedIds(new Set())
+            setRefreshKey((key) => key + 1)
+            setPageAlert({
+              type: "success",
+              message,
+            })
+          }}
+        />
+      )}
       {confirmState && (
         <ConfirmDialog
           open
