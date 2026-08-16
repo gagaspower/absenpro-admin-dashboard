@@ -155,19 +155,34 @@ const shiftSchema = yup.object({
     .max(1440, "Toleransi keterlambatan maksimal 1440 menit."),
 })
 
+/**
+ * Backend cuma balikin jam gabungan format "HH:MM - HH:MM" (lihat formatRange
+ * di ShiftPage.tsx). ShiftRow gak punya field terpisah (start_time,
+ * check_in_start, dst), jadi harus di-parse balik biar form edit terisi.
+ */
+function splitRange(range: string): [string, string] {
+  if (!range || range === "-") return ["", ""]
+  const [start, end] = range.split(" - ").map((part) => part.trim())
+  return [start && start !== "-" ? start : "", end && end !== "-" ? end : ""]
+}
+
 function initialValues(shift: ShiftRow | null): FormValues {
-  return shift
-    ? {
-        name: shift.name,
-        start_time: shift.start_time,
-        end_time: shift.end_time,
-        check_in_start: shift.check_in_start ?? "",
-        check_in_end: shift.check_in_end ?? "",
-        check_out_start: shift.check_out_start ?? "",
-        check_out_end: shift.check_out_end ?? "",
-        late_tolerance_minutes: String(shift.late_tolerance_minutes),
-      }
-    : EMPTY_VALUES
+  if (!shift) return EMPTY_VALUES
+
+  const [start_time, end_time] = splitRange(shift.jam_kerja)
+  const [check_in_start, check_in_end] = splitRange(shift.jam_absen_masuk)
+  const [check_out_start, check_out_end] = splitRange(shift.jam_absen_pulang)
+
+  return {
+    name: shift.name,
+    start_time,
+    end_time,
+    check_in_start,
+    check_in_end,
+    check_out_start,
+    check_out_end,
+    late_tolerance_minutes: String(shift.late_tolerance_minutes),
+  }
 }
 
 interface ShiftFormDrawerProps {
