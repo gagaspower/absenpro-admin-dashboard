@@ -1,8 +1,9 @@
 import axios from "axios"
 import { storage } from "./storage"
+import { BACKEND_URL } from "./config"
 
 export const api = axios.create({
-  baseURL: "https://workplace-ron-nothing-behalf.trycloudflare.com",
+  baseURL: BACKEND_URL,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
