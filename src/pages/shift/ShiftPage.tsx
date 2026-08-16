@@ -37,23 +37,19 @@ import {
   type ConfirmDialogType,
 } from "@/components/feedback/ConfirmDialog"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
-import { BranchFormDrawer } from "@/components/branch/BranchFormDrawer"
 import { PageCard, PageCardHeader } from "@/components/PageCard"
 import { useDebounce } from "@/hooks/useDebounce"
 
 import {
-  fetchBranches,
-  deleteBranch,
-  restoreBranch,
-  forceDeleteBranch,
-  restoreMultipleBranches,
-  deleteMultipleBranches,
-  forceDeleteMultipleBranches,
-  type BranchStatusFilter,
-} from "@/services/branch/branch.service"
-import type { BranchRow } from "@/types/branch/branch.types"
+  fetchShift,
+  restoreShift,
+  forceDeleteShift,
+  type ShiftStatusFilter,
+} from "@/services/shift/shift.service"
+import type { ShiftRow } from "@/types/shift/shift.types"
 import { AddButton } from "@/components/AddButton"
 
+// Bulk action belum difungsikan (menyusul), opsi tetap tampil tapi disabled.
 const BULK_OPTIONS: BulkActionOption[] = [
   { value: "restore", label: "Restore" },
   { value: "delete", label: "Hapus" },
@@ -80,8 +76,6 @@ export function ShiftPage() {
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editingBranch, setEditingBranch] = useState<BranchRow | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
   const [confirmState, setConfirmState] = useState<{
@@ -89,15 +83,15 @@ export function ShiftPage() {
     onConfirm: () => void
   } | null>(null)
 
-  const [rows, setRows] = useState<BranchRow[]>([])
+  const [rows, setRows] = useState<ShiftRow[]>([])
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
-  const statusFilter: BranchStatusFilter =
-    (filterSelected[0] as BranchStatusFilter) ?? "active"
+  const statusFilter: ShiftStatusFilter =
+    (filterSelected[0] as ShiftStatusFilter) ?? "active"
 
   useEffect(() => {
     const controller = new AbortController()
@@ -106,7 +100,7 @@ export function ShiftPage() {
       setIsLoading(true)
       setError(null)
       try {
-        const res = await fetchBranches({
+        const res = await fetchShift({
           limit: perPage,
           offset: (page - 1) * perPage,
           search: debouncedSearch || undefined,
@@ -116,7 +110,7 @@ export function ShiftPage() {
         setTotal(res.total)
       } catch {
         if (controller.signal.aborted) return
-        setError("Gagal memuat data branch. Coba lagi.")
+        setError("Gagal memuat data jadwal kerja. Coba lagi.")
         setRows([])
         setTotal(0)
       } finally {
@@ -152,55 +146,10 @@ export function ShiftPage() {
     })
   }
 
+  // Bulk action belum difungsikan ke backend, menyusul.
   function handleBulkSubmit() {
     if (!bulkValue || selectedIds.size === 0) return
-
-    const ids = [...selectedIds]
-
-    const confirmTypeMap: Record<string, ConfirmDialogType> = {
-      restore: "restore",
-      delete: "delete",
-      delete_permanent: "delete_permanent",
-    }
-
-    const confirmType = confirmTypeMap[bulkValue]
-    if (!confirmType) return
-
-    setConfirmState({
-      type: confirmType,
-      onConfirm: async () => {
-        setIsActionLoading(true)
-        try {
-          if (bulkValue === "restore") {
-            await restoreMultipleBranches(ids)
-            setPageAlert({
-              type: "success",
-              message: "Data berhasil direstore.",
-            })
-          } else if (bulkValue === "delete") {
-            await deleteMultipleBranches(ids)
-            setPageAlert({ type: "success", message: "Data berhasil dihapus." })
-          } else if (bulkValue === "delete_permanent") {
-            await forceDeleteMultipleBranches(ids)
-            setPageAlert({
-              type: "success",
-              message: "Data berhasil dihapus permanen.",
-            })
-          }
-          setSelectedIds(new Set())
-          setBulkValue("")
-          setRefreshKey((k) => k + 1)
-          setConfirmState(null)
-        } catch {
-          setPageAlert({
-            type: "error",
-            message: "Gagal menjalankan aksi. Coba lagi.",
-          })
-        } finally {
-          setIsActionLoading(false)
-        }
-      },
-    })
+    console.log("bulk action (menyusul)", bulkValue, [...selectedIds])
   }
 
   function handlePerPageChange(value: number) {
@@ -208,22 +157,21 @@ export function ShiftPage() {
     setPage(1)
   }
 
-  function rowActions(row: BranchRow): RowAction[] {
+  function rowActions(row: ShiftRow): RowAction[] {
     return [
       {
         key: "detail",
         label: "View Detail",
         icon: Eye,
-        onClick: () => console.log("detail", row.id),
+        // View menyusul
+        onClick: () => console.log("detail (menyusul)", row.id),
       },
       {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        onClick: () => {
-          setEditingBranch(row)
-          setDrawerOpen(true)
-        },
+        // Edit form menyusul
+        onClick: () => console.log("edit (menyusul)", row.id),
         hidden: row.is_trashed,
       },
       {
@@ -231,34 +179,8 @@ export function ShiftPage() {
         label: "Hapus",
         icon: Trash2,
         destructive: true,
-        onClick: () =>
-          setConfirmState({
-            type: "delete",
-            onConfirm: async () => {
-              setIsActionLoading(true)
-              try {
-                await deleteBranch(row.id)
-                setSelectedIds((prev) => {
-                  const next = new Set(prev)
-                  next.delete(row.id)
-                  return next
-                })
-                setRefreshKey((k) => k + 1)
-                setConfirmState(null)
-                setPageAlert({
-                  type: "success",
-                  message: "Data berhasil dihapus.",
-                })
-              } catch {
-                setPageAlert({
-                  type: "error",
-                  message: "Gagal menghapus data. Coba lagi.",
-                })
-              } finally {
-                setIsActionLoading(false)
-              }
-            },
-          }),
+        // Fungsi delete menyusul
+        onClick: () => console.log("delete (menyusul)", row.id),
         hidden: row.is_trashed,
       },
       {
@@ -271,7 +193,7 @@ export function ShiftPage() {
             onConfirm: async () => {
               setIsActionLoading(true)
               try {
-                await restoreBranch(row.id)
+                await restoreShift(row.id)
                 setSelectedIds((prev) => {
                   const next = new Set(prev)
                   next.delete(row.id)
@@ -306,7 +228,7 @@ export function ShiftPage() {
             onConfirm: async () => {
               setIsActionLoading(true)
               try {
-                await forceDeleteBranch(row.id)
+                await forceDeleteShift(row.id)
                 setSelectedIds((prev) => {
                   const next = new Set(prev)
                   next.delete(row.id)
@@ -336,14 +258,10 @@ export function ShiftPage() {
     <div className="flex flex-col gap-4">
       <PageCard>
         <PageCardHeader
-          title="Wilayah Kerja / Branch"
+          title="Jadwal Kerja / Shift"
           actions={
-            <AddButton
-              onClick={() => {
-                setEditingBranch(null)
-                setDrawerOpen(true)
-              }}
-            />
+            // Form tambah shift menyusul
+            <AddButton onClick={() => console.log("add shift (menyusul)")} />
           }
         />
 
@@ -354,7 +272,7 @@ export function ShiftPage() {
             value={bulkValue}
             onValueChange={(value) => setBulkValue(value)}
             onSubmit={handleBulkSubmit}
-            disabled={selectedIds.size === 0}
+            disabled
           />
 
           <div className="flex items-center gap-2">
@@ -375,7 +293,7 @@ export function ShiftPage() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                placeholder="Cari nama lokasi"
+                placeholder="Cari nama jadwal"
                 className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
               />
             </div>
@@ -395,9 +313,17 @@ export function ShiftPage() {
                       aria-label="Pilih semua"
                     />
                   </TableHead>
-                  <TableHead className="text-[#374957]">Nama Lokasi</TableHead>
-                  <TableHead className="text-[#374957]">Latitude</TableHead>
-                  <TableHead className="text-[#374957]">Longitude</TableHead>
+                  <TableHead className="text-[#374957]">Jadwal</TableHead>
+                  <TableHead className="text-[#374957]">Jam Kerja</TableHead>
+                  <TableHead className="text-[#374957]">
+                    Waktu Absensi Dimulai
+                  </TableHead>
+                  <TableHead className="text-[#374957]">
+                    Waktu Absensi Pulang Dimulai
+                  </TableHead>
+                  <TableHead className="text-[#374957]">
+                    Toleransi Keterlambatan
+                  </TableHead>
                   <TableHead className="text-[#374957]">Status</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
@@ -407,7 +333,7 @@ export function ShiftPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={8}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Memuat data...
@@ -416,7 +342,7 @@ export function ShiftPage() {
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={8}
                       className="py-10 text-center text-sm text-red-500"
                     >
                       {error}
@@ -425,7 +351,7 @@ export function ShiftPage() {
                 ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={8}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Tidak ada data.
@@ -447,10 +373,16 @@ export function ShiftPage() {
                         {row.name}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.latitude}
+                        {row.jam_kerja}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.longitude}
+                        {row.jam_absen_masuk}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {row.jam_absen_pulang}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {row.late_tolerance_minutes} menit
                       </TableCell>
                       <TableCell>
                         <StatusBadge active={!row.is_trashed} />
@@ -477,21 +409,6 @@ export function ShiftPage() {
         </div>
       </PageCard>
 
-      {drawerOpen && (
-        <BranchFormDrawer
-          open={drawerOpen}
-          branch={editingBranch}
-          onOpenChange={setDrawerOpen}
-          onCreated={(message) => {
-            setSelectedIds(new Set())
-            setRefreshKey((key) => key + 1)
-            setPageAlert({
-              type: "success",
-              message,
-            })
-          }}
-        />
-      )}
       {confirmState && (
         <ConfirmDialog
           open

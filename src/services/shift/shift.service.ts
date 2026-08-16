@@ -19,11 +19,7 @@ export interface FetchShiftParams {
 
 /**
  * Ambil shift / jadwal kerja dari backend.
- *
- * Paginasi pakai limit & offset (bukan page), sort & order sengaja
- * tidak dikirim dari FE — biarkan backend yang menentukan default-nya.
- *
- * is_trash berupa pilihan "all" | "active" | "trashed",
+ * Paginasi limit & offset. is_trash: all | active | trashed.
  */
 export async function fetchShift(
   params: FetchShiftParams = {}
@@ -56,7 +52,7 @@ export async function createShift(
   return data
 }
 
-export async function updateBranch(
+export async function updateShift(
   id: string,
   payload: UpdateShifthPayload
 ): Promise<UpdateShiftResponse> {
@@ -80,7 +76,7 @@ export async function forceDeleteShift(id: string): Promise<void> {
   await api.delete(`api/reference/jadwal-kerja/force-delete/${id}`)
 }
 
-// ── Bulk actions ─────────────────────────────────────────────────────────────
+// ── Bulk actions (belum difungsikan di FE, menyusul) ──────────────────────
 
 export async function restoreMultipleShift(ids: string[]): Promise<void> {
   await api.post("api/reference/jadwal-kerja/restore-multiple", { ids })
