@@ -30,3 +30,12 @@ export interface JabatanMutationResponse {
     department_id: string
   }
 }
+
+export interface JabatanOption {
+  id: string
+  name: string
+}
+
+export interface JabatanAllDataResponse {
+  rows: JabatanOption[]
+}

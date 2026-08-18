@@ -1,6 +1,7 @@
 import { api } from "@/lib/axios"
 import type {
   CreateJabatanPayload,
+  JabatanAllDataResponse,
   JabatanListResponse,
   JabatanMutationResponse,
   UpdateJabatanPayload,
@@ -42,8 +43,8 @@ export async function fetchJabatan(
 
 export async function fetchAllJabatan(
   id: string
-): Promise<JabatanListResponse> {
-  const { data } = await api.get<JabatanListResponse>(
+): Promise<JabatanAllDataResponse> {
+  const { data } = await api.get<JabatanAllDataResponse>(
     `api/reference/jabatan/search-departemen/${id}`
   )
   return data

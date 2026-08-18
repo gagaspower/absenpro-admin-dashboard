@@ -1,5 +1,6 @@
 import { api } from "@/lib/axios"
 import type {
+  BranchAllDataResponse,
   BranchListResponse,
   CreateBranchPayload,
   CreateBranchResponse,
@@ -42,6 +43,13 @@ export async function fetchBranches(
     }
   )
 
+  return data
+}
+
+export async function fetchBranchAllData(): Promise<BranchAllDataResponse> {
+  const { data } = await api.get<BranchAllDataResponse>(
+    "api/reference/lokasi-kerja/all-data"
+  )
   return data
 }
 

@@ -3,6 +3,7 @@ import { api } from "@/lib/axios"
 import type {
   CreateShiftPayload,
   CreateShiftResponse,
+  ShiftAllDataResponse,
   ShiftListResponse,
   UpdateShifthPayload,
   UpdateShiftResponse,
@@ -38,6 +39,13 @@ export async function fetchShift(
     }
   )
 
+  return data
+}
+
+export async function fetchAllShift(): Promise<ShiftAllDataResponse> {
+  const { data } = await api.get<ShiftAllDataResponse>(
+    `api/reference/lokasi-kerja/all-data`
+  )
   return data
 }
 

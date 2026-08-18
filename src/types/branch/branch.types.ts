@@ -37,3 +37,15 @@ export interface BranchFilterState {
   showAll: boolean
   showDeleted: boolean
 }
+
+export interface BranchOption {
+  name: string
+  address?: string
+  latitude: string
+  longitude: string
+  radius_meter: number
+}
+
+export interface BranchAllDataResponse {
+  rows: BranchOption[]
+}
