@@ -9,6 +9,7 @@ import { GuestRoute, ProtectedRoute } from "./guard"
 import { DepartemenPage } from "@/pages/departemen/DepartemenPage"
 import JabatanPage from "@/pages/jabatan/JabatanPage"
 import ShiftPage from "@/pages/shift/ShiftPage"
+import JenisCutiPage from "@/pages/jenis_cuti/JenisCutiPage"
 
 export function AppRouter() {
   return (
@@ -28,10 +29,7 @@ export function AppRouter() {
           <Route path="wilayah-kerja" element={<BranchPage />} />
           <Route path="jabatan" element={<JabatanPage />} />
           <Route path="jam-kerja" element={<ShiftPage />} />
-          <Route
-            path="jenis-izin"
-            element={<PlaceholderPage title="Jenis Izin / Cuti" />}
-          />
+          <Route path="jenis-izin" element={<JenisCutiPage />} />
           <Route
             path="karyawan"
             element={<PlaceholderPage title="Karyawan" />}
