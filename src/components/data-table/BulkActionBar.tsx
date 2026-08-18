@@ -38,12 +38,12 @@ export function BulkActionBar({
   className,
 }: BulkActionBarProps) {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-stretch gap-2", className)}>
       <Select
         value={value}
         onValueChange={(nextValue) => onValueChange(nextValue ?? "")}
       >
-        <SelectTrigger className="h-10 w-44 rounded-[5px] border-[#D9D9D9] text-sm text-[#374957] focus:ring-0 focus:ring-offset-0">
+        <SelectTrigger className="!h-10 w-44 shrink-0 rounded-[5px] border-[#D9D9D9] py-0 text-sm text-[#374957] focus:ring-0 focus:ring-offset-0">
           <SelectValue placeholder={placeholder}>
             {options.find((opt) => opt.value === value)?.label ?? placeholder}
           </SelectValue>
@@ -61,7 +61,7 @@ export function BulkActionBar({
         type="button"
         disabled={disabled || !value}
         onClick={onSubmit}
-        className="h-10 rounded-[5px] border-0 bg-[#EEEEEE] px-5 text-sm font-normal text-[#374957] hover:bg-[#e2e2e2] disabled:opacity-60"
+        className="!h-10 shrink-0 rounded-[5px] border-0 bg-[#EEEEEE] px-5 py-0 text-sm font-normal text-[#374957] hover:bg-[#e2e2e2] disabled:opacity-60"
       >
         Submit
       </Button>
