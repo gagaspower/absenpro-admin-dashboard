@@ -53,6 +53,11 @@ import {
 } from "@/services/jenis_cuti/jenis_cuti.service"
 import type { JenisCutiRow } from "@/types/jenis_cuti/jenis_cuti.types"
 import { AddButton } from "@/components/AddButton"
+import {
+  DeductQuotaBadge,
+  IsPaidBadge,
+  RequiresAttachmentBadge,
+} from "@/components/jenis_cuti/JenisCutiBadges"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -387,7 +392,9 @@ export function JenisCutiPage() {
                   <TableHead className="text-[#374957]">Kode</TableHead>
                   <TableHead className="text-[#374957]">Kategori</TableHead>
                   <TableHead className="text-[#374957]">Unit</TableHead>
-                  <TableHead className="text-[#374957]">Berbayar</TableHead>
+                  <TableHead className="text-[#374957]">
+                    Tetap dibayar
+                  </TableHead>
                   <TableHead className="text-[#374957]">Potong Kuota</TableHead>
                   <TableHead className="text-[#374957]">
                     Wajib Lampiran
@@ -456,13 +463,15 @@ export function JenisCutiPage() {
                         {row.unit}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {yaTidak(row.is_paid)}
+                        <IsPaidBadge value={row.is_paid} />
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {yaTidak(row.deduct_quota)}
+                        <DeductQuotaBadge value={row.deduct_quota} />
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {yaTidak(row.requires_attachment)}
+                        <RequiresAttachmentBadge
+                          value={row.requires_attachment}
+                        />
                       </TableCell>
                       <TableCell className="text-[#374957]">
                         {row.max_days_per_year ?? "-"}

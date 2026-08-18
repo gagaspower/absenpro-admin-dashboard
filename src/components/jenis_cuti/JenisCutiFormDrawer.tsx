@@ -298,7 +298,7 @@ export function JenisCutiFormDrawer({
             </div>
             <div className="space-y-3 pt-1">
               <CheckboxField
-                label="Berbayar"
+                label="Tetap dibayar"
                 checked={values.is_paid}
                 onCheckedChange={(checked) => changeValue("is_paid", checked)}
               />
