@@ -21,31 +21,13 @@ function BooleanBadge({ value, trueLabel, falseLabel }: BooleanBadgeProps) {
 }
 
 export function IsPaidBadge({ value }: { value: boolean }) {
-  return (
-    <BooleanBadge
-      value={value}
-      trueLabel="Berbayar"
-      falseLabel="Tidak Berbayar"
-    />
-  )
+  return <BooleanBadge value={value} trueLabel="Ya" falseLabel="Tidak" />
 }
 
 export function DeductQuotaBadge({ value }: { value: boolean }) {
-  return (
-    <BooleanBadge
-      value={value}
-      trueLabel="Potong Kuota"
-      falseLabel="Tidak Potong Kuota"
-    />
-  )
+  return <BooleanBadge value={value} trueLabel="Ya" falseLabel="Tidak" />
 }
 
 export function RequiresAttachmentBadge({ value }: { value: boolean }) {
-  return (
-    <BooleanBadge
-      value={value}
-      trueLabel="Wajib Lampiran"
-      falseLabel="Tanpa Lampiran"
-    />
-  )
+  return <BooleanBadge value={value} trueLabel="Ya" falseLabel="Tidak" />
 }
