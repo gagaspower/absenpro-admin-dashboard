@@ -38,19 +38,20 @@ import { ConfirmDialog } from "@/components/feedback/ConfirmDialog"
 import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 import { useDebounce } from "@/hooks/useDebounce"
 
-import { JabatanFormDrawer } from "@/components/jabatan/JabatanFormDrawer"
-import { DepartemenFilterCombobox } from "@/components/jabatan/DepartemenFilterCombobox"
+import { JenisCutiFormDrawer } from "@/components/jenis_cuti/JenisCutiFormDrawer"
+import { JenisCutiFilterCombobox } from "@/components/jenis_cuti/JenisCutiFilterCombobox"
 import {
-  deleteJabatan,
-  deleteMultipleJabatans,
-  fetchJabatan,
-  forceDeleteJabatan,
-  forceDeleteMultipleJabatans,
-  restoreJabatan,
-  restoreMultipleJabatans,
-  type JabatanStatusFilter,
-} from "@/services/jabatan/jabatan.service"
-import type { JabatanRow } from "@/types/jabatan/jabatan.types"
+  deleteJenisCuti,
+  deleteMultipleJenisCuti,
+  fetchJenisCuti,
+  forceDeleteJenisCuti,
+  forceDeleteMultipleJenisCuti,
+  restoreJenisCuti,
+  restoreMultipleJenisCuti,
+  type JenisCutiStatusFilter,
+  type KategoriCutiFilter,
+} from "@/services/jenis_cuti/jenis_cuti.service"
+import type { JenisCutiRow } from "@/types/jenis_cuti/jenis_cuti.types"
 import { AddButton } from "@/components/AddButton"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
@@ -59,7 +60,6 @@ const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "trashed", label: "Sudah dihapus" },
 ]
 
-// Bulk action API belum tersedia. UI disiapkan lebih dulu sesuai scope.
 const BULK_OPTIONS: BulkActionOption[] = [
   { value: "restore", label: "Restore" },
   { value: "delete", label: "Hapus" },
@@ -73,22 +73,27 @@ interface PageAlert {
   message: string
 }
 
+function yaTidak(value: boolean) {
+  return value ? "Ya" : "Tidak"
+}
+
 export function JenisCutiPage() {
   const [bulkValue, setBulkValue] = useState("")
   const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
-  const [departemenFilter, setDepartemenFilter] = useState("all")
+  const [kategoriFilter, setKategoriFilter] =
+    useState<KategoriCutiFilter>("all")
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-  const [rows, setRows] = useState<JabatanRow[]>([])
+  const [rows, setRows] = useState<JenisCutiRow[]>([])
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editingRow, setEditingRow] = useState<JabatanRow | null>(null)
+  const [editingRow, setEditingRow] = useState<JenisCutiRow | null>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
@@ -98,8 +103,8 @@ export function JenisCutiPage() {
   } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
-  const statusFilter: JabatanStatusFilter =
-    (filterSelected[0] as JabatanStatusFilter) ?? "active"
+  const statusFilter: JenisCutiStatusFilter =
+    (filterSelected[0] as JenisCutiStatusFilter) ?? "active"
 
   useEffect(() => {
     const controller = new AbortController()
@@ -108,18 +113,18 @@ export function JenisCutiPage() {
       setIsLoading(true)
       setError(null)
       try {
-        const res = await fetchJabatan({
+        const res = await fetchJenisCuti({
           limit: perPage,
           offset: (page - 1) * perPage,
           search: debouncedSearch || undefined,
           is_trash: statusFilter,
-          departemen_id: departemenFilter,
+          is_category: kategoriFilter,
         })
         setRows(res.rows)
         setTotal(res.total)
       } catch {
         if (controller.signal.aborted) return
-        setError("Gagal memuat data jabatan. Coba lagi.")
+        setError("Gagal memuat data jenis cuti. Coba lagi.")
         setRows([])
         setTotal(0)
       } finally {
@@ -129,14 +134,7 @@ export function JenisCutiPage() {
 
     load()
     return () => controller.abort()
-  }, [
-    page,
-    perPage,
-    debouncedSearch,
-    statusFilter,
-    departemenFilter,
-    refreshKey,
-  ])
+  }, [page, perPage, debouncedSearch, statusFilter, kategoriFilter, refreshKey])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
 
@@ -182,16 +180,16 @@ export function JenisCutiPage() {
         setIsActionLoading(true)
         try {
           if (bulkValue === "restore") {
-            await restoreMultipleJabatans(ids)
+            await restoreMultipleJenisCuti(ids)
             setPageAlert({
               type: "success",
               message: "Data berhasil direstore.",
             })
           } else if (bulkValue === "delete") {
-            await deleteMultipleJabatans(ids)
+            await deleteMultipleJenisCuti(ids)
             setPageAlert({ type: "success", message: "Data berhasil dihapus." })
           } else if (bulkValue === "delete_permanent") {
-            await forceDeleteMultipleJabatans(ids)
+            await forceDeleteMultipleJenisCuti(ids)
             setPageAlert({
               type: "success",
               message: "Data berhasil dihapus permanen.",
@@ -223,7 +221,7 @@ export function JenisCutiPage() {
     setDrawerOpen(true)
   }, [])
 
-  const openEditDrawer = useCallback((row: JabatanRow) => {
+  const openEditDrawer = useCallback((row: JenisCutiRow) => {
     setEditingRow(row)
     setDrawerOpen(true)
   }, [])
@@ -233,13 +231,13 @@ export function JenisCutiPage() {
     setRefreshKey((k) => k + 1)
   }, [])
 
-  function rowActions(row: JabatanRow): RowAction[] {
+  function rowActions(row: JenisCutiRow): RowAction[] {
     return [
       {
         key: "detail",
         label: "View Detail",
         icon: Eye,
-        onClick: () => console.log("[jabatan] detail", row.id),
+        onClick: () => console.log("[jenis_cuti] detail", row.id),
       },
       {
         key: "edit",
@@ -259,7 +257,7 @@ export function JenisCutiPage() {
             onConfirm: async () => {
               setIsActionLoading(true)
               try {
-                await deleteJabatan(row.id)
+                await deleteJenisCuti(row.id)
                 setPageAlert({
                   type: "success",
                   message: "Data berhasil dihapus.",
@@ -283,7 +281,7 @@ export function JenisCutiPage() {
             onConfirm: async () => {
               setIsActionLoading(true)
               try {
-                await restoreJabatan(row.id)
+                await restoreJenisCuti(row.id)
                 setPageAlert({
                   type: "success",
                   message: "Data berhasil di restore",
@@ -308,7 +306,7 @@ export function JenisCutiPage() {
             onConfirm: async () => {
               setIsActionLoading(true)
               try {
-                await forceDeleteJabatan(row.id)
+                await forceDeleteJenisCuti(row.id)
                 setPageAlert({
                   type: "success",
                   message: "Data telah dihapus permanen.",
@@ -328,7 +326,7 @@ export function JenisCutiPage() {
     <div className="flex flex-col gap-4">
       <PageCard>
         <PageCardHeader
-          title="Jabatan"
+          title="Jenis Cuti"
           actions={<AddButton onClick={openCreateDrawer} />}
         />
 
@@ -342,10 +340,10 @@ export function JenisCutiPage() {
           />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <DepartemenFilterCombobox
-              value={departemenFilter}
+            <JenisCutiFilterCombobox
+              value={kategoriFilter}
               onChange={(value) => {
-                setDepartemenFilter(value)
+                setKategoriFilter(value)
                 setPage(1)
               }}
             />
@@ -366,7 +364,7 @@ export function JenisCutiPage() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                placeholder="Cari nama jabatan"
+                placeholder="Cari nama jenis cuti"
                 className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
               />
             </div>
@@ -386,8 +384,20 @@ export function JenisCutiPage() {
                     />
                   </TableHead>
                   <TableHead className="text-[#374957]">Nama</TableHead>
-                  <TableHead className="text-[#374957]">Departemen</TableHead>
-                  <TableHead className="text-[#374957]">Deskripsi</TableHead>
+                  <TableHead className="text-[#374957]">Kode</TableHead>
+                  <TableHead className="text-[#374957]">Kategori</TableHead>
+                  <TableHead className="text-[#374957]">Unit</TableHead>
+                  <TableHead className="text-[#374957]">Berbayar</TableHead>
+                  <TableHead className="text-[#374957]">Potong Kuota</TableHead>
+                  <TableHead className="text-[#374957]">
+                    Wajib Lampiran
+                  </TableHead>
+                  <TableHead className="text-[#374957]">
+                    Maks Hari/Tahun
+                  </TableHead>
+                  <TableHead className="text-[#374957]">
+                    Min Hari Notice
+                  </TableHead>
                   <TableHead className="text-[#374957]">Status</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
@@ -397,7 +407,7 @@ export function JenisCutiPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={12}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Memuat data...
@@ -406,7 +416,7 @@ export function JenisCutiPage() {
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={12}
                       className="py-10 text-center text-sm text-red-500"
                     >
                       {error}
@@ -415,7 +425,7 @@ export function JenisCutiPage() {
                 ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={12}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Tidak ada data.
@@ -437,10 +447,28 @@ export function JenisCutiPage() {
                         {row.name}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.department_name ?? "-"}
+                        {row.code}
+                      </TableCell>
+                      <TableCell className="text-[#374957] capitalize">
+                        {row.category}
+                      </TableCell>
+                      <TableCell className="text-[#374957] capitalize">
+                        {row.unit}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.desc ?? "-"}
+                        {yaTidak(row.is_paid)}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {yaTidak(row.deduct_quota)}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {yaTidak(row.requires_attachment)}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {row.max_days_per_year ?? "-"}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {row.min_days_notice ?? "-"}
                       </TableCell>
                       <TableCell>
                         <StatusBadge active={!row.is_trashed} />
@@ -466,9 +494,9 @@ export function JenisCutiPage() {
         </div>
       </PageCard>
 
-      <JabatanFormDrawer
+      <JenisCutiFormDrawer
         open={drawerOpen}
-        jabatan={editingRow}
+        jenisCuti={editingRow}
         onOpenChange={setDrawerOpen}
         onCreated={handleSaved}
         onError={(message) => setPageAlert({ type: "error", message })}

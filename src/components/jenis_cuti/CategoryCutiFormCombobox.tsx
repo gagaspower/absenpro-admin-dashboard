@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react"
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
+import { useState } from "react"
+import { Check, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
@@ -16,48 +14,33 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import type { DepartemenOption } from "@/types/departemen/departemen.types"
-import { fetchDepartemenAllData } from "@/services/departemen/departemen.service"
+import type { KategoriCuti } from "@/types/jenis_cuti/jenis_cuti.types"
 
-interface DepartemenFormComboboxProps {
-  value: string // departemen id, "" jika belum dipilih
-  onChange: (value: string) => void
+interface CategoryOption {
+  id: KategoriCuti
+  label: string
+}
+
+// Hard code sesuai instruksi, tidak ambil dari API.
+const CATEGORY_OPTIONS: CategoryOption[] = [
+  { id: "cuti", label: "Cuti" },
+  { id: "izin", label: "Izin" },
+]
+
+interface CategoryCutiFormComboboxProps {
+  value: KategoriCuti | ""
+  onChange: (value: KategoriCuti) => void
   error?: boolean
 }
 
-export function DepartemenFormCombobox({
+export function CategoryCutiFormCombobox({
   value,
   onChange,
   error = false,
-}: DepartemenFormComboboxProps) {
+}: CategoryCutiFormComboboxProps) {
   const [open, setOpen] = useState(false)
-  const [options, setOptions] = useState<DepartemenOption[]>([])
-  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    let active = true
-    setIsLoading(true)
-    fetchDepartemenAllData()
-      .then((res) => {
-        if (active) setOptions(res.rows)
-      })
-      .catch(() => {
-        if (active) setOptions([])
-      })
-      .finally(() => {
-        if (active) setIsLoading(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [])
-
-  const selected = options.find((o) => o.id === value)
-  const selectedLabel = selected
-    ? selected.name
-    : value
-      ? "Memuat..."
-      : "Pilih Departemen"
+  const selected = CATEGORY_OPTIONS.find((o) => o.id === value)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -77,23 +60,19 @@ export function DepartemenFormCombobox({
           />
         }
       >
-        <span className="truncate">{selectedLabel}</span>
-        {isLoading ? (
-          <Loader2 className="size-4 shrink-0 animate-spin opacity-50" />
-        ) : (
-          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
-        )}
+        <span className="truncate">
+          {selected ? selected.label : "Pilih Kategori"}
+        </span>
+        <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
       </PopoverTrigger>
       <PopoverContent className="w-[260px] rounded-[5px] p-0">
         <Command>
-          <CommandInput placeholder="Cari departemen..." />
           <CommandList>
-            <CommandEmpty>Departemen tidak ditemukan.</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
+              {CATEGORY_OPTIONS.map((option) => (
                 <CommandItem
                   key={option.id}
-                  value={option.name}
+                  value={option.label}
                   onSelect={() => {
                     onChange(option.id)
                     setOpen(false)
@@ -105,7 +84,7 @@ export function DepartemenFormCombobox({
                       value === option.id ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {option.name}
+                  {option.label}
                 </CommandItem>
               ))}
             </CommandGroup>

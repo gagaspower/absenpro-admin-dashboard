@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react"
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
+import { useState } from "react"
+import { Check, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
@@ -16,12 +14,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import type { DepartemenOption } from "@/types/departemen/departemen.types"
-import { fetchDepartemenAllData } from "@/services/departemen/departemen.service"
+import type { KategoriCutiFilter } from "@/services/jenis_cuti/jenis_cuti.service"
+
+interface KategoriOption {
+  id: KategoriCutiFilter
+  label: string
+}
+
+// Hard code sesuai instruksi, tidak ambil dari API.
+const KATEGORI_OPTIONS: KategoriOption[] = [
+  { id: "all", label: "Semua Kategori" },
+  { id: "cuti", label: "Cuti" },
+  { id: "izin", label: "Izin" },
+]
 
 interface JenisCutiFilterComboboxProps {
-  value: string // "all" | departemen id
-  onChange: (value: string) => void
+  value: KategoriCutiFilter
+  onChange: (value: KategoriCutiFilter) => void
 }
 
 export function JenisCutiFilterCombobox({
@@ -29,31 +38,9 @@ export function JenisCutiFilterCombobox({
   onChange,
 }: JenisCutiFilterComboboxProps) {
   const [open, setOpen] = useState(false)
-  const [options, setOptions] = useState<DepartemenOption[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    let active = true
-    setIsLoading(true)
-    fetchDepartemenAllData()
-      .then((res) => {
-        if (active) setOptions(res.rows)
-      })
-      .catch(() => {
-        if (active) setOptions([])
-      })
-      .finally(() => {
-        if (active) setIsLoading(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [])
 
   const selectedLabel =
-    value === "all"
-      ? "Semua Departemen"
-      : (options.find((o) => o.id === value)?.name ?? "Semua Departemen")
+    KATEGORI_OPTIONS.find((o) => o.id === value)?.label ?? "Semua Kategori"
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -68,37 +55,16 @@ export function JenisCutiFilterCombobox({
         }
       >
         <span className="truncate">{selectedLabel}</span>
-        {isLoading ? (
-          <Loader2 className="size-4 shrink-0 animate-spin opacity-50" />
-        ) : (
-          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
-        )}
+        <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
       </PopoverTrigger>
-      <PopoverContent className="w-[260px] rounded-[5px] p-0">
+      <PopoverContent className="w-[220px] rounded-[5px] p-0">
         <Command>
-          <CommandInput placeholder="Cari departemen..." />
           <CommandList>
-            <CommandEmpty>Departemen tidak ditemukan.</CommandEmpty>
             <CommandGroup>
-              <CommandItem
-                value="all"
-                onSelect={() => {
-                  onChange("all")
-                  setOpen(false)
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 size-4",
-                    value === "all" ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                Semua Departemen
-              </CommandItem>
-              {options.map((option) => (
+              {KATEGORI_OPTIONS.map((option) => (
                 <CommandItem
                   key={option.id}
-                  value={option.name}
+                  value={option.label}
                   onSelect={() => {
                     onChange(option.id)
                     setOpen(false)
@@ -110,7 +76,7 @@ export function JenisCutiFilterCombobox({
                       value === option.id ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {option.name}
+                  {option.label}
                 </CommandItem>
               ))}
             </CommandGroup>

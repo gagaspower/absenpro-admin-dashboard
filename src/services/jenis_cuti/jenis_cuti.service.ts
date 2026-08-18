@@ -45,8 +45,6 @@ export async function fetchJenisCuti(
   return data
 }
 
-// ── Belum ada endpoint backend, stub console.log dulu ────────────────────────
-
 export async function createJenisCuti(
   payload: CreateJenisCutiPayload
 ): Promise<JenisCutiMutationResponse> {
