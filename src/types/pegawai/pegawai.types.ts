@@ -1,29 +1,21 @@
-export interface Role {
-  id: string
-  nama_role: string
-  pivot: {
-    user_id: string
-    role_id: string
-  }
-  permissions: string[]
-}
+import type { FaceProfile } from "@/types/face_profile/face_profile.types"
+import type { DepartemenRow } from "@/types/departemen/departemen.types"
+import type { JabatanRow } from "@/types/jabatan/jabatan.types"
+import type { BranchRow } from "@/types/branch/branch.types"
 
-export interface Department {
-  id: string
-  name: string
-}
+// Derive dari type existing pakai Pick, biar tetap 1 sumber kebenaran
+// (field nested response ini emang cuma subset dari row type aslinya).
+export type PegawaiPosition = Pick<JabatanRow, "id" | "name" | "department_id">
 
-export interface Position {
-  id: string
-  name: string
-}
+export type PegawaiDepartment = Pick<DepartemenRow, "id" | "name">
 
-export interface Branch {
-  id: string
-  name: string
-}
+export type PegawaiBranch = Pick<BranchRow, "id" | "name">
 
-export interface Shift {
+// ShiftRow (types/shift/shift.types.ts) pakai nama field beda total
+// (jam_kerja, jam_absen_masuk, dst), bukan cuma subset — jadi gak bisa
+// di-derive pakai Pick dari ShiftRow. Type baru di bawah ini ngikut
+// field asli yang dikirim backend di response pegawai.
+export interface PegawaiShift {
   id: string
   name: string
   start_time: string
@@ -33,67 +25,32 @@ export interface Shift {
   check_out_start: string
   check_out_end: string
   late_tolerance_minutes: number
-  deleted_at: string | null
 }
 
-export interface FaceProfile {
-  id: string
-  employee_id: string
-  reference_photo_path: string
-  face_embedding: number[]
-  threshold: number
-}
+export type PegawaiStatus = "permanent" | "contract" | "intern" | "resign"
 
-export interface Employee {
-  id: string
-  user_id: string
-  employee_code: string
-  full_name: string
-  address: string
-  department_id: string
-  position_id: string
-  branch_id: string
-  shift_id: string
-  photo_path: string | null
-  department: Department
-  position: Position
-  branch: Branch
-  shift: Shift
-  face_profile: FaceProfile | null
-  today_attendance: unknown | null
-}
+export type PegawaiGender = "L" | "P"
 
-export interface AuthUser {
+export interface PegawaiRow {
   id: string
+  code: string
   name: string
-  username: string
-  email: string
-  email_verified_at: string | null
-  is_active: number
-  deleted_at: string | null
-  roles: Role[]
-  employee: Employee
+  gender: PegawaiGender
+  phone: string
+  birth_place: string
+  birth_date: string
+  address: string
+  position: PegawaiPosition
+  department: PegawaiDepartment
+  branch: PegawaiBranch
+  face_profile: FaceProfile | null
+  join_date: string
+  shift: PegawaiShift
+  status: PegawaiStatus
+  is_trashed: boolean
 }
 
-export interface AuthData {
-  user: AuthUser
-  permissions: string[]
-  access_token: string
-}
-
-export interface LoginResponse {
-  status: boolean
-  message: string
-  data: AuthData
-}
-
-export interface LoginCredentials {
-  username: string
-  password: string
-}
-
-export interface StoredAuth {
-  access_token: string
-  user: AuthUser
-  permissions: string[]
+export interface PegawaiListResponse {
+  total: number
+  rows: PegawaiRow[]
 }

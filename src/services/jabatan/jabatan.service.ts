@@ -40,6 +40,15 @@ export async function fetchJabatan(
   return data
 }
 
+export async function fetchAllJabatan(
+  id: string
+): Promise<JabatanListResponse> {
+  const { data } = await api.get<JabatanListResponse>(
+    `api/reference/jabatan/search-departemen/${id}`
+  )
+  return data
+}
+
 // ── Belum ada endpoint backend, stub console.log dulu ────────────────────────
 
 export async function createJabatan(
