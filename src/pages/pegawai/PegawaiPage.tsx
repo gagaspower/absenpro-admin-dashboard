@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react"
-import { Eye, Pencil, RotateCcw, Search, Trash, Trash2 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Eye, Search, SlidersHorizontal } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Table,
@@ -17,10 +18,6 @@ import {
   type BulkActionOption,
 } from "@/components/data-table/BulkActionBar"
 import {
-  TableFilterPopover,
-  type FilterCheckboxOption,
-} from "@/components/data-table/TableFilterPopover"
-import {
   RowActionsMenu,
   type RowAction,
 } from "@/components/data-table/RowActionsMenu"
@@ -34,32 +31,20 @@ import {
   AlertModal,
   type AlertModalType,
 } from "@/components/feedback/AlertModal"
-import { ConfirmDialog } from "@/components/feedback/ConfirmDialog"
-import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 import { useDebounce } from "@/hooks/useDebounce"
 
-import { JabatanFormDrawer } from "@/components/jabatan/JabatanFormDrawer"
-import { DepartemenFilterCombobox } from "@/components/jabatan/DepartemenFilterCombobox"
+import { PegawaiFilterDrawer } from "@/components/pegawai/PegawaiFilterDrawer"
+
+import { fetchPegawai } from "@/services/pegawai/pegawai.service"
 import {
-  deleteJabatan,
-  deleteMultipleJabatans,
-  fetchJabatan,
-  forceDeleteJabatan,
-  forceDeleteMultipleJabatans,
-  restoreJabatan,
-  restoreMultipleJabatans,
-  type JabatanStatusFilter,
-} from "@/services/jabatan/jabatan.service"
-import type { JabatanRow } from "@/types/jabatan/jabatan.types"
-import { AddButton } from "@/components/AddButton"
+  DEFAULT_PEGAWAI_FILTER,
+  type PegawaiFilterState,
+  type PegawaiRow,
+} from "@/types/pegawai/pegawai.types"
+import { PegawaiStatusBadge } from "@/components/pegawai/PegawaiStatusBadge"
 
-const FILTER_OPTIONS: FilterCheckboxOption[] = [
-  { id: "all", label: "Semua" },
-  { id: "active", label: "Aktif" },
-  { id: "trashed", label: "Sudah dihapus" },
-]
-
-// Bulk action API belum tersedia. UI disiapkan lebih dulu sesuai scope.
+// Endpoint bulk action pegawai belum tersedia dari backend — UI tetap
+// disiapkan sesuai scope, onSubmit-nya sementara cuma nampilin info.
 const BULK_OPTIONS: BulkActionOption[] = [
   { value: "restore", label: "Restore" },
   { value: "delete", label: "Hapus" },
@@ -75,31 +60,22 @@ interface PageAlert {
 
 export function PegawaiPage() {
   const [bulkValue, setBulkValue] = useState("")
-  const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
-  const [departemenFilter, setDepartemenFilter] = useState("all")
+  const [filters, setFilters] = useState<PegawaiFilterState>(
+    DEFAULT_PEGAWAI_FILTER
+  )
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-  const [rows, setRows] = useState<JabatanRow[]>([])
+  const [rows, setRows] = useState<PegawaiRow[]>([])
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editingRow, setEditingRow] = useState<JabatanRow | null>(null)
-  const [isActionLoading, setIsActionLoading] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
-  const [confirmState, setConfirmState] = useState<{
-    type: ConfirmDialogType
-    onConfirm: () => void
-  } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
-  const statusFilter: JabatanStatusFilter =
-    (filterSelected[0] as JabatanStatusFilter) ?? "active"
 
   useEffect(() => {
     const controller = new AbortController()
@@ -108,18 +84,28 @@ export function PegawaiPage() {
       setIsLoading(true)
       setError(null)
       try {
-        const res = await fetchJabatan({
+        const res = await fetchPegawai({
           limit: perPage,
           offset: (page - 1) * perPage,
           search: debouncedSearch || undefined,
-          is_trash: statusFilter,
-          departemen_id: departemenFilter,
+          is_trash: filters.isTrash,
+          ...(filters.departemenId !== "all"
+            ? { department_id: filters.departemenId }
+            : {}),
+          ...(filters.jabatanId !== "all"
+            ? { position_id: filters.jabatanId }
+            : {}),
+          ...(filters.branchId !== "all"
+            ? { branch_id: filters.branchId }
+            : {}),
+          ...(filters.shiftId !== "all" ? { shift_id: filters.shiftId } : {}),
+          ...(filters.status !== "all" ? { status: filters.status } : {}),
         })
         setRows(res.rows)
         setTotal(res.total)
       } catch {
         if (controller.signal.aborted) return
-        setError("Gagal memuat data jabatan. Coba lagi.")
+        setError("Gagal memuat data pegawai. Coba lagi.")
         setRows([])
         setTotal(0)
       } finally {
@@ -129,17 +115,9 @@ export function PegawaiPage() {
 
     load()
     return () => controller.abort()
-  }, [
-    page,
-    perPage,
-    debouncedSearch,
-    statusFilter,
-    departemenFilter,
-    refreshKey,
-  ])
+  }, [page, perPage, debouncedSearch, filters])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
-
   const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
 
   function toggleAll(checked: boolean) {
@@ -164,53 +142,12 @@ export function PegawaiPage() {
 
   function handleBulkSubmit() {
     if (!bulkValue || selectedIds.size === 0) return
-
-    const ids = [...selectedIds]
-
-    const confirmTypeMap: Record<string, ConfirmDialogType> = {
-      restore: "restore",
-      delete: "delete",
-      delete_permanent: "delete_permanent",
-    }
-
-    const confirmType = confirmTypeMap[bulkValue]
-    if (!confirmType) return
-
-    setConfirmState({
-      type: confirmType,
-      onConfirm: async () => {
-        setIsActionLoading(true)
-        try {
-          if (bulkValue === "restore") {
-            await restoreMultipleJabatans(ids)
-            setPageAlert({
-              type: "success",
-              message: "Data berhasil direstore.",
-            })
-          } else if (bulkValue === "delete") {
-            await deleteMultipleJabatans(ids)
-            setPageAlert({ type: "success", message: "Data berhasil dihapus." })
-          } else if (bulkValue === "delete_permanent") {
-            await forceDeleteMultipleJabatans(ids)
-            setPageAlert({
-              type: "success",
-              message: "Data berhasil dihapus permanen.",
-            })
-          }
-          setSelectedIds(new Set())
-          setBulkValue("")
-          setRefreshKey((k) => k + 1)
-          setConfirmState(null)
-        } catch {
-          setPageAlert({
-            type: "error",
-            message: "Gagal menjalankan aksi. Coba lagi.",
-          })
-        } finally {
-          setIsActionLoading(false)
-        }
-      },
+    // Endpoint bulk action pegawai menyusul dari backend.
+    setPageAlert({
+      type: "error",
+      message: "Fitur ini masih menyusul, endpoint belum tersedia.",
     })
+    setBulkValue("")
   }
 
   function handlePerPageChange(value: number) {
@@ -218,108 +155,18 @@ export function PegawaiPage() {
     setPage(1)
   }
 
-  const openCreateDrawer = useCallback(() => {
-    setEditingRow(null)
-    setDrawerOpen(true)
-  }, [])
+  function handleApplyFilters(next: PegawaiFilterState) {
+    setFilters(next)
+    setPage(1)
+  }
 
-  const openEditDrawer = useCallback((row: JabatanRow) => {
-    setEditingRow(row)
-    setDrawerOpen(true)
-  }, [])
-
-  const handleSaved = useCallback((message: string) => {
-    setPageAlert({ type: "success", message })
-    setRefreshKey((k) => k + 1)
-  }, [])
-
-  function rowActions(row: JabatanRow): RowAction[] {
+  function rowActions(row: PegawaiRow): RowAction[] {
     return [
       {
         key: "detail",
         label: "View Detail",
         icon: Eye,
-        onClick: () => console.log("[jabatan] detail", row.id),
-      },
-      {
-        key: "edit",
-        label: "Edit",
-        icon: Pencil,
-        onClick: () => openEditDrawer(row),
-        hidden: row.is_trashed,
-      },
-      {
-        key: "delete",
-        label: "Hapus",
-        icon: Trash2,
-        destructive: true,
-        onClick: () =>
-          setConfirmState({
-            type: "delete",
-            onConfirm: async () => {
-              setIsActionLoading(true)
-              try {
-                await deleteJabatan(row.id)
-                setPageAlert({
-                  type: "success",
-                  message: "Data berhasil dihapus.",
-                })
-                setConfirmState(null)
-                setRefreshKey((k) => k + 1)
-              } finally {
-                setIsActionLoading(false)
-              }
-            },
-          }),
-        hidden: row.is_trashed,
-      },
-      {
-        key: "restore",
-        label: "Restore",
-        icon: RotateCcw,
-        onClick: () =>
-          setConfirmState({
-            type: "restore",
-            onConfirm: async () => {
-              setIsActionLoading(true)
-              try {
-                await restoreJabatan(row.id)
-                setPageAlert({
-                  type: "success",
-                  message: "Data berhasil di restore",
-                })
-                setConfirmState(null)
-                setRefreshKey((k) => k + 1)
-              } finally {
-                setIsActionLoading(false)
-              }
-            },
-          }),
-        hidden: !row.is_trashed,
-      },
-      {
-        key: "delete-permanent",
-        label: "Hapus Permanen",
-        icon: Trash,
-        destructive: true,
-        onClick: () =>
-          setConfirmState({
-            type: "delete_permanent",
-            onConfirm: async () => {
-              setIsActionLoading(true)
-              try {
-                await forceDeleteJabatan(row.id)
-                setPageAlert({
-                  type: "success",
-                  message: "Data telah dihapus permanen.",
-                })
-                setConfirmState(null)
-                setRefreshKey((k) => k + 1)
-              } finally {
-                setIsActionLoading(false)
-              }
-            },
-          }),
+        onClick: () => console.log("[pegawai] detail", row.id),
       },
     ]
   }
@@ -327,10 +174,7 @@ export function PegawaiPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageCard>
-        <PageCardHeader
-          title="Jabatan"
-          actions={<AddButton onClick={openCreateDrawer} />}
-        />
+        <PageCardHeader title="Data Pegawai" />
 
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <BulkActionBar
@@ -342,22 +186,15 @@ export function PegawaiPage() {
           />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <DepartemenFilterCombobox
-              value={departemenFilter}
-              onChange={(value) => {
-                setDepartemenFilter(value)
-                setPage(1)
-              }}
-            />
-            <TableFilterPopover
-              options={FILTER_OPTIONS}
-              selected={filterSelected}
-              singleSelect
-              onSubmit={(sel) => {
-                setFilterSelected(sel.length > 0 ? [sel[0]] : ["active"])
-                setPage(1)
-              }}
-            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFilterDrawerOpen(true)}
+              className="h-10 rounded-[5px] border-[#DDE3E6] text-sm font-normal text-[#374957]"
+            >
+              <SlidersHorizontal className="size-4" />
+              Filter
+            </Button>
             <div className="relative w-full min-w-[220px] md:w-64">
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
               <Input
@@ -366,7 +203,7 @@ export function PegawaiPage() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                placeholder="Cari nama jabatan"
+                placeholder="Cari nama pegawai"
                 className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
               />
             </div>
@@ -386,9 +223,13 @@ export function PegawaiPage() {
                     />
                   </TableHead>
                   <TableHead className="text-[#374957]">Nama</TableHead>
+                  <TableHead className="text-[#374957]">J/K</TableHead>
+                  <TableHead className="text-[#374957]">Jabatan</TableHead>
                   <TableHead className="text-[#374957]">Departemen</TableHead>
-                  <TableHead className="text-[#374957]">Deskripsi</TableHead>
-                  <TableHead className="text-[#374957]">Status</TableHead>
+                  <TableHead className="text-[#374957]">
+                    Status Pegawai
+                  </TableHead>
+                  <TableHead className="text-[#374957]">Aktif/Tidak</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
@@ -397,7 +238,7 @@ export function PegawaiPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={8}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Memuat data...
@@ -406,7 +247,7 @@ export function PegawaiPage() {
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={8}
                       className="py-10 text-center text-sm text-red-500"
                     >
                       {error}
@@ -415,7 +256,7 @@ export function PegawaiPage() {
                 ) : rows.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={8}
                       className="py-10 text-center text-sm text-gray-400"
                     >
                       Tidak ada data.
@@ -437,10 +278,16 @@ export function PegawaiPage() {
                         {row.name}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.department_name ?? "-"}
+                        {row.gender}
                       </TableCell>
                       <TableCell className="text-[#374957]">
-                        {row.desc ?? "-"}
+                        {row.position.name}
+                      </TableCell>
+                      <TableCell className="text-[#374957]">
+                        {row.department.name}
+                      </TableCell>
+                      <TableCell>
+                        <PegawaiStatusBadge status={row.status} />
                       </TableCell>
                       <TableCell>
                         <StatusBadge active={!row.is_trashed} />
@@ -466,27 +313,12 @@ export function PegawaiPage() {
         </div>
       </PageCard>
 
-      <JabatanFormDrawer
-        open={drawerOpen}
-        jabatan={editingRow}
-        onOpenChange={setDrawerOpen}
-        onCreated={handleSaved}
-        onError={(message) => setPageAlert({ type: "error", message })}
+      <PegawaiFilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        filters={filters}
+        onApply={handleApplyFilters}
       />
-
-      {confirmState && (
-        <ConfirmDialog
-          open
-          type={confirmState.type}
-          isLoading={isActionLoading}
-          onOpenChange={(open) => {
-            if (!open) setConfirmState(null)
-          }}
-          onConfirm={() => {
-            confirmState.onConfirm()
-          }}
-        />
-      )}
 
       {pageAlert && (
         <AlertModal

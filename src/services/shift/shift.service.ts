@@ -43,8 +43,9 @@ export async function fetchShift(
 }
 
 export async function fetchAllShift(): Promise<ShiftAllDataResponse> {
+  // FIX: sebelumnya manggil endpoint lokasi-kerja (branch), salah service.
   const { data } = await api.get<ShiftAllDataResponse>(
-    `api/reference/lokasi-kerja/all-data`
+    `api/reference/jadwal-kerja/all-data`
   )
   return data
 }

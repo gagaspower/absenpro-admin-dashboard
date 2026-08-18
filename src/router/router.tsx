@@ -10,6 +10,7 @@ import { DepartemenPage } from "@/pages/departemen/DepartemenPage"
 import JabatanPage from "@/pages/jabatan/JabatanPage"
 import ShiftPage from "@/pages/shift/ShiftPage"
 import JenisCutiPage from "@/pages/jenis_cuti/JenisCutiPage"
+import PegawaiPage from "@/pages/pegawai/PegawaiPage"
 
 export function AppRouter() {
   return (
@@ -30,10 +31,7 @@ export function AppRouter() {
           <Route path="jabatan" element={<JabatanPage />} />
           <Route path="jam-kerja" element={<ShiftPage />} />
           <Route path="jenis-izin" element={<JenisCutiPage />} />
-          <Route
-            path="karyawan"
-            element={<PlaceholderPage title="Karyawan" />}
-          />
+          <Route path="karyawan" element={<PegawaiPage />} />
           <Route path="absensi" element={<PlaceholderPage title="Absensi" />} />
           <Route
             path="cuti-izin"

@@ -1,5 +1,8 @@
 import { api } from "@/lib/axios"
-import type { PegawaiListResponse } from "@/types/pegawai/pegawai.types"
+import type {
+  PegawaiListResponse,
+  PegawaiStatus,
+} from "@/types/pegawai/pegawai.types"
 
 export type PegawaiStatusFilter = "all" | "active" | "trashed"
 
@@ -11,6 +14,7 @@ export interface FetchPegawaiParams {
   position_id?: string
   branch_id?: string
   shift_id?: string
+  status?: PegawaiStatus
   is_trash?: PegawaiStatusFilter
 }
 
@@ -18,7 +22,7 @@ export interface FetchPegawaiParams {
  * Ambil daftar pegawai dari backend.
  *
  * Paginasi pakai limit & offset. search, department_id, position_id,
- * branch_id, shift_id opsional — hanya dikirim kalau ada nilainya.
+ * branch_id, shift_id, status opsional — hanya dikirim kalau ada nilainya.
  * is_trash default "all" sesuai dokumentasi endpoint.
  */
 export async function fetchPegawai(
@@ -32,6 +36,7 @@ export async function fetchPegawai(
     position_id,
     branch_id,
     shift_id,
+    status,
     is_trash = "all",
   } = params
 
@@ -45,6 +50,7 @@ export async function fetchPegawai(
       ...(position_id ? { position_id } : {}),
       ...(branch_id ? { branch_id } : {}),
       ...(shift_id ? { shift_id } : {}),
+      ...(status ? { status } : {}),
     },
   })
 

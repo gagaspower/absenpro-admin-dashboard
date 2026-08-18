@@ -54,3 +54,27 @@ export interface PegawaiListResponse {
   total: number
   rows: PegawaiRow[]
 }
+
+// ── Filter drawer state ──────────────────────────────────────────────────
+// "all" dipakai sebagai nilai default utk tiap combobox/select (belum
+// dipilih = gak dikirim ke backend sebagai param).
+export type PegawaiStatusFilterValue = PegawaiStatus | "all"
+export type PegawaiTrashFilterValue = "all" | "active" | "trashed"
+
+export interface PegawaiFilterState {
+  departemenId: string
+  jabatanId: string
+  branchId: string
+  shiftId: string
+  status: PegawaiStatusFilterValue
+  isTrash: PegawaiTrashFilterValue
+}
+
+export const DEFAULT_PEGAWAI_FILTER: PegawaiFilterState = {
+  departemenId: "all",
+  jabatanId: "all",
+  branchId: "all",
+  shiftId: "all",
+  status: "all",
+  isTrash: "active",
+}
