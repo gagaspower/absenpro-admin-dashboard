@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react"
-import { Eye, Search, SlidersHorizontal } from "lucide-react"
+import {
+  Eye,
+  Pencil,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
+  Trash,
+  Trash2,
+} from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -165,6 +173,9 @@ export function PegawaiPage() {
     setPage(1)
   }
 
+  // Endpoint edit/delete/restore/force-delete pegawai belum tersedia dari
+  // backend. Row action tetap ditampilkan sesuai scope UI, action-nya
+  // sementara console.log dulu — GANTI ke service call begitu endpoint ready.
   function rowActions(row: PegawaiRow): RowAction[] {
     return [
       {
@@ -172,6 +183,35 @@ export function PegawaiPage() {
         label: "View Detail",
         icon: Eye,
         onClick: () => console.log("[pegawai] detail", row.id),
+      },
+      {
+        key: "edit",
+        label: "Edit",
+        icon: Pencil,
+        onClick: () => console.log("[pegawai] edit", row.id),
+        hidden: row.is_trashed,
+      },
+      {
+        key: "delete",
+        label: "Hapus",
+        icon: Trash2,
+        destructive: true,
+        onClick: () => console.log("[pegawai] delete", row.id),
+        hidden: row.is_trashed,
+      },
+      {
+        key: "restore",
+        label: "Restore",
+        icon: RotateCcw,
+        onClick: () => console.log("[pegawai] restore", row.id),
+        hidden: !row.is_trashed,
+      },
+      {
+        key: "delete-permanent",
+        label: "Hapus Permanen",
+        icon: Trash,
+        destructive: true,
+        onClick: () => console.log("[pegawai] force delete", row.id),
       },
     ]
   }
