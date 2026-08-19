@@ -1,5 +1,7 @@
 import { api } from "@/lib/axios"
 import type {
+  CreatePegawaiPayload,
+  CreatePegawaiResponse,
   PegawaiListResponse,
   PegawaiStatus,
 } from "@/types/pegawai/pegawai.types"
@@ -54,5 +56,19 @@ export async function fetchPegawai(
     },
   })
 
+  return data
+}
+
+/**
+ * Create pegawai — sekalian create data user (username/password/role) di
+ * satu endpoint yang sama.
+ */
+export async function createPegawai(
+  payload: CreatePegawaiPayload
+): Promise<CreatePegawaiResponse> {
+  const { data } = await api.post<CreatePegawaiResponse>(
+    "api/reference/pegawai",
+    payload
+  )
   return data
 }

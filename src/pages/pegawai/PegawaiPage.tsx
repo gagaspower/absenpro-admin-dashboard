@@ -34,6 +34,7 @@ import {
 import { useDebounce } from "@/hooks/useDebounce"
 
 import { PegawaiFilterDrawer } from "@/components/pegawai/PegawaiFilterDrawer"
+import { PegawaiFormDrawer } from "@/components/pegawai/PegawaiFormDrawer"
 
 import { fetchPegawai } from "@/services/pegawai/pegawai.service"
 import {
@@ -42,9 +43,11 @@ import {
   type PegawaiRow,
 } from "@/types/pegawai/pegawai.types"
 import { PegawaiStatusBadge } from "@/components/pegawai/PegawaiStatusBadge"
+import { AddButton } from "@/components/AddButton"
 
 // Endpoint bulk action pegawai belum tersedia dari backend — UI tetap
 // disiapkan sesuai scope, onSubmit-nya sementara cuma nampilin info.
+// JANGAN hilangkan/hide tombol ini walau endpoint blm ready — masih tahap develop.
 const BULK_OPTIONS: BulkActionOption[] = [
   { value: "restore", label: "Restore" },
   { value: "delete", label: "Hapus" },
@@ -64,10 +67,12 @@ export function PegawaiPage() {
     DEFAULT_PEGAWAI_FILTER
   )
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+  const [formDrawerOpen, setFormDrawerOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const [rows, setRows] = useState<PegawaiRow[]>([])
   const [total, setTotal] = useState(0)
@@ -115,7 +120,7 @@ export function PegawaiPage() {
 
     load()
     return () => controller.abort()
-  }, [page, perPage, debouncedSearch, filters])
+  }, [page, perPage, debouncedSearch, filters, refreshKey])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
   const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
@@ -174,7 +179,10 @@ export function PegawaiPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageCard>
-        <PageCardHeader title="Data Pegawai" />
+        <PageCardHeader
+          title="Data Pegawai"
+          actions={<AddButton onClick={() => setFormDrawerOpen(true)} />}
+        />
 
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <BulkActionBar
@@ -318,6 +326,17 @@ export function PegawaiPage() {
         onOpenChange={setFilterDrawerOpen}
         filters={filters}
         onApply={handleApplyFilters}
+      />
+
+      <PegawaiFormDrawer
+        open={formDrawerOpen}
+        onOpenChange={setFormDrawerOpen}
+        onCreated={(message) => {
+          setSelectedIds(new Set())
+          setRefreshKey((k) => k + 1)
+          setPageAlert({ type: "success", message })
+        }}
+        onError={(message) => setPageAlert({ type: "error", message })}
       />
 
       {pageAlert && (

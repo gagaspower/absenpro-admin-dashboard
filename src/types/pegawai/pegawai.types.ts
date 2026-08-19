@@ -78,3 +78,45 @@ export const DEFAULT_PEGAWAI_FILTER: PegawaiFilterState = {
   status: "all",
   isTrash: "active",
 }
+
+// ── Create form ───────────────────────────────────────────────────────────
+// NOTE: rule backend utk create ('employee_status') pakai 'resigned',
+// beda dgn PegawaiStatus hasil read ('resign'). Ngikut rule backend
+// literal spy lolos validasi Rule::in([...]) pas submit.
+export type PegawaiCreateEmployeeStatus =
+  "permanent" | "contract" | "intern" | "resigned"
+
+/**
+ * Payload POST api/reference/pegawai — create pegawai sekalian create user.
+ * password_confirmation wajib ada (rule 'confirmed' Laravel butuh field
+ * <field>_confirmation), walau gak muncul di contoh body dokumentasi.
+ */
+export interface CreatePegawaiPayload {
+  full_name: string
+  username: string
+  email: string
+  password: string
+  password_confirmation: string
+  is_active: boolean
+
+  role_id: string
+
+  employee_code: string
+  phone?: string
+  gender: PegawaiGender
+  birth_place?: string
+  birth_date: string
+  address?: string
+
+  department_id: string
+  position_id: string
+  branch_id: string
+  shift_id?: string
+
+  join_date: string
+  employee_status: PegawaiCreateEmployeeStatus
+}
+
+export interface CreatePegawaiResponse {
+  message?: string
+}
