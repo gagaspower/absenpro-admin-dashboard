@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import {
   Eye,
+  Inbox,
   Pencil,
   RotateCcw,
   Search,
@@ -34,6 +35,7 @@ import {
   TablePagination,
 } from "@/components/data-table/TableFooter"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
+import { TableEmptyState } from "@/components/data-table/TableEmptyState"
 import { PageCard, PageCardHeader } from "@/components/PageCard"
 import {
   AlertModal,
@@ -133,6 +135,16 @@ export function PegawaiPage() {
   const totalPages = Math.max(1, Math.ceil(total / perPage))
   const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
 
+  // Aktif kalau user lagi cari atau filter drawer diubah dari default.
+  const hasActiveFilter =
+    Boolean(debouncedSearch) ||
+    JSON.stringify(filters) !== JSON.stringify(DEFAULT_PEGAWAI_FILTER)
+
+  // Kosong total (belum ada data sama sekali, bukan hasil filter/search) →
+  // sembunyikan toolbar + tabel + pagination, tampilkan empty state + tombol tambah.
+  const showEmptyState =
+    !isLoading && !error && rows.length === 0 && !hasActiveFilter
+
   function toggleAll(checked: boolean) {
     setSelectedIds((prev) => {
       const next = new Set(prev)
@@ -221,144 +233,166 @@ export function PegawaiPage() {
       <PageCard>
         <PageCardHeader
           title="Data Pegawai"
-          actions={<AddButton onClick={() => setFormDrawerOpen(true)} />}
+          actions={
+            !showEmptyState && (
+              <AddButton onClick={() => setFormDrawerOpen(true)} />
+            )
+          }
         />
 
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <BulkActionBar
-            options={BULK_OPTIONS}
-            value={bulkValue}
-            onValueChange={(value) => setBulkValue(value)}
-            onSubmit={handleBulkSubmit}
-            disabled={selectedIds.size === 0}
+        {showEmptyState ? (
+          <TableEmptyState
+            icon={Inbox}
+            title="Belum ada data pegawai"
+            description="Tambahkan pegawai pertama untuk mulai mengelola data."
+            action={<AddButton onClick={() => setFormDrawerOpen(true)} />}
           />
+        ) : (
+          <>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <BulkActionBar
+                options={BULK_OPTIONS}
+                value={bulkValue}
+                onValueChange={(value) => setBulkValue(value)}
+                onSubmit={handleBulkSubmit}
+                disabled={selectedIds.size === 0}
+              />
 
-          <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setFilterDrawerOpen(true)}
-              className="h-10 rounded-[5px] border-[#DDE3E6] text-sm font-normal text-[#374957]"
-            >
-              <SlidersHorizontal className="size-4" />
-              Filter
-            </Button>
-            <div className="relative w-full min-w-[220px] md:w-64">
-              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
-              <Input
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value)
-                  setPage(1)
-                }}
-                placeholder="Cari nama pegawai"
-                className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
+              <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setFilterDrawerOpen(true)}
+                  className="h-10 rounded-[5px] border-[#DDE3E6] text-sm font-normal text-[#374957]"
+                >
+                  <SlidersHorizontal className="size-4" />
+                  Filter
+                </Button>
+                <div className="relative w-full min-w-[220px] md:w-64">
+                  <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value)
+                      setPage(1)
+                    }}
+                    placeholder="Cari nama pegawai"
+                    className="h-10 rounded-[5px] border-[#EAEAEA] pl-9 text-sm text-[#374957] placeholder:text-gray-400 focus-visible:ring-0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-[5px] border border-[#EAEAEA] bg-white">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-[#EAEAEA] bg-[#F7FCFA] hover:bg-[#F7FCFA]">
+                      <TableHead className="w-12 px-5">
+                        <Checkbox
+                          checked={allChecked}
+                          onCheckedChange={(checked) =>
+                            toggleAll(checked === true)
+                          }
+                          aria-label="Pilih semua"
+                        />
+                      </TableHead>
+                      <TableHead className="text-[#374957]">Nama</TableHead>
+                      <TableHead className="text-[#374957]">J/K</TableHead>
+                      <TableHead className="text-[#374957]">Jabatan</TableHead>
+                      <TableHead className="text-[#374957]">
+                        Departemen
+                      </TableHead>
+                      <TableHead className="text-[#374957]">
+                        Status Pegawai
+                      </TableHead>
+                      <TableHead className="text-[#374957]">
+                        Aktif/Tidak
+                      </TableHead>
+                      <TableHead className="w-12" />
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody>
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={8}
+                          className="py-10 text-center text-sm text-gray-400"
+                        >
+                          Memuat data...
+                        </TableCell>
+                      </TableRow>
+                    ) : error ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={8}
+                          className="py-10 text-center text-sm text-red-500"
+                        >
+                          {error}
+                        </TableCell>
+                      </TableRow>
+                    ) : rows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8}>
+                          <TableEmptyState
+                            icon={Search}
+                            title="Data tidak ditemukan"
+                            description="Coba ubah kata kunci pencarian atau filter."
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      rows.map((row) => (
+                        <TableRow key={row.id} className="border-[#EAEAEA]">
+                          <TableCell className="px-5">
+                            <Checkbox
+                              checked={selectedIds.has(row.id)}
+                              onCheckedChange={(checked) =>
+                                toggleRow(row.id, checked === true)
+                              }
+                              aria-label={`Pilih ${row.name}`}
+                            />
+                          </TableCell>
+                          <TableCell className="text-[#374957]">
+                            {row.name}
+                          </TableCell>
+                          <TableCell className="text-[#374957]">
+                            {row.gender}
+                          </TableCell>
+                          <TableCell className="text-[#374957]">
+                            {row.position.name}
+                          </TableCell>
+                          <TableCell className="text-[#374957]">
+                            {row.department.name}
+                          </TableCell>
+                          <TableCell>
+                            <PegawaiStatusBadge status={row.status} />
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge active={!row.is_trashed} />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <RowActionsMenu actions={rowActions(row)} />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-col-reverse items-center justify-between gap-3 md:flex-row">
+              <PerPageSelect value={perPage} onChange={handlePerPageChange} />
+              <TablePagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
               />
             </div>
-          </div>
-        </div>
-
-        <div className="mt-4 overflow-hidden rounded-[5px] border border-[#EAEAEA] bg-white">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-[#EAEAEA] bg-[#F7FCFA] hover:bg-[#F7FCFA]">
-                  <TableHead className="w-12 px-5">
-                    <Checkbox
-                      checked={allChecked}
-                      onCheckedChange={(checked) => toggleAll(checked === true)}
-                      aria-label="Pilih semua"
-                    />
-                  </TableHead>
-                  <TableHead className="text-[#374957]">Nama</TableHead>
-                  <TableHead className="text-[#374957]">J/K</TableHead>
-                  <TableHead className="text-[#374957]">Jabatan</TableHead>
-                  <TableHead className="text-[#374957]">Departemen</TableHead>
-                  <TableHead className="text-[#374957]">
-                    Status Pegawai
-                  </TableHead>
-                  <TableHead className="text-[#374957]">Aktif/Tidak</TableHead>
-                  <TableHead className="w-12" />
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="py-10 text-center text-sm text-gray-400"
-                    >
-                      Memuat data...
-                    </TableCell>
-                  </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="py-10 text-center text-sm text-red-500"
-                    >
-                      {error}
-                    </TableCell>
-                  </TableRow>
-                ) : rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="py-10 text-center text-sm text-gray-400"
-                    >
-                      Tidak ada data.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  rows.map((row) => (
-                    <TableRow key={row.id} className="border-[#EAEAEA]">
-                      <TableCell className="px-5">
-                        <Checkbox
-                          checked={selectedIds.has(row.id)}
-                          onCheckedChange={(checked) =>
-                            toggleRow(row.id, checked === true)
-                          }
-                          aria-label={`Pilih ${row.name}`}
-                        />
-                      </TableCell>
-                      <TableCell className="text-[#374957]">
-                        {row.name}
-                      </TableCell>
-                      <TableCell className="text-[#374957]">
-                        {row.gender}
-                      </TableCell>
-                      <TableCell className="text-[#374957]">
-                        {row.position.name}
-                      </TableCell>
-                      <TableCell className="text-[#374957]">
-                        {row.department.name}
-                      </TableCell>
-                      <TableCell>
-                        <PegawaiStatusBadge status={row.status} />
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge active={!row.is_trashed} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <RowActionsMenu actions={rowActions(row)} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-col-reverse items-center justify-between gap-3 md:flex-row">
-          <PerPageSelect value={perPage} onChange={handlePerPageChange} />
-          <TablePagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
-        </div>
+          </>
+        )}
       </PageCard>
 
       <PegawaiFilterDrawer
