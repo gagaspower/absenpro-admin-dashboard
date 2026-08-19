@@ -78,10 +78,6 @@ interface PageAlert {
   message: string
 }
 
-function yaTidak(value: boolean) {
-  return value ? "Ya" : "Tidak"
-}
-
 export function JenisCutiPage() {
   const [bulkValue, setBulkValue] = useState("")
   const [filterSelected, setFilterSelected] = useState<string[]>(["active"])

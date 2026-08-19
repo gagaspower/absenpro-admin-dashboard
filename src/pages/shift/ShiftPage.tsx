@@ -73,11 +73,6 @@ interface PageAlert {
   message: string
 }
 
-function formatRange(start?: string, end?: string) {
-  if (!start && !end) return "-"
-  return `${start ?? "-"} - ${end ?? "-"}`
-}
-
 export function ShiftPage() {
   const [bulkValue, setBulkValue] = useState("")
   const [filterSelected, setFilterSelected] = useState<string[]>(["active"])

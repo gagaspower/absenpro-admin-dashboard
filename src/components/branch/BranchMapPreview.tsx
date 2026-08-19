@@ -88,11 +88,9 @@ export function BranchMapPreview({
       /**
        * Pastikan map sudah loaded.
        */
-      if (currentMap._loaded) {
-        currentMap.setView(target, 15, {
-          animate: false,
-        })
-      }
+      currentMap.setView(target, 15, {
+        animate: false,
+      })
 
       /**
        * Backup kecil untuk drawer/modal.
@@ -110,11 +108,9 @@ export function BranchMapPreview({
           animate: false,
         })
 
-        if (latestMap._loaded) {
-          latestMap.setView(target, 15, {
-            animate: false,
-          })
-        }
+        latestMap.setView(target, 15, {
+          animate: false,
+        })
       }, 100)
     })
   }
