@@ -17,10 +17,6 @@ import { Input } from "@/components/ui/input"
 import { useMobile } from "@/hooks/use-mobile"
 
 import { DepartemenFormCombobox } from "@/components/pegawai/DepartemenFormCombobox"
-import { JabatanFormCombobox } from "@/components/pegawai/JabatanFormCombobox"
-import { BranchFormCombobox } from "@/components/pegawai/BranchFormCombobox"
-import { ShiftFormCombobox } from "@/components/pegawai/ShiftFormCombobox"
-import { RoleFormCombobox } from "@/components/pegawai/RoleFormCombobox"
 
 import { createPegawai } from "@/services/pegawai/pegawai.service"
 import type {
@@ -28,6 +24,11 @@ import type {
   PegawaiCreateEmployeeStatus,
   PegawaiGender,
 } from "@/types/pegawai/pegawai.types"
+import { DatePicker } from "../ui/date-picker"
+import { RoleFormCombobox } from "./RoleFormCombobox"
+import { JabatanFormCombobox } from "./JabatanFormCombobox"
+import { BranchFormCombobox } from "./BranchFormCombobox"
+import { ShiftFormCombobox } from "./ShiftFormCombobox"
 
 type FormValues = {
   full_name: string
@@ -348,7 +349,7 @@ export function PegawaiFormDrawer({
                 <Field label="Role" error={errors.role_id} required>
                   <RoleFormCombobox
                     value={values.role_id}
-                    onChange={(value) => changeValue("role_id", value)}
+                    onChange={(value: string) => changeValue("role_id", value)}
                     error={Boolean(errors.role_id)}
                   />
                 </Field>
@@ -420,12 +421,10 @@ export function PegawaiFormDrawer({
                   />
                 </Field>
                 <Field label="Tanggal Lahir" error={errors.birth_date} required>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={values.birth_date}
-                    onChange={(e) => changeValue("birth_date", e.target.value)}
-                    aria-invalid={Boolean(errors.birth_date)}
-                    className="h-10 rounded-[5px] border-[#DDE3E6]"
+                    onChange={(value) => changeValue("birth_date", value)}
+                    error={Boolean(errors.birth_date)}
                   />
                 </Field>
                 <div className="sm:col-span-2">
@@ -453,7 +452,9 @@ export function PegawaiFormDrawer({
                 <Field label="Jabatan" error={errors.position_id} required>
                   <JabatanFormCombobox
                     value={values.position_id}
-                    onChange={(value) => changeValue("position_id", value)}
+                    onChange={(value: string) =>
+                      changeValue("position_id", value)
+                    }
                     departemenId={values.department_id}
                     error={Boolean(errors.position_id)}
                   />
@@ -474,7 +475,7 @@ export function PegawaiFormDrawer({
                 <Field label="Shift" error={errors.shift_id}>
                   <ShiftFormCombobox
                     value={values.shift_id}
-                    onChange={(value) => changeValue("shift_id", value)}
+                    onChange={(value: string) => changeValue("shift_id", value)}
                   />
                 </Field>
               </div>
@@ -487,12 +488,10 @@ export function PegawaiFormDrawer({
                   error={errors.join_date}
                   required
                 >
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={values.join_date}
-                    onChange={(e) => changeValue("join_date", e.target.value)}
-                    aria-invalid={Boolean(errors.join_date)}
-                    className="h-10 rounded-[5px] border-[#DDE3E6]"
+                    onChange={(value) => changeValue("join_date", value)}
+                    error={Boolean(errors.join_date)}
                   />
                 </Field>
                 <Field
