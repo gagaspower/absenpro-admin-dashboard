@@ -60,10 +60,11 @@ export function DepartemenFilterCombobox({
       <PopoverTrigger
         render={
           <Button
+            type="button"
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="h-10 w-full min-w-[220px] justify-between rounded-[5px] border-[#DDE3E6] text-sm font-normal text-[#374957] md:w-56"
+            className="h-10 w-full justify-between rounded-[5px] border-[#DDE3E6] text-sm font-normal text-[#374957]"
           />
         }
       >
