@@ -2,6 +2,8 @@ import type { FaceProfile } from "@/types/face_profile/face_profile.types"
 import type { DepartemenRow } from "@/types/departemen/departemen.types"
 import type { JabatanRow } from "@/types/jabatan/jabatan.types"
 import type { BranchRow } from "@/types/branch/branch.types"
+import type { UserRow } from "@/types/user/user.types"
+import type { RoleOption } from "../roles/roles.types"
 
 // Derive dari type existing pakai Pick, biar tetap 1 sumber kebenaran
 // (field nested response ini emang cuma subset dari row type aslinya).
@@ -48,6 +50,8 @@ export interface PegawaiRow {
   shift: PegawaiShift
   status: PegawaiStatus
   is_trashed: boolean
+  user: UserRow | null
+  role: RoleOption | null
 }
 
 export interface PegawaiListResponse {
