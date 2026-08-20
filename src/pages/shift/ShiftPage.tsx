@@ -453,7 +453,7 @@ export function ShiftPage() {
 
                   <TableBody>
                     {isLoading ? (
-                      <TableLoadingState colSpan={6} />
+                      <TableLoadingState colSpan={8} />
                     ) : error ? (
                       <TableRow>
                         <TableCell

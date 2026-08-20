@@ -34,6 +34,11 @@ const JabatanPage = lazy(() => import("@/pages/jabatan/JabatanPage"))
 const ShiftPage = lazy(() => import("@/pages/shift/ShiftPage"))
 const JenisCutiPage = lazy(() => import("@/pages/jenis_cuti/JenisCutiPage"))
 const PegawaiPage = lazy(() => import("@/pages/pegawai/PegawaiPage"))
+const ResetPasswordPage = lazy(() =>
+  import("@/pages/auth/ResetPasswordPage").then((m) => ({
+    default: m.ResetPasswordPage,
+  }))
+)
 
 function PageFallback() {
   return (
@@ -82,6 +87,7 @@ export function AppRouter() {
               path="cuti-izin"
               element={<PlaceholderPage title="Cuti & Izin" />}
             />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
           </Route>
         </Route>
 

@@ -97,3 +97,13 @@ export interface StoredAuth {
   user: AuthUser
   permissions: string[]
 }
+
+export interface ResetPasswordPayload {
+  password: string
+  password_confirmation: string
+}
+
+export interface ResetPasswordResponse {
+  status: boolean
+  message?: string
+}

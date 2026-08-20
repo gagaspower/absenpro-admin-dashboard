@@ -1,5 +1,10 @@
 import { api } from "@/lib/axios"
-import type { LoginCredentials, LoginResponse } from "@/types/auth/auth.types"
+import type {
+  LoginCredentials,
+  LoginResponse,
+  ResetPasswordPayload,
+  ResetPasswordResponse,
+} from "@/types/auth/auth.types"
 
 export async function loginRequest(
   credentials: LoginCredentials
@@ -17,6 +22,26 @@ export async function logoutRequest(): Promise<{
 }> {
   const { data } = await api.post<{ status: boolean; message?: string }>(
     "api/reference/auth/revoke-session"
+  )
+  return data
+}
+
+export async function resetPasswordRequest(
+  payload: ResetPasswordPayload
+): Promise<ResetPasswordResponse> {
+  const { data } = await api.put<ResetPasswordResponse>(
+    "api/reference/auth/reset-password",
+    payload
+  )
+  return data
+}
+
+export async function logoutAllRequest(): Promise<{
+  status: boolean
+  message?: string
+}> {
+  const { data } = await api.post<{ status: boolean; message?: string }>(
+    "api/reference/auth/revoke-all-session"
   )
   return data
 }

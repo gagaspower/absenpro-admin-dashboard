@@ -145,7 +145,10 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             align="end"
             className="w-44 rounded-[8px] border-[#D9D9D9] shadow-md"
           >
-            <DropdownMenuItem className="cursor-pointer gap-2.5 text-gray-700 hover:text-[#2B8CE5] focus:text-[#2B8CE5]">
+            <DropdownMenuItem
+              className="cursor-pointer gap-2.5 text-gray-700 hover:text-[#2B8CE5] focus:text-[#2B8CE5]"
+              onClick={() => navigate("/dashboard/reset-password")}
+            >
               <KeyRound className="size-4" />
               Reset Password
             </DropdownMenuItem>
