@@ -46,7 +46,15 @@ import { useDebounce } from "@/hooks/useDebounce"
 import { PegawaiFilterDrawer } from "@/components/pegawai/PegawaiFilterDrawer"
 import { PegawaiFormDrawer } from "@/components/pegawai/PegawaiFormDrawer"
 
-import { fetchPegawai } from "@/services/pegawai/pegawai.service"
+import {
+  deleteMultiplePegawai,
+  deletePegawai,
+  fetchPegawai,
+  forceDeleteMultiplePegawai,
+  forceDeletePegawai,
+  restoreMultiplePegawai,
+  restorePegawai,
+} from "@/services/pegawai/pegawai.service"
 import {
   DEFAULT_PEGAWAI_FILTER,
   type PegawaiFilterState,
@@ -54,6 +62,10 @@ import {
 } from "@/types/pegawai/pegawai.types"
 import { PegawaiStatusBadge } from "@/components/pegawai/PegawaiStatusBadge"
 import { AddButton } from "@/components/AddButton"
+import {
+  ConfirmDialog,
+  type ConfirmDialogType,
+} from "@/components/feedback/ConfirmDialog"
 
 // Endpoint bulk action pegawai belum tersedia dari backend — UI tetap
 // disiapkan sesuai scope, onSubmit-nya sementara cuma nampilin info.
@@ -90,6 +102,11 @@ export function PegawaiPage() {
   const [error, setError] = useState<string | null>(null)
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
   const [editTarget, setEditTarget] = useState<PegawaiRow | null>(null)
+  const [isActionLoading, setIsActionLoading] = useState(false)
+  const [confirmState, setConfirmState] = useState<{
+    type: ConfirmDialogType
+    onConfirm: () => void
+  } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
@@ -168,12 +185,53 @@ export function PegawaiPage() {
 
   function handleBulkSubmit() {
     if (!bulkValue || selectedIds.size === 0) return
-    // Endpoint bulk action pegawai menyusul dari backend.
-    setPageAlert({
-      type: "error",
-      message: "Fitur ini masih menyusul, endpoint belum tersedia.",
+
+    const ids = [...selectedIds]
+
+    const confirmTypeMap: Record<string, ConfirmDialogType> = {
+      restore: "restore",
+      delete: "delete",
+      delete_permanent: "delete_permanent",
+    }
+
+    const confirmType = confirmTypeMap[bulkValue]
+    if (!confirmType) return
+
+    setConfirmState({
+      type: confirmType,
+      onConfirm: async () => {
+        setIsActionLoading(true)
+        try {
+          if (bulkValue === "restore") {
+            await restoreMultiplePegawai(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil direstore.",
+            })
+          } else if (bulkValue === "delete") {
+            await deleteMultiplePegawai(ids)
+            setPageAlert({ type: "success", message: "Data berhasil dihapus." })
+          } else if (bulkValue === "delete_permanent") {
+            await forceDeleteMultiplePegawai(ids)
+            setPageAlert({
+              type: "success",
+              message: "Data berhasil dihapus permanen.",
+            })
+          }
+          setSelectedIds(new Set())
+          setBulkValue("")
+          setRefreshKey((k) => k + 1)
+          setConfirmState(null)
+        } catch {
+          setPageAlert({
+            type: "error",
+            message: "Gagal menjalankan aksi. Coba lagi.",
+          })
+        } finally {
+          setIsActionLoading(false)
+        }
+      },
     })
-    setBulkValue("")
   }
 
   function handlePerPageChange(value: number) {
@@ -212,14 +270,68 @@ export function PegawaiPage() {
         label: "Hapus",
         icon: Trash2,
         destructive: true,
-        onClick: () => console.log("[pegawai] delete", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "delete",
+            onConfirm: async () => {
+              setIsActionLoading(true)
+              try {
+                await deletePegawai(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setConfirmState(null)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil dihapus.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal menghapus data. Coba lagi.",
+                })
+              } finally {
+                setIsActionLoading(false)
+              }
+            },
+          }),
         hidden: row.is_trashed,
       },
       {
         key: "restore",
         label: "Restore",
         icon: RotateCcw,
-        onClick: () => console.log("[pegawai] restore", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "restore",
+            onConfirm: async () => {
+              setIsActionLoading(true)
+              try {
+                await restorePegawai(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setConfirmState(null)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil direstore.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal merestore data. Coba lagi.",
+                })
+              } finally {
+                setIsActionLoading(false)
+              }
+            },
+          }),
         hidden: !row.is_trashed,
       },
       {
@@ -227,7 +339,34 @@ export function PegawaiPage() {
         label: "Hapus Permanen",
         icon: Trash,
         destructive: true,
-        onClick: () => console.log("[pegawai] force delete", row.id),
+        onClick: () =>
+          setConfirmState({
+            type: "delete_permanent",
+            onConfirm: async () => {
+              setIsActionLoading(true)
+              try {
+                await forceDeletePegawai(row.id)
+                setSelectedIds((prev) => {
+                  const next = new Set(prev)
+                  next.delete(row.id)
+                  return next
+                })
+                setRefreshKey((k) => k + 1)
+                setConfirmState(null)
+                setPageAlert({
+                  type: "success",
+                  message: "Data berhasil dihapus permanen.",
+                })
+              } catch {
+                setPageAlert({
+                  type: "error",
+                  message: "Gagal menghapus permanen. Coba lagi.",
+                })
+              } finally {
+                setIsActionLoading(false)
+              }
+            },
+          }),
       },
     ]
   }
@@ -433,6 +572,17 @@ export function PegawaiPage() {
         }}
         onError={(message) => setPageAlert({ type: "error", message })}
       />
+      {confirmState && (
+        <ConfirmDialog
+          open
+          type={confirmState.type}
+          isLoading={isActionLoading}
+          onOpenChange={(open) => {
+            if (!open) setConfirmState(null)
+          }}
+          onConfirm={() => confirmState.onConfirm()}
+        />
+      )}
 
       {pageAlert && (
         <AlertModal

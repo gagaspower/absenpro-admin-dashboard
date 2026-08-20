@@ -97,3 +97,29 @@ export async function updatePegawai(
 
   return data
 }
+
+export async function deletePegawai(id: string): Promise<void> {
+  await api.delete(`api/reference/pegawai/${id}`)
+}
+
+export async function restorePegawai(id: string): Promise<void> {
+  await api.post(`api/reference/pegawai/restore/${id}`)
+}
+
+export async function forceDeletePegawai(id: string): Promise<void> {
+  await api.delete(`api/reference/pegawai/force-delete/${id}`)
+}
+
+export async function restoreMultiplePegawai(ids: string[]): Promise<void> {
+  await api.post("api/reference/pegawai/restore-multiple", { ids })
+}
+
+export async function deleteMultiplePegawai(ids: string[]): Promise<void> {
+  await api.delete("api/reference/pegawai/multiple", { data: { ids } })
+}
+
+export async function forceDeleteMultiplePegawai(ids: string[]): Promise<void> {
+  await api.delete("api/reference/pegawai/force-delete-multiple", {
+    data: { ids },
+  })
+}
