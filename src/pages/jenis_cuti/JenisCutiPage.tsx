@@ -67,6 +67,7 @@ import {
   IsPaidBadge,
   RequiresAttachmentBadge,
 } from "@/components/jenis_cuti/JenisCutiBadges"
+import TableLoadingState from "@/components/data-table/TableLoadingState"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -441,14 +442,7 @@ export function JenisCutiPage() {
 
                   <TableBody>
                     {isLoading ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={12}
-                          className="py-10 text-center text-sm text-gray-400"
-                        >
-                          Memuat data...
-                        </TableCell>
-                      </TableRow>
+                      <TableLoadingState colSpan={6} />
                     ) : error ? (
                       <TableRow>
                         <TableCell

@@ -60,6 +60,7 @@ import type { DepartemenRow } from "@/types/departemen/departemen.types"
 import { AddButton } from "@/components/AddButton"
 import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 import { TableEmptyState } from "@/components/data-table/TableEmptyState"
+import TableLoadingState from "@/components/data-table/TableLoadingState"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -438,14 +439,7 @@ export function DepartemenPage() {
 
                   <TableBody>
                     {isLoading ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className="py-10 text-center text-sm text-gray-400"
-                        >
-                          Memuat data...
-                        </TableCell>
-                      </TableRow>
+                      <TableLoadingState colSpan={6} />
                     ) : error ? (
                       <TableRow>
                         <TableCell

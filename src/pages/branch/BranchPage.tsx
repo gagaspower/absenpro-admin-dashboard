@@ -46,6 +46,7 @@ import {
 } from "@/components/feedback/ConfirmDialog"
 import { StatusBadge } from "@/components/data-table/StatusBadge"
 import { TableEmptyState } from "@/components/data-table/TableEmptyState"
+import { TableLoadingState } from "@/components/data-table/TableLoadingState"
 import { BranchFormDrawer } from "@/components/branch/BranchFormDrawer"
 import { PageCard, PageCardHeader } from "@/components/PageCard"
 import { useDebounce } from "@/hooks/useDebounce"
@@ -446,14 +447,7 @@ export function BranchPage() {
 
                   <TableBody>
                     {isLoading ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={6}
-                          className="py-10 text-center text-sm text-gray-400"
-                        >
-                          Memuat data...
-                        </TableCell>
-                      </TableRow>
+                      <TableLoadingState colSpan={6} />
                     ) : error ? (
                       <TableRow>
                         <TableCell

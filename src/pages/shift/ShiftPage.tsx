@@ -62,6 +62,7 @@ import {
 } from "@/services/shift/shift.service"
 import type { ShiftRow } from "@/types/shift/shift.types"
 import { AddButton } from "@/components/AddButton"
+import TableLoadingState from "@/components/data-table/TableLoadingState"
 
 const BULK_OPTIONS: BulkActionOption[] = [
   { value: "restore", label: "Restore" },
@@ -452,14 +453,7 @@ export function ShiftPage() {
 
                   <TableBody>
                     {isLoading ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={8}
-                          className="py-10 text-center text-sm text-gray-400"
-                        >
-                          Memuat data...
-                        </TableCell>
-                      </TableRow>
+                      <TableLoadingState colSpan={6} />
                     ) : error ? (
                       <TableRow>
                         <TableCell

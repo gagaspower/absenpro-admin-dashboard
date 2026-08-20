@@ -66,6 +66,7 @@ import {
   ConfirmDialog,
   type ConfirmDialogType,
 } from "@/components/feedback/ConfirmDialog"
+import TableLoadingState from "@/components/data-table/TableLoadingState"
 
 // Endpoint bulk action pegawai belum tersedia dari backend — UI tetap
 // disiapkan sesuai scope, onSubmit-nya sementara cuma nampilin info.
@@ -470,14 +471,7 @@ export function PegawaiPage() {
 
                   <TableBody>
                     {isLoading ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={8}
-                          className="py-10 text-center text-sm text-gray-400"
-                        >
-                          Memuat data...
-                        </TableCell>
-                      </TableRow>
+                      <TableLoadingState colSpan={6} />
                     ) : error ? (
                       <TableRow>
                         <TableCell

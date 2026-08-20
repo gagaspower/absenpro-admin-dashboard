@@ -61,6 +61,7 @@ import {
 } from "@/services/jabatan/jabatan.service"
 import type { JabatanRow } from "@/types/jabatan/jabatan.types"
 import { AddButton } from "@/components/AddButton"
+import TableLoadingState from "@/components/data-table/TableLoadingState"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -430,14 +431,7 @@ export function JabatanPage() {
 
                   <TableBody>
                     {isLoading ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={6}
-                          className="py-10 text-center text-sm text-gray-400"
-                        >
-                          Memuat data...
-                        </TableCell>
-                      </TableRow>
+                      <TableLoadingState colSpan={6} />
                     ) : error ? (
                       <TableRow>
                         <TableCell
