@@ -39,6 +39,11 @@ const ResetPasswordPage = lazy(() =>
     default: m.ResetPasswordPage,
   }))
 )
+const NotFoundPage = lazy(() =>
+  import("@/pages/errors/NotFoundPage").then((m) => ({
+    default: m.NotFoundPage,
+  }))
+)
 
 function PageFallback() {
   return (
@@ -91,7 +96,7 @@ export function AppRouter() {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   )
