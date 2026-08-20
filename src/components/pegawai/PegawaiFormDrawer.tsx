@@ -312,12 +312,6 @@ export function PegawaiFormDrawer({
     setErrors({})
   }
 
-  // Isi ulang form & reset loading state combobox tiap drawer dibuka: kosong
-  // buat create, ke-prefill dari row buat edit. NOTE: field akun login
-  // (username/email/role_id/is_active) gak ada di PegawaiRow (data list),
-  // jadi dibiarin kosong/default meski section-nya tetap tampil & wajib
-  // diisi ulang — payload update butuh field itu. Ganti jadi prefill
-  // beneran begitu backend expose data akun di response detail pegawai.
   useEffect(() => {
     if (!open) return
 
@@ -326,6 +320,11 @@ export function PegawaiFormDrawer({
     if (isEdit && pegawai) {
       setValues({
         ...EMPTY_VALUES,
+        username: pegawai.user?.username ?? "",
+        email: pegawai.user?.email ?? "",
+        is_active: pegawai.user ? Boolean(pegawai.user.is_active) : true,
+        role_id: pegawai.role?.id ?? "",
+
         full_name: pegawai.name,
         employee_code: pegawai.code,
         phone: pegawai.phone ?? "",
@@ -517,8 +516,12 @@ export function PegawaiFormDrawer({
                     onChange={(e) => changeValue("username", e.target.value)}
                     placeholder="budi.santoso"
                     maxLength={50}
+                    readOnly={isEdit}
                     aria-invalid={Boolean(errors.username)}
-                    className="h-10 rounded-[5px] border-[#DDE3E6]"
+                    className={cn(
+                      "h-10 rounded-[5px] border-[#DDE3E6]",
+                      isEdit && "cursor-not-allowed bg-gray-50 text-gray-500"
+                    )}
                   />
                 </Field>
                 <Field label="Email" error={errors.email} required>

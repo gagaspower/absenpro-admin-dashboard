@@ -13,10 +13,13 @@ export type PegawaiDepartment = Pick<DepartemenRow, "id" | "name">
 
 export type PegawaiBranch = Pick<BranchRow, "id" | "name">
 
-// ShiftRow (types/shift/shift.types.ts) pakai nama field beda total
-// (jam_kerja, jam_absen_masuk, dst), bukan cuma subset — jadi gak bisa
-// di-derive pakai Pick dari ShiftRow. Type baru di bawah ini ngikut
-// field asli yang dikirim backend di response pegawai.
+export interface PegawaiRole extends RoleOption {
+  pivot?: {
+    user_id: string
+    role_id: string
+  }
+}
+
 export interface PegawaiShift {
   id: string
   name: string
@@ -51,7 +54,7 @@ export interface PegawaiRow {
   status: PegawaiStatus
   is_trashed: boolean
   user: UserRow | null
-  role: RoleOption | null
+  role: PegawaiRole | null
 }
 
 export interface PegawaiListResponse {
