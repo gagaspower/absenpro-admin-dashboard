@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import * as yup from "yup"
 import { LoaderCircle, X } from "lucide-react"
 
@@ -23,12 +23,16 @@ import type {
   CreatePegawaiPayload,
   PegawaiCreateEmployeeStatus,
   PegawaiGender,
+  PegawaiRow,
+  PegawaiStatus,
 } from "@/types/pegawai/pegawai.types"
 import { DatePicker } from "../ui/date-picker"
 import { RoleFormCombobox } from "./RoleFormCombobox"
 import { JabatanFormCombobox } from "./JabatanFormCombobox"
 import { BranchFormCombobox } from "./BranchFormCombobox"
 import { ShiftFormCombobox } from "./ShiftFormCombobox"
+
+export type PegawaiFormMode = "create" | "edit"
 
 type FormValues = {
   full_name: string
@@ -97,34 +101,22 @@ const STATUS_OPTIONS: { value: PegawaiCreateEmployeeStatus; label: string }[] =
     { value: "resigned", label: "Resign" },
   ]
 
-// Sinkron dgn Request::rules() backend — bagian yg bisa dicek di client aja
-// (unique/exists tetap divalidasi server, gak bisa dicek Yup).
-const pegawaiSchema = yup.object({
-  username: yup
-    .string()
-    .required("Username wajib diisi.")
-    .min(3, "Username minimal 3 karakter.")
-    .max(50, "Username maksimal 50 karakter."),
-  email: yup
-    .string()
-    .required("Email wajib diisi.")
-    .email("Format email tidak valid."),
-  password: yup
-    .string()
-    .required("Password wajib diisi.")
-    .min(6, "Password minimal 6 karakter.")
-    .max(25, "Password maksimal 25 karakter.")
-    .matches(
-      /^[A-Za-z0-9]+$/,
-      "Password hanya boleh berisi huruf dan angka tanpa spasi atau karakter khusus."
-    ),
-  password_confirmation: yup
-    .string()
-    .required("Konfirmasi password wajib diisi.")
-    .oneOf([yup.ref("password")], "Konfirmasi password tidak sesuai."),
-  is_active: yup.boolean().required(),
-  role_id: yup.string().required("Role user wajib dipilih."),
+// Backend read pakai 'resign', create/edit form pakai 'resigned' —
+// samain di sini pas prefill dari data row.
+function mapRowStatusToFormStatus(
+  status: PegawaiStatus
+): PegawaiCreateEmployeeStatus {
+  return status === "resign" ? "resigned" : status
+}
 
+function toDateInputValue(raw: string | null | undefined): string {
+  if (!raw) return ""
+  const match = raw.match(/^\d{4}-\d{2}-\d{2}/)
+  return match ? match[0] : ""
+}
+
+// Field data pribadi/penempatan/kepegawaian dipakai bareng di create & edit.
+const dataPribadiPenempatanSchema = {
   employee_code: yup
     .string()
     .required("NIK wajib diisi.")
@@ -158,11 +150,50 @@ const pegawaiSchema = yup.object({
       "Status pegawai tidak valid."
     )
     .required("Status pegawai wajib dipilih."),
+}
+
+// Sinkron dgn Request::rules() backend — bagian yg bisa dicek di client aja
+// (unique/exists tetap divalidasi server, gak bisa dicek Yup).
+const pegawaiCreateSchema = yup.object({
+  username: yup
+    .string()
+    .required("Username wajib diisi.")
+    .min(3, "Username minimal 3 karakter.")
+    .max(50, "Username maksimal 50 karakter."),
+  email: yup
+    .string()
+    .required("Email wajib diisi.")
+    .email("Format email tidak valid."),
+  password: yup
+    .string()
+    .required("Password wajib diisi.")
+    .min(6, "Password minimal 6 karakter.")
+    .max(25, "Password maksimal 25 karakter.")
+    .matches(
+      /^[A-Za-z0-9]+$/,
+      "Password hanya boleh berisi huruf dan angka tanpa spasi atau karakter khusus."
+    ),
+  password_confirmation: yup
+    .string()
+    .required("Konfirmasi password wajib diisi.")
+    .oneOf([yup.ref("password")], "Konfirmasi password tidak sesuai."),
+  is_active: yup.boolean().required(),
+  role_id: yup.string().required("Role user wajib dipilih."),
+
+  ...dataPribadiPenempatanSchema,
+})
+
+// Mode edit gak nyentuh akun login (data itu gak ikut dikirim di response
+// list pegawai, dan endpoint update-nya sendiri belum ada dari backend).
+const pegawaiEditSchema = yup.object({
+  ...dataPribadiPenempatanSchema,
 })
 
 interface PegawaiFormDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  mode?: PegawaiFormMode
+  pegawai?: PegawaiRow | null
   onCreated: (message: string) => void
   onError?: (message: string) => void
 }
@@ -170,6 +201,8 @@ interface PegawaiFormDrawerProps {
 export function PegawaiFormDrawer({
   open,
   onOpenChange,
+  mode = "create",
+  pegawai = null,
   onCreated,
   onError,
 }: PegawaiFormDrawerProps) {
@@ -178,10 +211,43 @@ export function PegawaiFormDrawer({
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const isEdit = mode === "edit"
+
   function resetForm() {
     setValues(EMPTY_VALUES)
     setErrors({})
   }
+
+  // Isi ulang form tiap drawer dibuka: kosong buat create, ke-prefill dari
+  // row buat edit. Field akun login (username/email/password/role) gak ada
+  // di data row, jadi dibiarin kosong & section-nya disembunyiin di edit.
+  useEffect(() => {
+    if (!open) return
+
+    if (isEdit && pegawai) {
+      setValues({
+        ...EMPTY_VALUES,
+        full_name: pegawai.name,
+        employee_code: pegawai.code,
+        phone: pegawai.phone ?? "",
+        gender: pegawai.gender,
+        birth_place: pegawai.birth_place ?? "",
+        birth_date: toDateInputValue(pegawai.birth_date),
+        address: pegawai.address ?? "",
+
+        department_id: pegawai.department.id,
+        position_id: pegawai.position.id,
+        branch_id: pegawai.branch.id,
+        shift_id: pegawai.shift?.id ?? "",
+
+        join_date: toDateInputValue(pegawai.join_date),
+        employee_status: mapRowStatusToFormStatus(pegawai.status),
+      })
+    } else {
+      setValues(EMPTY_VALUES)
+    }
+    setErrors({})
+  }, [open, isEdit, pegawai])
 
   function changeValue<K extends keyof FormValues>(
     field: K,
@@ -209,9 +275,18 @@ export function PegawaiFormDrawer({
     event.preventDefault()
 
     try {
-      await pegawaiSchema.validate(values, { abortEarly: false })
+      const schema = isEdit ? pegawaiEditSchema : pegawaiCreateSchema
+      await schema.validate(values, { abortEarly: false })
       setErrors({})
       setIsSubmitting(true)
+
+      if (isEdit) {
+        // TODO: sambungin ke updatePegawai() begitu endpoint edit pegawai
+        // ready dari backend. Form udah siap & ke-prefill, tinggal ganti
+        // blok ini jadi service call beneran.
+        onError?.("Fitur edit pegawai masih menyusul, endpoint belum tersedia.")
+        return
+      }
 
       const payload: CreatePegawaiPayload = {
         full_name: values.full_name.trim(),
@@ -256,7 +331,9 @@ export function PegawaiFormDrawer({
         })
         setErrors(nextErrors)
       } else {
-        onError?.("Gagal menyimpan pegawai.")
+        onError?.(
+          isEdit ? "Gagal memperbarui pegawai." : "Gagal menyimpan pegawai."
+        )
       }
     } finally {
       setIsSubmitting(false)
@@ -278,10 +355,12 @@ export function PegawaiFormDrawer({
           <div className="flex items-start justify-between gap-4">
             <div>
               <DrawerTitle className="text-lg font-semibold text-[#374957]">
-                Tambah Pegawai
+                {isEdit ? "Edit Pegawai" : "Tambah Pegawai"}
               </DrawerTitle>
               <DrawerDescription className="mt-1 text-sm text-[#71808B]">
-                Lengkapi data pegawai. Akun login pegawai dibuat sekalian.
+                {isEdit
+                  ? "Perbarui data pegawai."
+                  : "Lengkapi data pegawai. Akun login pegawai dibuat sekalian."}
               </DrawerDescription>
             </div>
             <DrawerClose
@@ -296,74 +375,80 @@ export function PegawaiFormDrawer({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
-            <FormSection title="Akun Login">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Username" error={errors.username} required>
-                  <Input
-                    value={values.username}
-                    onChange={(e) => changeValue("username", e.target.value)}
-                    placeholder="budi.santoso"
-                    maxLength={50}
-                    aria-invalid={Boolean(errors.username)}
-                    className="h-10 rounded-[5px] border-[#DDE3E6]"
-                  />
-                </Field>
-                <Field label="Email" error={errors.email} required>
-                  <Input
-                    type="email"
-                    value={values.email}
-                    onChange={(e) => changeValue("email", e.target.value)}
-                    placeholder="budi.santoso@example.com"
-                    aria-invalid={Boolean(errors.email)}
-                    className="h-10 rounded-[5px] border-[#DDE3E6]"
-                  />
-                </Field>
-                <Field label="Password" error={errors.password} required>
-                  <Input
-                    type="password"
-                    value={values.password}
-                    onChange={(e) => changeValue("password", e.target.value)}
-                    placeholder="Minimal 6 karakter"
-                    maxLength={25}
-                    aria-invalid={Boolean(errors.password)}
-                    className="h-10 rounded-[5px] border-[#DDE3E6]"
-                  />
-                </Field>
-                <Field
-                  label="Konfirmasi Password"
-                  error={errors.password_confirmation}
-                  required
-                >
-                  <Input
-                    type="password"
-                    value={values.password_confirmation}
-                    onChange={(e) =>
-                      changeValue("password_confirmation", e.target.value)
-                    }
-                    placeholder="Ulangi password"
-                    maxLength={25}
-                    aria-invalid={Boolean(errors.password_confirmation)}
-                    className="h-10 rounded-[5px] border-[#DDE3E6]"
-                  />
-                </Field>
-                <Field label="Role" error={errors.role_id} required>
-                  <RoleFormCombobox
-                    value={values.role_id}
-                    onChange={(value: string) => changeValue("role_id", value)}
-                    error={Boolean(errors.role_id)}
-                  />
-                </Field>
-                <label className="flex items-center gap-2 pt-6">
-                  <Checkbox
-                    checked={values.is_active}
-                    onCheckedChange={(checked) =>
-                      changeValue("is_active", checked === true)
-                    }
-                  />
-                  <span className="text-sm text-[#374957]">Aktifkan akun</span>
-                </label>
-              </div>
-            </FormSection>
+            {!isEdit && (
+              <FormSection title="Akun Login">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Username" error={errors.username} required>
+                    <Input
+                      value={values.username}
+                      onChange={(e) => changeValue("username", e.target.value)}
+                      placeholder="budi.santoso"
+                      maxLength={50}
+                      aria-invalid={Boolean(errors.username)}
+                      className="h-10 rounded-[5px] border-[#DDE3E6]"
+                    />
+                  </Field>
+                  <Field label="Email" error={errors.email} required>
+                    <Input
+                      type="email"
+                      value={values.email}
+                      onChange={(e) => changeValue("email", e.target.value)}
+                      placeholder="budi.santoso@example.com"
+                      aria-invalid={Boolean(errors.email)}
+                      className="h-10 rounded-[5px] border-[#DDE3E6]"
+                    />
+                  </Field>
+                  <Field label="Password" error={errors.password} required>
+                    <Input
+                      type="password"
+                      value={values.password}
+                      onChange={(e) => changeValue("password", e.target.value)}
+                      placeholder="Minimal 6 karakter"
+                      maxLength={25}
+                      aria-invalid={Boolean(errors.password)}
+                      className="h-10 rounded-[5px] border-[#DDE3E6]"
+                    />
+                  </Field>
+                  <Field
+                    label="Konfirmasi Password"
+                    error={errors.password_confirmation}
+                    required
+                  >
+                    <Input
+                      type="password"
+                      value={values.password_confirmation}
+                      onChange={(e) =>
+                        changeValue("password_confirmation", e.target.value)
+                      }
+                      placeholder="Ulangi password"
+                      maxLength={25}
+                      aria-invalid={Boolean(errors.password_confirmation)}
+                      className="h-10 rounded-[5px] border-[#DDE3E6]"
+                    />
+                  </Field>
+                  <Field label="Role" error={errors.role_id} required>
+                    <RoleFormCombobox
+                      value={values.role_id}
+                      onChange={(value: string) =>
+                        changeValue("role_id", value)
+                      }
+                      error={Boolean(errors.role_id)}
+                    />
+                  </Field>
+                  <label className="flex items-center gap-2 pt-6">
+                    <Checkbox
+                      checked={values.is_active}
+                      onCheckedChange={(checked) =>
+                        changeValue("is_active", checked === true)
+                      }
+                    />
+                    <span className="text-sm text-[#374957]">
+                      Aktifkan akun
+                    </span>
+                  </label>
+                </div>
+              </FormSection>
+            )}
 
             <FormSection title="Data Pribadi">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -527,7 +612,7 @@ export function PegawaiFormDrawer({
               className="h-10 flex-1 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0]"
             >
               {isSubmitting && <LoaderCircle className="size-4 animate-spin" />}
-              Simpan
+              {isEdit ? "Simpan Perubahan" : "Simpan"}
             </Button>
           </div>
         </form>

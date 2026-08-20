@@ -89,6 +89,7 @@ export function PegawaiPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
+  const [editTarget, setEditTarget] = useState<PegawaiRow | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
@@ -200,7 +201,10 @@ export function PegawaiPage() {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        onClick: () => console.log("[pegawai] edit", row.id),
+        onClick: () => {
+          setEditTarget(row)
+          setFormDrawerOpen(true)
+        },
         hidden: row.is_trashed,
       },
       {
@@ -235,7 +239,12 @@ export function PegawaiPage() {
           title="Data Pegawai"
           actions={
             !showEmptyState && (
-              <AddButton onClick={() => setFormDrawerOpen(true)} />
+              <AddButton
+                onClick={() => {
+                  setEditTarget(null)
+                  setFormDrawerOpen(true)
+                }}
+              />
             )
           }
         />
@@ -245,7 +254,14 @@ export function PegawaiPage() {
             icon={Inbox}
             title="Belum ada data pegawai"
             description="Tambahkan pegawai pertama untuk mulai mengelola data."
-            action={<AddButton onClick={() => setFormDrawerOpen(true)} />}
+            action={
+              <AddButton
+                onClick={() => {
+                  setEditTarget(null)
+                  setFormDrawerOpen(true)
+                }}
+              />
+            }
           />
         ) : (
           <>
@@ -404,7 +420,12 @@ export function PegawaiPage() {
 
       <PegawaiFormDrawer
         open={formDrawerOpen}
-        onOpenChange={setFormDrawerOpen}
+        onOpenChange={(next) => {
+          setFormDrawerOpen(next)
+          if (!next) setEditTarget(null)
+        }}
+        mode={editTarget ? "edit" : "create"}
+        pegawai={editTarget}
         onCreated={(message) => {
           setSelectedIds(new Set())
           setRefreshKey((k) => k + 1)

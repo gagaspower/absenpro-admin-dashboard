@@ -27,7 +27,9 @@ export function DatePicker({
   disabled = false,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
-  const selectedDate = value ? new Date(`${value}T00:00:00`) : undefined
+  const parsedDate = value ? new Date(`${value}T00:00:00`) : undefined
+  const selectedDate =
+    parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : undefined
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
