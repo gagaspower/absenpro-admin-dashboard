@@ -109,10 +109,39 @@ function mapRowStatusToFormStatus(
   return status === "resign" ? "resigned" : status
 }
 
+// taro deket mapRowStatusToFormStatus
+const ID_MONTHS: Record<string, string> = {
+  januari: "01",
+  februari: "02",
+  maret: "03",
+  april: "04",
+  mei: "05",
+  juni: "06",
+  juli: "07",
+  agustus: "08",
+  september: "09",
+  oktober: "10",
+  november: "11",
+  desember: "12",
+}
+
+// Backend kirim date-only ("2024-01-01"), full timestamp
+// ("2024-01-01T00:00:00Z"), ATAU long date Indonesia ("27 Agustus 1992")
+// — DatePicker cuma nerima "yyyy-MM-dd" polos. Handle ketiganya.
 function toDateInputValue(raw: string | null | undefined): string {
   if (!raw) return ""
-  const match = raw.match(/^\d{4}-\d{2}-\d{2}/)
-  return match ? match[0] : ""
+
+  const isoMatch = raw.match(/^\d{4}-\d{2}-\d{2}/)
+  if (isoMatch) return isoMatch[0]
+
+  const idMatch = raw.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/)
+  if (idMatch) {
+    const [, day, monthName, year] = idMatch
+    const month = ID_MONTHS[monthName.toLowerCase()]
+    if (month) return `${year}-${month}-${day.padStart(2, "0")}`
+  }
+
+  return ""
 }
 
 // Field data pribadi/penempatan/kepegawaian dipakai bareng di create & edit.
