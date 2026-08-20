@@ -101,6 +101,22 @@ const STATUS_OPTIONS: { value: PegawaiCreateEmployeeStatus; label: string }[] =
     { value: "resigned", label: "Resign" },
   ]
 
+type ComboboxLoadingState = {
+  role: boolean
+  departemen: boolean
+  jabatan: boolean
+  branch: boolean
+  shift: boolean
+}
+
+const INITIAL_LOADING_STATE: ComboboxLoadingState = {
+  role: true,
+  departemen: true,
+  jabatan: false,
+  branch: true,
+  shift: true,
+}
+
 // Backend read pakai 'resign', create/edit form pakai 'resigned' —
 // samain di sini pas prefill dari data row.
 function mapRowStatusToFormStatus(
@@ -239,13 +255,41 @@ export function PegawaiFormDrawer({
   const [values, setValues] = useState<FormValues>(EMPTY_VALUES)
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [dataLoading, setDataLoading] = useState<ComboboxLoadingState>(
+    INITIAL_LOADING_STATE
+  )
+
+  function setLoadingFor(key: keyof ComboboxLoadingState) {
+    return (isLoading: boolean) =>
+      setDataLoading((current) => ({ ...current, [key]: isLoading }))
+  }
 
   const isEdit = mode === "edit"
+
+  const isReferenceDataLoading =
+    dataLoading.departemen ||
+    dataLoading.jabatan ||
+    dataLoading.branch ||
+    dataLoading.shift ||
+    (!isEdit && dataLoading.role)
 
   function resetForm() {
     setValues(EMPTY_VALUES)
     setErrors({})
   }
+
+  useEffect(() => {
+    if (!open) return
+
+    setDataLoading(INITIAL_LOADING_STATE) // ⬅️ baru
+
+    if (isEdit && pegawai) {
+      setValues({ ...EMPTY_VALUES /* ... */ })
+    } else {
+      setValues(EMPTY_VALUES)
+    }
+    setErrors({})
+  }, [open, isEdit, pegawai])
 
   // Isi ulang form tiap drawer dibuka: kosong buat create, ke-prefill dari
   // row buat edit. Field akun login (username/email/password/role) gak ada
@@ -462,6 +506,7 @@ export function PegawaiFormDrawer({
                         changeValue("role_id", value)
                       }
                       error={Boolean(errors.role_id)}
+                      onLoadingChange={setLoadingFor("role")}
                     />
                   </Field>
                   <label className="flex items-center gap-2 pt-6">
@@ -561,6 +606,7 @@ export function PegawaiFormDrawer({
                     value={values.department_id}
                     onChange={changeDepartemen}
                     error={Boolean(errors.department_id)}
+                    onLoadingChange={setLoadingFor("departemen")}
                   />
                 </Field>
                 <Field label="Jabatan" error={errors.position_id} required>
@@ -571,6 +617,7 @@ export function PegawaiFormDrawer({
                     }
                     departemenId={values.department_id}
                     error={Boolean(errors.position_id)}
+                    onLoadingChange={setLoadingFor("jabatan")}
                   />
                 </Field>
                 <Field
@@ -584,12 +631,14 @@ export function PegawaiFormDrawer({
                       changeValue("branch_id", value)
                     }
                     error={Boolean(errors.branch_id)}
+                    onLoadingChange={setLoadingFor("branch")}
                   />
                 </Field>
                 <Field label="Shift" error={errors.shift_id}>
                   <ShiftFormCombobox
                     value={values.shift_id}
                     onChange={(value: string) => changeValue("shift_id", value)}
+                    onLoadingChange={setLoadingFor("shift")}
                   />
                 </Field>
               </div>
@@ -635,10 +684,15 @@ export function PegawaiFormDrawer({
             >
               Batal
             </DrawerClose>
+            {isReferenceDataLoading && (
+              <span className="self-center text-xs text-gray-400">
+                Memuat data referensi...
+              </span>
+            )}
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="h-10 flex-1 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0]"
+              disabled={isSubmitting || isReferenceDataLoading}
+              className="h-10 flex-1 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting && <LoaderCircle className="size-4 animate-spin" />}
               {isEdit ? "Simpan Perubahan" : "Simpan"}

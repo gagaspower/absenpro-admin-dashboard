@@ -23,17 +23,23 @@ interface BranchFormComboboxProps {
   value: string // branch id, "" jika belum dipilih
   onChange: (value: string) => void
   error?: boolean
+  onLoadingChange?: (isLoading: boolean) => void
 }
 
 export function BranchFormCombobox({
   value,
   onChange,
   error = false,
+  onLoadingChange,
 }: BranchFormComboboxProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<BranchOption[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
+  useEffect(() => {
+    onLoadingChange?.(isLoading)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading])
   useEffect(() => {
     let active = true
     setIsLoading(true)

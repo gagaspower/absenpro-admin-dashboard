@@ -20,19 +20,27 @@ import type { DepartemenOption } from "@/types/departemen/departemen.types"
 import { fetchDepartemenAllData } from "@/services/departemen/departemen.service"
 
 interface DepartemenFormComboboxProps {
-  value: string // departemen id, "" jika belum dipilih
+  value: string
   onChange: (value: string) => void
   error?: boolean
+  onLoadingChange?: (isLoading: boolean) => void
 }
 
 export function DepartemenFormCombobox({
   value,
   onChange,
   error = false,
+  onLoadingChange, // ⬅️ baru
 }: DepartemenFormComboboxProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<DepartemenOption[]>([])
   const [isLoading, setIsLoading] = useState(false)
+
+  // ⬅️ baru — lapor tiap kali isLoading berubah
+  useEffect(() => {
+    onLoadingChange?.(isLoading)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading])
 
   useEffect(() => {
     let active = true

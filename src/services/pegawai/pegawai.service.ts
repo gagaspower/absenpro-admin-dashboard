@@ -4,6 +4,8 @@ import type {
   CreatePegawaiResponse,
   PegawaiListResponse,
   PegawaiStatus,
+  UpdatePegawaiPayload,
+  UpdatePegawaiResponse,
 } from "@/types/pegawai/pegawai.types"
 
 export type PegawaiStatusFilter = "all" | "active" | "trashed"
@@ -70,5 +72,28 @@ export async function createPegawai(
     "api/reference/pegawai",
     payload
   )
+  return data
+}
+
+/**
+ * Update data pegawai.
+ *
+ * Endpoint:
+ * PUT api/reference/pegawai/{id}
+ *
+ * Update mencakup:
+ * - user
+ * - role
+ * - employee
+ */
+export async function updatePegawai(
+  id: string,
+  payload: UpdatePegawaiPayload
+): Promise<UpdatePegawaiResponse> {
+  const { data } = await api.put<UpdatePegawaiResponse>(
+    `api/reference/pegawai/${id}`,
+    payload
+  )
+
   return data
 }

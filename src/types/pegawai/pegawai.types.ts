@@ -120,3 +120,38 @@ export interface CreatePegawaiPayload {
 export interface CreatePegawaiResponse {
   message?: string
 }
+
+export type PegawaiUpdateEmployeeStatus =
+  "permanent" | "contract" | "intern" | "resigned"
+
+export interface UpdatePegawaiPayload {
+  full_name: string
+  username: string
+  email: string
+  is_active: boolean
+
+  password?: string
+
+  role_id: string
+
+  employee_code: string
+  phone?: string
+  gender: PegawaiGender
+  birth_place?: string
+  birth_date: string
+  address?: string
+
+  department_id: string
+  position_id: string
+  branch_id: string
+  shift_id?: string
+
+  join_date: string
+  employee_status: PegawaiUpdateEmployeeStatus
+}
+
+export interface UpdatePegawaiResponse {
+  success: boolean
+  message: string
+  data: unknown
+}

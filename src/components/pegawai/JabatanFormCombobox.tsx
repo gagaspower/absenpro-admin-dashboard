@@ -22,8 +22,9 @@ import { fetchAllJabatan } from "@/services/jabatan/jabatan.service"
 interface JabatanFormComboboxProps {
   value: string // jabatan/position id, "" jika belum dipilih
   onChange: (value: string) => void
-  departemenId: string // "" kalau departemen blm dipilih — combobox disabled
+  departemenId: string
   error?: boolean
+  onLoadingChange?: (isLoading: boolean) => void
 }
 
 export function JabatanFormCombobox({
@@ -31,12 +32,18 @@ export function JabatanFormCombobox({
   onChange,
   departemenId,
   error = false,
+  onLoadingChange,
 }: JabatanFormComboboxProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<JabatanOption[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const disabled = !departemenId
+
+  useEffect(() => {
+    onLoadingChange?.(isLoading)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading])
 
   useEffect(() => {
     if (disabled) {

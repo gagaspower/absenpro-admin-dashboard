@@ -23,16 +23,22 @@ interface RoleFormComboboxProps {
   value: string // role id, "" jika belum dipilih
   onChange: (value: string) => void
   error?: boolean
+  onLoadingChange?: (isLoading: boolean) => void
 }
 
 export function RoleFormCombobox({
   value,
   onChange,
   error = false,
+  onLoadingChange,
 }: RoleFormComboboxProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<RoleOption[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  useEffect(() => {
+    onLoadingChange?.(isLoading)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading])
 
   useEffect(() => {
     let active = true

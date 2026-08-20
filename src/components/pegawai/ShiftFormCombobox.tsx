@@ -20,14 +20,25 @@ import type { ShiftOption } from "@/types/shift/shift.types"
 import { fetchAllShift } from "@/services/shift/shift.service"
 
 interface ShiftFormComboboxProps {
-  value: string // shift id, "" = tidak dipilih (shift_id nullable di backend)
+  value: string
   onChange: (value: string) => void
+
+  onLoadingChange?: (isLoading: boolean) => void
 }
 
-export function ShiftFormCombobox({ value, onChange }: ShiftFormComboboxProps) {
+export function ShiftFormCombobox({
+  value,
+  onChange,
+  onLoadingChange,
+}: ShiftFormComboboxProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<ShiftOption[]>([])
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    onLoadingChange?.(isLoading)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading])
 
   useEffect(() => {
     let active = true
