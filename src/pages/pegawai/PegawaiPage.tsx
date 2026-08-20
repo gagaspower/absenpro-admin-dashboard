@@ -68,9 +68,6 @@ import {
 } from "@/components/feedback/ConfirmDialog"
 import TableLoadingState from "@/components/data-table/TableLoadingState"
 
-// Endpoint bulk action pegawai belum tersedia dari backend — UI tetap
-// disiapkan sesuai scope, onSubmit-nya sementara cuma nampilin info.
-// JANGAN hilangkan/hide tombol ini walau endpoint blm ready — masih tahap develop.
 const BULK_OPTIONS: BulkActionOption[] = [
   { value: "restore", label: "Restore" },
   { value: "delete", label: "Hapus" },
@@ -154,13 +151,10 @@ export function PegawaiPage() {
   const totalPages = Math.max(1, Math.ceil(total / perPage))
   const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
 
-  // Aktif kalau user lagi cari atau filter drawer diubah dari default.
   const hasActiveFilter =
     Boolean(debouncedSearch) ||
     JSON.stringify(filters) !== JSON.stringify(DEFAULT_PEGAWAI_FILTER)
 
-  // Kosong total (belum ada data sama sekali, bukan hasil filter/search) →
-  // sembunyikan toolbar + tabel + pagination, tampilkan empty state + tombol tambah.
   const showEmptyState =
     !isLoading && !error && rows.length === 0 && !hasActiveFilter
 
@@ -245,9 +239,6 @@ export function PegawaiPage() {
     setPage(1)
   }
 
-  // Endpoint edit/delete/restore/force-delete pegawai belum tersedia dari
-  // backend. Row action tetap ditampilkan sesuai scope UI, action-nya
-  // sementara console.log dulu — GANTI ke service call begitu endpoint ready.
   function rowActions(row: PegawaiRow): RowAction[] {
     return [
       {

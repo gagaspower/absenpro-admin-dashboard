@@ -17,14 +17,9 @@ interface TableFilterPopoverProps {
   options: FilterCheckboxOption[]
   selected: string[]
   onSubmit: (selected: string[]) => void
-  /** Batasi pilihan ke satu checkbox, misalnya untuk filter status. */
   singleSelect?: boolean
 }
 
-/**
- * Filter popover generik (icon button + checkbox list + Reset/Submit).
- * `options` beda2 sesuai kebutuhan tiap tabel master data.
- */
 export function TableFilterPopover({
   options,
   selected,

@@ -5,8 +5,6 @@ import type { BranchRow } from "@/types/branch/branch.types"
 import type { UserRow } from "@/types/user/user.types"
 import type { RoleOption } from "../roles/roles.types"
 
-// Derive dari type existing pakai Pick, biar tetap 1 sumber kebenaran
-// (field nested response ini emang cuma subset dari row type aslinya).
 export type PegawaiPosition = Pick<JabatanRow, "id" | "name" | "department_id">
 
 export type PegawaiDepartment = Pick<DepartemenRow, "id" | "name">
@@ -62,9 +60,6 @@ export interface PegawaiListResponse {
   rows: PegawaiRow[]
 }
 
-// ── Filter drawer state ──────────────────────────────────────────────────
-// "all" dipakai sebagai nilai default utk tiap combobox/select (belum
-// dipilih = gak dikirim ke backend sebagai param).
 export type PegawaiStatusFilterValue = PegawaiStatus | "all"
 export type PegawaiTrashFilterValue = "all" | "active" | "trashed"
 
@@ -86,18 +81,9 @@ export const DEFAULT_PEGAWAI_FILTER: PegawaiFilterState = {
   isTrash: "active",
 }
 
-// ── Create form ───────────────────────────────────────────────────────────
-// NOTE: rule backend utk create ('employee_status') pakai 'resigned',
-// beda dgn PegawaiStatus hasil read ('resign'). Ngikut rule backend
-// literal spy lolos validasi Rule::in([...]) pas submit.
 export type PegawaiCreateEmployeeStatus =
   "permanent" | "contract" | "intern" | "resigned"
 
-/**
- * Payload POST api/reference/pegawai — create pegawai sekalian create user.
- * password_confirmation wajib ada (rule 'confirmed' Laravel butuh field
- * <field>_confirmation), walau gak muncul di contoh body dokumentasi.
- */
 export interface CreatePegawaiPayload {
   full_name: string
   username: string

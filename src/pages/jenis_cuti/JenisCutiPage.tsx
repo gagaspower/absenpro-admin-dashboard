@@ -151,14 +151,11 @@ export function JenisCutiPage() {
 
   const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
 
-  // Aktif kalau user lagi cari atau ubah filter dari default ("active" / "all").
   const hasActiveFilter =
     Boolean(debouncedSearch) ||
     statusFilter !== "active" ||
     kategoriFilter !== "all"
 
-  // Kosong total (belum ada data sama sekali, bukan hasil filter/search) →
-  // sembunyikan toolbar + tabel + pagination, tampilkan empty state + tombol tambah.
   const showEmptyState =
     !isLoading && !error && rows.length === 0 && !hasActiveFilter
 

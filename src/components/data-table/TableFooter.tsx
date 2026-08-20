@@ -43,7 +43,6 @@ interface TablePaginationProps {
   onPageChange: (page: number) => void
 }
 
-/** Bangun daftar nomor halaman dgn ellipsis, mis. [1,2,'...',9,10] */
 function buildPageList(page: number, totalPages: number): (number | "...")[] {
   if (totalPages <= 5) {
     return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -65,7 +64,6 @@ function buildPageList(page: number, totalPages: number): (number | "...")[] {
   return result
 }
 
-/** Paginasi (bawah tabel, sisi kanan). */
 export function TablePagination({
   page,
   totalPages,

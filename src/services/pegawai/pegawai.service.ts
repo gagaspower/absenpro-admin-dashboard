@@ -22,13 +22,6 @@ export interface FetchPegawaiParams {
   is_trash?: PegawaiStatusFilter
 }
 
-/**
- * Ambil daftar pegawai dari backend.
- *
- * Paginasi pakai limit & offset. search, department_id, position_id,
- * branch_id, shift_id, status opsional — hanya dikirim kalau ada nilainya.
- * is_trash default "all" sesuai dokumentasi endpoint.
- */
 export async function fetchPegawai(
   params: FetchPegawaiParams = {}
 ): Promise<PegawaiListResponse> {
@@ -61,10 +54,6 @@ export async function fetchPegawai(
   return data
 }
 
-/**
- * Create pegawai — sekalian create data user (username/password/role) di
- * satu endpoint yang sama.
- */
 export async function createPegawai(
   payload: CreatePegawaiPayload
 ): Promise<CreatePegawaiResponse> {
@@ -75,17 +64,6 @@ export async function createPegawai(
   return data
 }
 
-/**
- * Update data pegawai.
- *
- * Endpoint:
- * PUT api/reference/pegawai/{id}
- *
- * Update mencakup:
- * - user
- * - role
- * - employee
- */
 export async function updatePegawai(
   id: string,
   payload: UpdatePegawaiPayload

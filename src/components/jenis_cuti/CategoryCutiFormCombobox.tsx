@@ -21,7 +21,6 @@ interface CategoryOption {
   label: string
 }
 
-// Hard code sesuai instruksi, tidak ambil dari API.
 const CATEGORY_OPTIONS: CategoryOption[] = [
   { id: "cuti", label: "Cuti" },
   { id: "izin", label: "Izin" },

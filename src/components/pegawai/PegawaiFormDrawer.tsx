@@ -122,15 +122,12 @@ const INITIAL_LOADING_STATE: ComboboxLoadingState = {
   shift: true,
 }
 
-// Backend read pakai 'resign', create/edit form pakai 'resigned' —
-// samain di sini pas prefill dari data row.
 function mapRowStatusToFormStatus(
   status: PegawaiStatus
 ): PegawaiCreateEmployeeStatus {
   return status === "resign" ? "resigned" : status
 }
 
-// taro deket mapRowStatusToFormStatus
 const ID_MONTHS: Record<string, string> = {
   januari: "01",
   februari: "02",
@@ -146,9 +143,6 @@ const ID_MONTHS: Record<string, string> = {
   desember: "12",
 }
 
-// Backend kirim date-only ("2024-01-01"), full timestamp
-// ("2024-01-01T00:00:00Z"), ATAU long date Indonesia ("27 Agustus 1992")
-// — DatePicker cuma nerima "yyyy-MM-dd" polos. Handle ketiganya.
 function toDateInputValue(raw: string | null | undefined): string {
   if (!raw) return ""
 
@@ -165,7 +159,6 @@ function toDateInputValue(raw: string | null | undefined): string {
   return ""
 }
 
-// Field data pribadi/penempatan/kepegawaian dipakai bareng di create & edit.
 const dataPribadiPenempatanSchema = {
   employee_code: yup
     .string()
@@ -202,8 +195,6 @@ const dataPribadiPenempatanSchema = {
     .required("Status pegawai wajib dipilih."),
 }
 
-// Sinkron dgn Request::rules() backend — bagian yg bisa dicek di client aja
-// (unique/exists tetap divalidasi server, gak bisa dicek Yup).
 const pegawaiCreateSchema = yup.object({
   username: yup
     .string()
@@ -233,9 +224,6 @@ const pegawaiCreateSchema = yup.object({
   ...dataPribadiPenempatanSchema,
 })
 
-// Mode edit TETAP nyentuh akun login (username/email/role/is_active ikut
-// dikirim ke PUT api/reference/pegawai/{id}), tapi password opsional —
-// cuma dikirim kalau user memang mau ganti password.
 const pegawaiEditSchema = yup.object({
   username: yup
     .string()

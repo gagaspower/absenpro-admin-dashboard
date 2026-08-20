@@ -27,7 +27,6 @@ export interface DepartemenMutationResponse {
   }
 }
 
-// Untuk filter departemen (dari endpoint departemen/all-data)
 export interface DepartemenOption {
   id: string
   name: string

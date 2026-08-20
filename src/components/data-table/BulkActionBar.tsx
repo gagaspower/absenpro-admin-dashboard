@@ -23,11 +23,6 @@ interface BulkActionBarProps {
   className?: string
 }
 
-/**
- * Bulk action bar generik: combobox pilihan aksi + tombol submit.
- * Dipakai di atas tabel (sisi kiri). Reusable utk semua tabel master data,
- * cukup ganti `options`.
- */
 export function BulkActionBar({
   options,
   value,

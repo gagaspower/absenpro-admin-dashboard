@@ -21,10 +21,6 @@ interface RowActionsMenuProps {
   actions: RowAction[]
 }
 
-/**
- * Popover triple-dot generik utk aksi per-row.
- * Susun `actions` sesuai state row (mis. sembunyikan Restore jika belum dihapus).
- */
 export function RowActionsMenu({ actions }: RowActionsMenuProps) {
   const visibleActions = actions.filter((a) => !a.hidden)
 

@@ -53,8 +53,6 @@ export function PegawaiFilterDrawer({
   const isMobile = useMobile()
   const [draft, setDraft] = useState<PegawaiFilterState>(filters)
 
-  // Sinkron draft tiap drawer dibuka, biar gak kebawa nilai lama yang
-  // udah di-Reset/Terapkan dari sesi buka-tutup sebelumnya.
   useEffect(() => {
     if (open) setDraft(filters)
   }, [open, filters])

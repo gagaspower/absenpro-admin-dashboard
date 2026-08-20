@@ -7,10 +7,6 @@ interface StatusBadgeProps {
   className?: string
 }
 
-/**
- * Badge status generik. Default: Aktif / Tidak Aktif.
- * Bisa dipakai ulang utk tabel master data lain dgn label custom.
- */
 export function StatusBadge({
   active,
   activeLabel = "Aktif",

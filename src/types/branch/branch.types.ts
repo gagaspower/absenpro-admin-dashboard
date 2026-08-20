@@ -38,8 +38,6 @@ export interface BranchFilterState {
   showDeleted: boolean
 }
 
-// id ditambahkan — dipakai sebagai branch_id saat filter pegawai.
-// Tanpa id, hasil endpoint all-data ini gak bisa dipakai utk filter.
 export interface BranchOption {
   id: string
   name: string

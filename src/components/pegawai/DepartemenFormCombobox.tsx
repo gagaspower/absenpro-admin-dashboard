@@ -30,13 +30,12 @@ export function DepartemenFormCombobox({
   value,
   onChange,
   error = false,
-  onLoadingChange, // ⬅️ baru
+  onLoadingChange,
 }: DepartemenFormComboboxProps) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<DepartemenOption[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  // ⬅️ baru — lapor tiap kali isLoading berubah
   useEffect(() => {
     onLoadingChange?.(isLoading)
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -22,7 +22,7 @@ import { fetchAllJabatan } from "@/services/jabatan/jabatan.service"
 interface JabatanFilterComboboxProps {
   value: string // "all" | jabatan id
   onChange: (value: string) => void
-  departemenId: string // "all" | departemen id — kalau "all", combobox disabled
+  departemenId: string
 }
 
 export function JabatanFilterCombobox({

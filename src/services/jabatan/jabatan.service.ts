@@ -50,8 +50,6 @@ export async function fetchAllJabatan(
   return data
 }
 
-// ── Belum ada endpoint backend, stub console.log dulu ────────────────────────
-
 export async function createJabatan(
   payload: CreateJabatanPayload
 ): Promise<JabatanMutationResponse> {

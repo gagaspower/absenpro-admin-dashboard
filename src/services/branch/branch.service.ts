@@ -17,15 +17,6 @@ export interface FetchBranchesParams {
   is_trash?: BranchStatusFilter
 }
 
-/**
- * Ambil daftar branch / lokasi kerja dari backend.
- *
- * Paginasi pakai limit & offset (bukan page), sort & order sengaja
- * tidak dikirim dari FE — biarkan backend yang menentukan default-nya.
- *
- * is_trash sekarang berupa pilihan "all" | "active" | "trashed",
- * bukan boolean lagi.
- */
 export async function fetchBranches(
   params: FetchBranchesParams = {}
 ): Promise<BranchListResponse> {
