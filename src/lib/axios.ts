@@ -20,11 +20,13 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Response — handle 401: clear auth + redirect login
+// Response — handle 401: clear auth + redirect login (skip untuk request login sendiri)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginRequest = error.config?.url?.includes("create-session")
+
+    if (error.response?.status === 401 && !isLoginRequest) {
       storage.clearAuth()
       window.location.replace("/login")
     }
