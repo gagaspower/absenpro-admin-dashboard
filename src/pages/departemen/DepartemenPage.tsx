@@ -439,7 +439,7 @@ export function DepartemenPage() {
 
                   <TableBody>
                     {isLoading ? (
-                      <TableLoadingState colSpan={6} />
+                      <TableLoadingState colSpan={5} />
                     ) : error ? (
                       <TableRow>
                         <TableCell

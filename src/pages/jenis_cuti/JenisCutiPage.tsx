@@ -442,7 +442,7 @@ export function JenisCutiPage() {
 
                   <TableBody>
                     {isLoading ? (
-                      <TableLoadingState colSpan={6} />
+                      <TableLoadingState colSpan={12} />
                     ) : error ? (
                       <TableRow>
                         <TableCell
