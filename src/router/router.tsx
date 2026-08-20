@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react"
+import { Loader2 } from "lucide-react"
 import { Navigate, Route, Routes } from "react-router-dom"
 
 import { GuestRoute, ProtectedRoute } from "./guard"
@@ -35,7 +36,21 @@ const JenisCutiPage = lazy(() => import("@/pages/jenis_cuti/JenisCutiPage"))
 const PegawaiPage = lazy(() => import("@/pages/pegawai/PegawaiPage"))
 
 function PageFallback() {
-  return <div className="p-6 text-sm text-muted-foreground">Loading...</div>
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background">
+      <div className="relative flex h-16 w-16 items-center justify-center">
+        <div className="absolute h-16 w-16 animate-ping rounded-full bg-primary/20" />
+        <div className="absolute h-16 w-16 rounded-full border-2 border-primary/10" />
+        <Loader2 className="h-7 w-7 animate-spin text-primary" />
+      </div>
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-sm font-medium text-foreground">Memuat halaman</p>
+        <p className="text-xs text-muted-foreground">
+          Mohon tunggu sebentar...
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export function AppRouter() {
