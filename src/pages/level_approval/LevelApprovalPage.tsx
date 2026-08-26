@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Eye, Inbox, Pencil, Trash2 } from "lucide-react"
 
 import {
@@ -28,6 +29,8 @@ import { getLevelApprovalList } from "@/services/level_approval/level_approval.s
 const COL_SPAN = 3
 
 export function LevelApprovalPage() {
+  const navigate = useNavigate()
+
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
 
@@ -71,10 +74,9 @@ export function LevelApprovalPage() {
     setPage(1)
   }
 
-  // TODO: ganti dengan drawer/dialog create begitu endpoint POST tersedia.
   const openCreate = useCallback(() => {
-    console.log("[level-approval] create clicked")
-  }, [])
+    navigate("/dashboard/level-approval/create")
+  }, [navigate])
 
   // TODO: ganti dengan aksi asli (detail/edit/delete) begitu endpoint tersedia.
   function rowActions(row: LevelApprovalItem): RowAction[] {

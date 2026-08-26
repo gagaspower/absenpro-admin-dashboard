@@ -1,6 +1,8 @@
 import { api } from "@/lib/axios"
 import type {
+  CreateLevelApprovalPayload,
   GetLevelApprovalQueryParams,
+  LevelApprovalMutationResponse,
   LevelApprovalResponse,
 } from "@/types/level_approval/level_approval.type"
 
@@ -22,6 +24,22 @@ export async function getLevelApprovalList(
   const { data } = await api.get<LevelApprovalResponse>(
     "/api/reference/level-approval",
     { params: query }
+  )
+
+  return data
+}
+
+/**
+ * POST /api/reference/level-approval
+ * `levels` dikirim sesuai urutan array — levels[0] = urutan 1, levels[1] = urutan 2, dst.
+ * Setiap level membawa `id` (ULID) yang di-generate di client saat baris ditambahkan.
+ */
+export async function createLevelApproval(
+  payload: CreateLevelApprovalPayload
+): Promise<LevelApprovalMutationResponse> {
+  const { data } = await api.post<LevelApprovalMutationResponse>(
+    "/api/reference/level-approval",
+    payload
   )
 
   return data

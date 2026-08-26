@@ -37,6 +37,9 @@ const PegawaiPage = lazy(() => import("@/pages/pegawai/PegawaiPage"))
 const LevelApprovalPage = lazy(
   () => import("@/pages/level_approval/LevelApprovalPage")
 )
+const AddLevelApprovalPage = lazy(
+  () => import("@/pages/level_approval/AddLevelApprovalPage")
+)
 const ResetPasswordPage = lazy(() =>
   import("@/pages/auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
@@ -88,6 +91,10 @@ export function AppRouter() {
             <Route path="jenis-izin" element={<JenisCutiPage />} />
             <Route path="karyawan" element={<PegawaiPage />} />
             <Route path="level-approval" element={<LevelApprovalPage />} />
+            <Route
+              path="level-approval/create"
+              element={<AddLevelApprovalPage />}
+            />
             <Route
               path="absensi"
               element={<PlaceholderPage title="Absensi" />}
