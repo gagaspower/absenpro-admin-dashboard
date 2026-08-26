@@ -9,6 +9,7 @@ import {
   ScanLine,
   CalendarOff,
   type LucideIcon,
+  ListChecks,
 } from "lucide-react"
 
 export interface MenuItem {
@@ -43,6 +44,11 @@ export const menuGroups: MenuGroup[] = [
         icon: FileText,
       },
       { label: "Karyawan", path: "/dashboard/karyawan", icon: Users },
+      {
+        label: "Level Approval",
+        path: "/dashboard/level-approval",
+        icon: ListChecks,
+      },
     ],
   },
   {
