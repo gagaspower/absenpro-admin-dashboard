@@ -40,6 +40,10 @@ const LevelApprovalPage = lazy(
 const AddLevelApprovalPage = lazy(
   () => import("@/pages/level_approval/AddLevelApprovalPage")
 )
+
+const EditLevelApprovalPage = lazy(
+  () => import("@/pages/level_approval/EditLevelApprovalPage")
+)
 const ResetPasswordPage = lazy(() =>
   import("@/pages/auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
@@ -94,6 +98,10 @@ export function AppRouter() {
             <Route
               path="level-approval/create"
               element={<AddLevelApprovalPage />}
+            />
+            <Route
+              path="level-approval/edit/:id"
+              element={<EditLevelApprovalPage />}
             />
             <Route
               path="absensi"

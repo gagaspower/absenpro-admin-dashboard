@@ -57,7 +57,10 @@ function initialValues(row: DepartemenRow | null): FormValues {
         name: row.name,
         description: row.desc ?? "",
       }
-    : EMPTY_VALUES
+    : {
+        name: EMPTY_VALUES.name,
+        description: EMPTY_VALUES.description,
+      }
 }
 
 interface DepartemenFormDrawerProps {
@@ -83,10 +86,12 @@ export function DepartemenFormDrawer({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
+    if (!open) return
+
     setValues(initialValues(departemen))
     setErrors({})
     setSubmitAlert(null)
-  }, [departemen])
+  }, [open, departemen])
 
   function changeValue(field: keyof FormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }))

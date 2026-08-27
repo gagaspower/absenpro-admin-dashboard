@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Eye, Inbox, Pencil, Trash2 } from "lucide-react"
+import { Inbox, Pencil, Trash2 } from "lucide-react"
 
 import {
   Table,
@@ -82,16 +82,10 @@ export function LevelApprovalPage() {
   function rowActions(row: LevelApprovalItem): RowAction[] {
     return [
       {
-        key: "detail",
-        label: "View Detail",
-        icon: Eye,
-        onClick: () => console.log("[level-approval] detail", row.id),
-      },
-      {
         key: "edit",
         label: "Edit",
         icon: Pencil,
-        onClick: () => console.log("[level-approval] edit", row.id),
+        onClick: () => navigate(`/dashboard/level-approval/edit/${row.id}`),
       },
       {
         key: "delete",

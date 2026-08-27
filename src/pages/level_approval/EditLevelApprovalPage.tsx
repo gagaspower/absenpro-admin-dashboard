@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import {
+  AlertCircle,
   ArrowLeft,
   Loader2,
   Plus,
   Save,
   Workflow,
-  AlertCircle,
 } from "lucide-react"
 import {
   DndContext,
@@ -34,11 +34,18 @@ import {
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { PageCard } from "@/components/PageCard"
+import {
+  AlertModal,
+  type AlertModalType,
+} from "@/components/feedback/AlertModal"
 
 import { fetchJenisCuti } from "@/services/jenis_cuti/jenis_cuti.service"
 import { fetchDepartemenAllData } from "@/services/departemen/departemen.service"
 import { fetchRole } from "@/services/role/role.service"
-import { createLevelApproval } from "@/services/level_approval/level_approval.service"
+import {
+  getLevelApprovalById,
+  updateLevelApproval,
+} from "@/services/level_approval/level_approval.service"
 
 import type { JenisCutiRow } from "@/types/jenis_cuti/jenis_cuti.types"
 import type { DepartemenOption } from "@/types/departemen/departemen.types"
@@ -50,74 +57,109 @@ interface LevelDraft {
   roleId: string
 }
 
+interface PageAlert {
+  type: AlertModalType
+  message: string
+}
+
 let levelKey = 0
 
-function createEmptyLevel(): LevelDraft {
+function createLevel(roleId = ""): LevelDraft {
   levelKey += 1
 
   return {
     key: `level-${levelKey}`,
-    roleId: "",
+    roleId,
   }
 }
 
-export function AddLevelApprovalPage() {
+export function EditLevelApprovalPage() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
 
   const [jenisCutiOptions, setJenisCutiOptions] = useState<JenisCutiRow[]>([])
   const [departemenOptions, setDepartemenOptions] = useState<
     DepartemenOption[]
   >([])
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>([])
-  const [isLoadingOptions, setIsLoadingOptions] = useState(true)
 
   const [leaveTypeId, setLeaveTypeId] = useState("")
   const [departmentId, setDepartmentId] = useState("")
-  const [levels, setLevels] = useState<LevelDraft[]>([createEmptyLevel()])
+  const [levels, setLevels] = useState<LevelDraft[]>([])
 
-  const [formError, setFormError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const [formError, setFormError] = useState<string | null>(null)
+  const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
+
   useEffect(() => {
+    if (!id) {
+      setFormError("ID level approval tidak ditemukan.")
+      setIsLoading(false)
+      return
+    }
+
+    const levelApprovalId = id
+
     let ignore = false
 
-    async function loadOptions() {
-      setIsLoadingOptions(true)
+    async function loadData() {
+      setIsLoading(true)
+      setFormError(null)
 
       try {
-        const [jenisCutiRes, departemenRes, roleRes] = await Promise.all([
-          fetchJenisCuti({
-            limit: 100,
-            is_trash: "active",
-          }),
-          fetchDepartemenAllData(),
-          fetchRole(),
-        ])
+        const [detailRes, jenisCutiRes, departemenRes, roleRes] =
+          await Promise.all([
+            getLevelApprovalById(levelApprovalId),
+            fetchJenisCuti({
+              limit: 100,
+              is_trash: "active",
+            }),
+            fetchDepartemenAllData(),
+            fetchRole(),
+          ])
 
         if (ignore) return
 
+        const detail = detailRes.data
+
         setJenisCutiOptions(jenisCutiRes.rows)
-        setDepartemenOptions(departemenRes.rows.filter((d) => !d.deleted_at))
-        setRoleOptions(roleRes.rows)
+
+        setDepartemenOptions(
+          departemenRes.rows.filter((department) => !department.deleted_at)
+        )
+
+        const normalizedRoleOptions = roleRes.rows.map((role) => ({
+          ...role,
+          id: String(role.id),
+        }))
+
+        setRoleOptions(normalizedRoleOptions)
+
+        setLeaveTypeId(String(detail.leave_type_id))
+        setDepartmentId(String(detail.department_id))
+
+        setLevels(
+          detail.levels.map((level) => createLevel(String(level.role_id)))
+        )
       } catch {
         if (!ignore) {
-          setFormError(
-            "Gagal memuat data referensi (jenis cuti / departemen / role). Muat ulang halaman."
-          )
+          setFormError("Gagal memuat data level approval. Silakan coba lagi.")
         }
       } finally {
         if (!ignore) {
-          setIsLoadingOptions(false)
+          setIsLoading(false)
         }
       }
     }
 
-    loadOptions()
+    loadData()
 
     return () => {
       ignore = true
     }
-  }, [])
+  }, [id])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -150,7 +192,7 @@ export function AddLevelApprovalPage() {
   }
 
   function addLevel() {
-    setLevels((prev) => [...prev, createEmptyLevel()])
+    setLevels((prev) => [...prev, createLevel()])
   }
 
   function removeLevel(key: string) {
@@ -198,6 +240,11 @@ export function AddLevelApprovalPage() {
     event.preventDefault()
     setFormError(null)
 
+    if (!id) {
+      setFormError("ID level approval tidak ditemukan.")
+      return
+    }
+
     if (!leaveTypeId) {
       setFormError("Jenis cuti wajib dipilih.")
       return
@@ -205,6 +252,11 @@ export function AddLevelApprovalPage() {
 
     if (!departmentId) {
       setFormError("Departemen wajib dipilih.")
+      return
+    }
+
+    if (levels.length === 0) {
+      setFormError("Minimal harus memiliki satu level approval.")
       return
     }
 
@@ -221,7 +273,7 @@ export function AddLevelApprovalPage() {
     setIsSubmitting(true)
 
     try {
-      await createLevelApproval({
+      await updateLevelApproval(id, {
         leave_type_id: leaveTypeId,
         department_id: departmentId,
         levels: levels.map((level) => ({
@@ -229,14 +281,26 @@ export function AddLevelApprovalPage() {
         })),
       })
 
-      navigate("/dashboard/level-approval", {
-        replace: true,
+      setPageAlert({
+        type: "success",
+        message: "Level approval berhasil diperbarui.",
       })
     } catch {
-      setFormError("Gagal menyimpan level approval. Silakan coba lagi.")
+      setPageAlert({
+        type: "error",
+        message: "Gagal memperbarui level approval. Coba lagi.",
+      })
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-[#30CCD5]" />
+      </div>
+    )
   }
 
   return (
@@ -255,12 +319,11 @@ export function AddLevelApprovalPage() {
 
         <div>
           <h1 className="text-lg font-semibold text-[#1F2937]">
-            Tambah Level Approval
+            Edit Level Approval
           </h1>
 
           <p className="text-sm text-gray-500">
-            Atur alur persetujuan cuti/izin berdasarkan jenis cuti dan
-            departemen.
+            Ubah jenis cuti, departemen, dan urutan role approval.
           </p>
         </div>
       </div>
@@ -287,14 +350,13 @@ export function AddLevelApprovalPage() {
                 </h2>
 
                 <p className="text-xs text-gray-500">
-                  Pilih jenis cuti dan departemen yang akan menggunakan alur
-                  approval ini.
+                  Pilih jenis cuti dan departemen yang menggunakan alur approval
+                  ini.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-5">
-              {/* Jenis Cuti */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="jenis-cuti">Jenis Cuti</Label>
 
@@ -306,11 +368,7 @@ export function AddLevelApprovalPage() {
                     id="jenis-cuti"
                     className="!h-10 w-full rounded-[5px] border-[#D9D9D9] text-sm text-[#374957] focus:ring-0 focus:ring-offset-0"
                   >
-                    <SelectValue
-                      placeholder={
-                        isLoadingOptions ? "Memuat..." : "Pilih jenis cuti"
-                      }
-                    >
+                    <SelectValue placeholder="Pilih jenis cuti">
                       {selectedJenisCuti?.name}
                     </SelectValue>
                   </SelectTrigger>
@@ -325,7 +383,6 @@ export function AddLevelApprovalPage() {
                 </Select>
               </div>
 
-              {/* Departemen */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="departemen">Departemen</Label>
 
@@ -337,11 +394,7 @@ export function AddLevelApprovalPage() {
                     id="departemen"
                     className="!h-10 w-full rounded-[5px] border-[#D9D9D9] text-sm text-[#374957] focus:ring-0 focus:ring-offset-0"
                   >
-                    <SelectValue
-                      placeholder={
-                        isLoadingOptions ? "Memuat..." : "Pilih departemen"
-                      }
-                    >
+                    <SelectValue placeholder="Pilih departemen">
                       {selectedDepartemen?.name}
                     </SelectValue>
                   </SelectTrigger>
@@ -358,7 +411,7 @@ export function AddLevelApprovalPage() {
             </div>
           </PageCard>
 
-          {/* RIGHT - URUTAN APPROVAL */}
+          {/* RIGHT - APPROVAL */}
           <PageCard>
             <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
               <div>
@@ -367,7 +420,7 @@ export function AddLevelApprovalPage() {
                 </h2>
 
                 <p className="text-xs text-gray-500">
-                  Geser (drag) baris untuk mengubah urutan approval.
+                  Geser baris untuk mengubah urutan approval.
                 </p>
               </div>
 
@@ -415,7 +468,6 @@ export function AddLevelApprovalPage() {
           </PageCard>
         </div>
 
-        {/* ACTION */}
         <div className="flex justify-end gap-3">
           <Button
             type="button"
@@ -429,7 +481,7 @@ export function AddLevelApprovalPage() {
 
           <Button
             type="submit"
-            disabled={isSubmitting || isLoadingOptions}
+            disabled={isSubmitting}
             className="h-10 gap-1.5 rounded-[5px] bg-[#30CCD5] text-sm font-normal text-white hover:bg-[#2ab8c0] disabled:opacity-60"
           >
             {isSubmitting ? (
@@ -437,12 +489,25 @@ export function AddLevelApprovalPage() {
             ) : (
               <Save className="size-4" />
             )}
-            Simpan
+            Simpan Perubahan
           </Button>
         </div>
       </form>
+
+      {pageAlert && (
+        <AlertModal
+          open
+          type={pageAlert.type}
+          message={pageAlert.message}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setPageAlert(null)
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
 
-export default AddLevelApprovalPage
+export default EditLevelApprovalPage
