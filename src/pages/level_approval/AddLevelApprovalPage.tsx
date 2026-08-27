@@ -34,6 +34,10 @@ import {
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { PageCard } from "@/components/PageCard"
+import {
+  AlertModal,
+  type AlertModalType,
+} from "@/components/feedback/AlertModal"
 
 import { fetchJenisCuti } from "@/services/jenis_cuti/jenis_cuti.service"
 import { fetchDepartemenAllData } from "@/services/departemen/departemen.service"
@@ -48,6 +52,11 @@ import { SortableLevelRow } from "@/components/level_approval/SortableLevelRow"
 interface LevelDraft {
   key: string
   roleId: string
+}
+
+interface PageAlert {
+  type: AlertModalType
+  message: string
 }
 
 let levelKey = 0
@@ -77,6 +86,7 @@ export function AddLevelApprovalPage() {
 
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
 
   useEffect(() => {
     let ignore = false
@@ -97,13 +107,17 @@ export function AddLevelApprovalPage() {
         if (ignore) return
 
         setJenisCutiOptions(jenisCutiRes.rows)
-        setDepartemenOptions(departemenRes.rows.filter((d) => !d.deleted_at))
+        setDepartemenOptions(
+          departemenRes.rows.filter((d: DepartemenOption) => !d.deleted_at)
+        )
         setRoleOptions(roleRes.rows)
       } catch {
         if (!ignore) {
-          setFormError(
-            "Gagal memuat data referensi (jenis cuti / departemen / role). Muat ulang halaman."
-          )
+          setPageAlert({
+            type: "error",
+            message:
+              "Gagal memuat data referensi (jenis cuti / departemen / role). Muat ulang halaman.",
+          })
         }
       } finally {
         if (!ignore) {
@@ -229,11 +243,15 @@ export function AddLevelApprovalPage() {
         })),
       })
 
-      navigate("/dashboard/level-approval", {
-        replace: true,
+      setPageAlert({
+        type: "success",
+        message: "Level approval berhasil ditambahkan.",
       })
     } catch {
-      setFormError("Gagal menyimpan level approval. Silakan coba lagi.")
+      setPageAlert({
+        type: "error",
+        message: "Gagal menyimpan level approval. Silakan coba lagi.",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -441,6 +459,23 @@ export function AddLevelApprovalPage() {
           </Button>
         </div>
       </form>
+
+      {pageAlert && (
+        <AlertModal
+          open
+          type={pageAlert.type}
+          message={pageAlert.message}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setPageAlert(null)
+
+              if (pageAlert.type === "success") {
+                navigate("/dashboard/level-approval", { replace: true })
+              }
+            }
+          }}
+        />
+      )}
     </div>
   )
 }

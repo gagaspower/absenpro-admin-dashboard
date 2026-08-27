@@ -23,10 +23,25 @@ import {
 } from "@/components/data-table/RowActionsMenu"
 import { PageCard, PageCardHeader } from "@/components/PageCard"
 import { AddButton } from "@/components/AddButton"
+
+import {
+  AlertModal,
+  type AlertModalType,
+} from "@/components/feedback/AlertModal"
+import { LevelApprovalDeleteDialog } from "@/components/feedback/LevelApprovalDeleteDialog"
+
 import type { LevelApprovalItem } from "@/types/level_approval/level_approval.type"
-import { getLevelApprovalList } from "@/services/level_approval/level_approval.service"
+import {
+  deleteLevelApproval,
+  getLevelApprovalList,
+} from "@/services/level_approval/level_approval.service"
 
 const COL_SPAN = 3
+
+interface PageAlert {
+  type: AlertModalType
+  message: string
+}
 
 export function LevelApprovalPage() {
   const navigate = useNavigate()
@@ -39,32 +54,45 @@ export function LevelApprovalPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [isActionLoading, setIsActionLoading] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
+
+  const [deleteRow, setDeleteRow] = useState<LevelApprovalItem | null>(null)
+
   useEffect(() => {
     const controller = new AbortController()
 
     async function load() {
       setIsLoading(true)
       setError(null)
+
       try {
         const res = await getLevelApprovalList({
           limit: perPage,
           offset: (page - 1) * perPage,
         })
+
         setRows(res.rows)
         setTotal(res.total)
       } catch {
         if (controller.signal.aborted) return
+
         setError("Gagal memuat data level approval. Coba lagi.")
         setRows([])
         setTotal(0)
       } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
+        if (!controller.signal.aborted) {
+          setIsLoading(false)
+        }
       }
     }
 
     load()
+
     return () => controller.abort()
-  }, [page, perPage])
+  }, [page, perPage, refreshKey])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
   const showEmptyState = !isLoading && !error && rows.length === 0
@@ -78,7 +106,6 @@ export function LevelApprovalPage() {
     navigate("/dashboard/level-approval/create")
   }, [navigate])
 
-  // TODO: ganti dengan aksi asli (detail/edit/delete) begitu endpoint tersedia.
   function rowActions(row: LevelApprovalItem): RowAction[] {
     return [
       {
@@ -92,9 +119,36 @@ export function LevelApprovalPage() {
         label: "Hapus",
         icon: Trash2,
         destructive: true,
-        onClick: () => console.log("[level-approval] delete", row.id),
+        onClick: () => setDeleteRow(row),
       },
     ]
+  }
+
+  async function handleDelete() {
+    if (!deleteRow) return
+
+    setIsActionLoading(true)
+
+    try {
+      await deleteLevelApproval(deleteRow.id)
+
+      setDeleteRow(null)
+      setRefreshKey((key) => key + 1)
+
+      setPageAlert({
+        type: "success",
+        message: "Data berhasil dihapus.",
+      })
+    } catch {
+      setDeleteRow(null)
+
+      setPageAlert({
+        type: "error",
+        message: "Gagal menghapus data. Coba lagi.",
+      })
+    } finally {
+      setIsActionLoading(false)
+    }
   }
 
   return (
@@ -122,9 +176,11 @@ export function LevelApprovalPage() {
                       <TableHead className="text-[#374957]">
                         Jenis Cuti
                       </TableHead>
+
                       <TableHead className="text-[#374957]">
                         Departemen
                       </TableHead>
+
                       <TableHead className="w-12" />
                     </TableRow>
                   </TableHeader>
@@ -157,9 +213,11 @@ export function LevelApprovalPage() {
                           <TableCell className="text-[#374957]">
                             {row.nama_leave_type}
                           </TableCell>
+
                           <TableCell className="text-[#374957]">
                             {row.nama_department}
                           </TableCell>
+
                           <TableCell className="text-right">
                             <RowActionsMenu actions={rowActions(row)} />
                           </TableCell>
@@ -173,6 +231,7 @@ export function LevelApprovalPage() {
 
             <div className="mt-4 flex flex-col-reverse items-center justify-between gap-3 md:flex-row">
               <PerPageSelect value={perPage} onChange={handlePerPageChange} />
+
               <TablePagination
                 page={page}
                 totalPages={totalPages}
@@ -182,6 +241,30 @@ export function LevelApprovalPage() {
           </>
         )}
       </PageCard>
+
+      <LevelApprovalDeleteDialog
+        open={deleteRow !== null}
+        isLoading={isActionLoading}
+        onOpenChange={(open) => {
+          if (!open && !isActionLoading) {
+            setDeleteRow(null)
+          }
+        }}
+        onConfirm={handleDelete}
+      />
+
+      {pageAlert && (
+        <AlertModal
+          open
+          type={pageAlert.type}
+          message={pageAlert.message}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setPageAlert(null)
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
