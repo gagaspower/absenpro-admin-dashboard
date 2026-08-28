@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Inbox, Pencil, Trash2 } from "lucide-react"
+import { Inbox, Pencil, Trash2, SlidersHorizontal } from "lucide-react"
 
 import {
   Table,
@@ -35,6 +35,12 @@ import {
   deleteLevelApproval,
   getLevelApprovalList,
 } from "@/services/level_approval/level_approval.service"
+import {
+  DEFAULT_LEVEL_APPROVAL_FILTER,
+  type LevelApprovalFilterState,
+} from "@/types/jenis_cuti/jenis_cuti.types"
+import { Button } from "@/components/ui/button"
+import LevelApprovalFilterDrawer from "@/components/level_approval/LevelApprovalFilterDrawer"
 
 const COL_SPAN = 3
 
@@ -60,6 +66,11 @@ export function LevelApprovalPage() {
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
 
   const [deleteRow, setDeleteRow] = useState<LevelApprovalItem | null>(null)
+  const [filters, setFilters] = useState<LevelApprovalFilterState>(
+    DEFAULT_LEVEL_APPROVAL_FILTER
+  )
+
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -72,6 +83,12 @@ export function LevelApprovalPage() {
         const res = await getLevelApprovalList({
           limit: perPage,
           offset: (page - 1) * perPage,
+          ...(filters.departmentId !== "all"
+            ? { department_id: filters.departmentId }
+            : {}),
+          ...(filters.leaveTypeId !== "all"
+            ? { leave_type_id: filters.leaveTypeId }
+            : {}),
         })
 
         setRows(res.rows)
@@ -92,13 +109,23 @@ export function LevelApprovalPage() {
     load()
 
     return () => controller.abort()
-  }, [page, perPage, refreshKey])
+  }, [page, perPage, filters, refreshKey])
 
   const totalPages = Math.max(1, Math.ceil(total / perPage))
-  const showEmptyState = !isLoading && !error && rows.length === 0
+
+  const hasActiveFilter =
+    filters.departmentId !== "all" || filters.leaveTypeId !== "all"
+
+  const showEmptyState =
+    !isLoading && !error && rows.length === 0 && !hasActiveFilter
 
   function handlePerPageChange(value: number) {
     setPerPage(value)
+    setPage(1)
+  }
+
+  function handleApplyFilters(next: LevelApprovalFilterState) {
+    setFilters(next)
     setPage(1)
   }
 
@@ -156,7 +183,23 @@ export function LevelApprovalPage() {
       <PageCard>
         <PageCardHeader
           title="Level Approval"
-          actions={!showEmptyState && <AddButton onClick={openCreate} />}
+          actions={
+            !showEmptyState && (
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setFilterDrawerOpen(true)}
+                  className="h-10 rounded-[5px] border-[#DDE3E6] text-sm font-normal text-[#374957]"
+                >
+                  <SlidersHorizontal className="size-4" />
+                  Filter
+                </Button>
+
+                <AddButton onClick={openCreate} />
+              </div>
+            )
+          }
         />
 
         {showEmptyState ? (
@@ -203,7 +246,7 @@ export function LevelApprovalPage() {
                           <TableEmptyState
                             icon={Inbox}
                             title="Data tidak ditemukan"
-                            description="Belum ada data untuk ditampilkan."
+                            description="Belum ada data untuk filter yang dipilih."
                           />
                         </TableCell>
                       </TableRow>
@@ -241,6 +284,13 @@ export function LevelApprovalPage() {
           </>
         )}
       </PageCard>
+
+      <LevelApprovalFilterDrawer
+        open={filterDrawerOpen}
+        onOpenChange={setFilterDrawerOpen}
+        filters={filters}
+        onApply={handleApplyFilters}
+      />
 
       <LevelApprovalDeleteDialog
         open={deleteRow !== null}

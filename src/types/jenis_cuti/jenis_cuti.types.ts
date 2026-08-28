@@ -20,6 +20,12 @@ export interface JenisCutiListResponse {
   rows: JenisCutiRow[]
 }
 
+export interface JenisCutiAllResponse {
+  success: boolean
+  message: string
+  data: JenisCutiRow[]
+}
+
 export interface CreateJenisCutiPayload {
   name: string
   code: string
@@ -38,4 +44,14 @@ export interface JenisCutiMutationResponse {
   success: boolean
   message: string
   data?: JenisCutiRow
+}
+
+export interface LevelApprovalFilterState {
+  departmentId: string
+  leaveTypeId: string
+}
+
+export const DEFAULT_LEVEL_APPROVAL_FILTER: LevelApprovalFilterState = {
+  departmentId: "all",
+  leaveTypeId: "all",
 }

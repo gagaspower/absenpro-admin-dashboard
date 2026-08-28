@@ -14,12 +14,29 @@ const BASE_URL = "api/reference/level-approval"
 /**
  * Get level approval list.
  */
+export interface FetchLevelApprovalParams {
+  limit?: number
+  offset?: number
+  department_id?: string
+  leave_type_id?: string
+}
+
 export async function getLevelApprovalList(
-  params: GetLevelApprovalQueryParams = {}
+  params: FetchLevelApprovalParams = {}
 ): Promise<LevelApprovalResponse> {
-  const { data } = await api.get<LevelApprovalResponse>(BASE_URL, {
-    params,
-  })
+  const { limit = 10, offset = 0, department_id, leave_type_id } = params
+
+  const { data } = await api.get<LevelApprovalResponse>(
+    "api/reference/level-approval",
+    {
+      params: {
+        limit,
+        offset,
+        ...(department_id ? { department_id } : {}),
+        ...(leave_type_id ? { leave_type_id } : {}),
+      },
+    }
+  )
 
   return data
 }

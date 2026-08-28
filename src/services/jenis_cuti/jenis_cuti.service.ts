@@ -2,6 +2,7 @@ import { api } from "@/lib/axios"
 
 import type {
   CreateJenisCutiPayload,
+  JenisCutiAllResponse,
   JenisCutiListResponse,
   JenisCutiMutationResponse,
   UpdateJenisCutiPayload,
@@ -45,6 +46,14 @@ export async function fetchJenisCuti(
   return data
 }
 
+export async function fetchAllJenisCuti(): Promise<JenisCutiAllResponse> {
+  const { data } = await api.get<JenisCutiAllResponse>(
+    "api/reference/jenis-cuti/show"
+  )
+
+  return data
+}
+
 export async function createJenisCuti(
   payload: CreateJenisCutiPayload
 ): Promise<JenisCutiMutationResponse> {
@@ -52,6 +61,7 @@ export async function createJenisCuti(
     "api/reference/jenis-cuti",
     payload
   )
+
   return data
 }
 
@@ -63,6 +73,7 @@ export async function updateJenisCuti(
     `api/reference/jenis-cuti/${id}`,
     payload
   )
+
   return data
 }
 
@@ -83,7 +94,9 @@ export async function restoreMultipleJenisCuti(ids: string[]): Promise<void> {
 }
 
 export async function deleteMultipleJenisCuti(ids: string[]): Promise<void> {
-  await api.delete("api/reference/jenis-cuti/multiple", { data: { ids } })
+  await api.delete("api/reference/jenis-cuti/multiple", {
+    data: { ids },
+  })
 }
 
 export async function forceDeleteMultipleJenisCuti(

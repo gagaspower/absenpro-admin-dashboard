@@ -85,3 +85,13 @@ export interface LevelApprovalMutationResponse {
   message: string
   data?: LevelApprovalDetail
 }
+
+export interface LevelApprovalFilterState {
+  departmentId: string
+  leaveTypeId: string
+}
+
+export const DEFAULT_LEVEL_APPROVAL_FILTER: LevelApprovalFilterState = {
+  departmentId: "all",
+  leaveTypeId: "all",
+}
