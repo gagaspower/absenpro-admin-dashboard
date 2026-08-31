@@ -14,6 +14,8 @@ export interface LeaveRequestStatusOption {
   label: string
 }
 
+export type LeaveRequestStatusCounts = Record<LeaveRequestStatus, number>
+
 export const LEAVE_REQUEST_STATUS_OPTIONS: LeaveRequestStatusOption[] = [
   { value: "draft", label: "Draft" },
   { value: "pending", label: "Menunggu Persetujuan" },
@@ -145,5 +147,6 @@ export interface PermohonanCutiRow {
 export interface PermohonanCutiListResponse {
   success: boolean
   total: number
+  status_counts: LeaveRequestStatusCounts
   rows: PermohonanCutiRow[]
 }

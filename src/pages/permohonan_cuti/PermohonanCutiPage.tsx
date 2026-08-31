@@ -40,8 +40,10 @@ import { formatDateTime } from "@/components/permohonan_cuti/format"
 import { fetchPermohonanCuti } from "@/services/permohonan_cuti/permohonan_cuti.service"
 import type {
   LeaveRequestStatus,
+  LeaveRequestStatusCounts,
   PermohonanCutiRow,
 } from "@/types/permohonan_cuti/permohonan_cuti.types"
+import { PermohonanCutiStatusCounts } from "@/components/permohonan_cuti/PermohonanCutiStatusCounts"
 
 const SEARCH_DEBOUNCE_MS = 400
 
@@ -62,6 +64,8 @@ export function PermohonanCutiPage() {
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [statusCounts, setStatusCounts] =
+    useState<LeaveRequestStatusCounts | null>(null)
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
   const activeFilterCount = countActiveFilters(filters)
@@ -91,6 +95,7 @@ export function PermohonanCutiPage() {
               : undefined,
         })
         setRows(res.rows)
+        setStatusCounts(res.status_counts)
         setTotal(res.total)
       } catch {
         if (controller.signal.aborted) return
@@ -181,6 +186,13 @@ export function PermohonanCutiPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="mt-4">
+              <PermohonanCutiStatusCounts
+                counts={statusCounts}
+                isLoading={isLoading}
+              />
             </div>
 
             {/* Table */}
