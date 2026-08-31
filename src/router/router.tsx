@@ -33,6 +33,11 @@ const DepartemenPage = lazy(() =>
 const JabatanPage = lazy(() => import("@/pages/jabatan/JabatanPage"))
 const ShiftPage = lazy(() => import("@/pages/shift/ShiftPage"))
 const JenisCutiPage = lazy(() => import("@/pages/jenis_cuti/JenisCutiPage"))
+const PermohonanCutiPage = lazy(() =>
+  import("@/pages/permohonan_cuti/PermohonanCutiPage").then((m) => ({
+    default: m.PermohonanCutiPage,
+  }))
+)
 const PegawaiPage = lazy(() => import("@/pages/pegawai/PegawaiPage"))
 const LevelApprovalPage = lazy(
   () => import("@/pages/level_approval/LevelApprovalPage")
@@ -107,10 +112,7 @@ export function AppRouter() {
               path="absensi"
               element={<PlaceholderPage title="Absensi" />}
             />
-            <Route
-              path="cuti-izin"
-              element={<PlaceholderPage title="Cuti & Izin" />}
-            />
+            <Route path="cuti-izin" element={<PermohonanCutiPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
           </Route>
         </Route>
