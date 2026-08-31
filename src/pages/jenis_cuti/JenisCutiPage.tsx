@@ -253,12 +253,6 @@ export function JenisCutiPage() {
   function rowActions(row: JenisCutiRow): RowAction[] {
     return [
       {
-        key: "detail",
-        label: "View Detail",
-        icon: Eye,
-        onClick: () => console.log("[jenis_cuti] detail", row.id),
-      },
-      {
         key: "edit",
         label: "Edit",
         icon: Pencil,

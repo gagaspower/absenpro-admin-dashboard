@@ -226,12 +226,6 @@ export function BranchPage() {
   function rowActions(row: BranchRow): RowAction[] {
     return [
       {
-        key: "detail",
-        label: "View Detail",
-        icon: Eye,
-        onClick: () => console.log("detail", row.id),
-      },
-      {
         key: "edit",
         label: "Edit",
         icon: Pencil,
