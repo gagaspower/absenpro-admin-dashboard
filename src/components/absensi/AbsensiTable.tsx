@@ -1,3 +1,4 @@
+// src/components/absensi/AbsensiTable.tsx
 import { Search } from "lucide-react"
 
 import {
@@ -13,12 +14,12 @@ import { cn } from "@/lib/utils"
 
 import { AbsensiStatusCell } from "@/components/absensi/AbsensiStatusCell"
 import type { AbsensiRow } from "@/types/absensi/absensi.types"
+import { parsePeriodeValue } from "@/types/absensi/absensi.types"
 
 interface AbsensiTableProps {
   rows: AbsensiRow[]
   daysInMonth: number
-  month: number
-  year: number
+  periode: string
   isLoading?: boolean
   error?: string | null
 }
@@ -30,11 +31,13 @@ function isSundayDate(day: number, month: number, year: number): boolean {
 export function AbsensiTable({
   rows,
   daysInMonth,
-  month,
-  year,
+  periode,
   isLoading = false,
   error = null,
 }: AbsensiTableProps) {
+  // Parsing di sini murni untuk kebutuhan render kalender (highlight hari
+  // Minggu), bukan untuk dikirim ke backend.
+  const { month, year } = parsePeriodeValue(periode)
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 
   return (

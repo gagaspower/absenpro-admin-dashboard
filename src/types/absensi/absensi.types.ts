@@ -66,3 +66,18 @@ export const MONTH_OPTIONS: { value: number; label: string }[] = [
   { value: 11, label: "November" },
   { value: 12, label: "Desember" },
 ]
+
+export function parsePeriodeValue(value: string): {
+  month: number
+  year: number
+} {
+  const [monthStr, yearStr] = value.split("-").map((s) => s.trim())
+  const month = Number(monthStr)
+  const year = Number(yearStr)
+
+  const now = new Date()
+  return {
+    month: Number.isFinite(month) && month > 0 ? month : now.getMonth() + 1,
+    year: Number.isFinite(year) && year > 0 ? year : now.getFullYear(),
+  }
+}

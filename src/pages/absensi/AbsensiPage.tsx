@@ -1,3 +1,4 @@
+// src/pages/absensi/AbsensiPage.tsx
 import { useEffect, useState } from "react"
 import { Search } from "lucide-react"
 
@@ -6,13 +7,12 @@ import { PageCard, PageCardHeader } from "@/components/PageCard"
 import { useDebounce } from "@/hooks/useDebounce"
 import {
   ABSENSI_STATUS_META,
-  DEFAULT_ABSENSI_FILTER,
   type AbsensiRow,
 } from "@/types/absensi/absensi.types"
 
-import { MonthYearFilter } from "@/components/absensi/MonthYearFilter"
 import { AbsensiTable } from "@/components/absensi/AbsensiTable"
 import { fetchAbsensi } from "@/services/absensi/absensi.service"
+import { PeriodeFilter } from "@/components/absensi/PeriodeFilter"
 
 const SEARCH_DEBOUNCE_MS = 400
 
@@ -27,8 +27,7 @@ const LEGEND_ITEMS: {
 ]
 
 export function AbsensiPage() {
-  const [month, setMonth] = useState(DEFAULT_ABSENSI_FILTER.month)
-  const [year, setYear] = useState(DEFAULT_ABSENSI_FILTER.year)
+  const [periode, setPeriode] = useState("")
   const [search, setSearch] = useState("")
 
   const [rows, setRows] = useState<AbsensiRow[]>([])
@@ -39,6 +38,9 @@ export function AbsensiPage() {
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
   useEffect(() => {
+    // Tunggu periode terisi dulu (menunggu fetchPeriode selesai di PeriodeFilter)
+    if (!periode) return
+
     let cancelled = false
 
     async function load() {
@@ -46,8 +48,7 @@ export function AbsensiPage() {
       setError(null)
       try {
         const res = await fetchAbsensi({
-          month,
-          year,
+          periode,
           search: debouncedSearch || undefined,
         })
         if (cancelled) return
@@ -66,7 +67,7 @@ export function AbsensiPage() {
     return () => {
       cancelled = true
     }
-  }, [month, year, debouncedSearch])
+  }, [periode, debouncedSearch])
 
   return (
     <div className="flex flex-col gap-4">
@@ -74,12 +75,7 @@ export function AbsensiPage() {
         <PageCardHeader title="Absensi Pegawai" />
 
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <MonthYearFilter
-            month={month}
-            year={year}
-            onMonthChange={setMonth}
-            onYearChange={setYear}
-          />
+          <PeriodeFilter value={periode} onChange={setPeriode} />
 
           <div className="relative w-full min-w-[220px] md:w-64">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
@@ -107,8 +103,7 @@ export function AbsensiPage() {
           <AbsensiTable
             rows={rows}
             daysInMonth={daysInMonth}
-            month={month}
-            year={year}
+            periode={periode}
             isLoading={isLoading}
             error={error}
           />

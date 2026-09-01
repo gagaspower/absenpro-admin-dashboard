@@ -1,19 +1,22 @@
+// src/services/absensi/absensi.service.ts
 import type {
   AbsensiDayRecord,
   AbsensiListResponse,
   AbsensiRow,
   AttendanceStatus,
 } from "@/types/absensi/absensi.types"
+import { parsePeriodeValue } from "@/types/absensi/absensi.types"
 
 // ---------------------------------------------------------------------------
 // NOTE: Ini masih data dummy (belum terhubung ke API).
 // Nanti tinggal ganti isi fungsi `fetchAbsensi` dengan pemanggilan
 // `api.get("api/reference/absensi", { params })` sesuai kontrak backend.
+// Param `periode` dikirim apa adanya (mis. "1 - 2026") — backend yang
+// bertanggung jawab memecahnya jadi bulan & tahun.
 // ---------------------------------------------------------------------------
 
 export interface FetchAbsensiParams {
-  month: number
-  year: number
+  periode: string
   search?: string
   department_id?: string
   branch_id?: string
@@ -145,7 +148,12 @@ export async function fetchAbsensi(
   // Simulasi delay network supaya loading state kelihatan natural.
   await new Promise((resolve) => setTimeout(resolve, 300))
 
-  const daysInMonth = getDaysInMonth(params.month, params.year)
+  // NOTE: parsing di bawah ini HANYA untuk keperluan generate data dummy
+  // (mensimulasikan apa yang nanti dilakukan backend). Saat sudah connect
+  // ke API asli, baris ini tidak diperlukan lagi — cukup:
+  // const { data } = await api.get("api/reference/absensi", { params })
+  const { month, year } = parsePeriodeValue(params.periode)
+  const daysInMonth = getDaysInMonth(month, year)
 
   let rows: AbsensiRow[] = DUMMY_EMPLOYEES.map((emp, index) => ({
     id: String(index + 1),
@@ -154,7 +162,7 @@ export async function fetchAbsensi(
     employee_name: emp.name,
     position_name: emp.position,
     department_name: emp.department,
-    days: generateDays(params.month, params.year),
+    days: generateDays(month, year),
   }))
 
   if (params.search) {
