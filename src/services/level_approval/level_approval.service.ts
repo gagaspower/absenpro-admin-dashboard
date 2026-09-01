@@ -2,7 +2,6 @@ import { api } from "@/lib/axios"
 
 import type {
   CreateLevelApprovalPayload,
-  GetLevelApprovalQueryParams,
   LevelApprovalDetailResponse,
   LevelApprovalMutationResponse,
   LevelApprovalResponse,

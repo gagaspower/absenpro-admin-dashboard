@@ -1,13 +1,5 @@
 import { useEffect, useState } from "react"
-import {
-  Eye,
-  Inbox,
-  Pencil,
-  RotateCcw,
-  Search,
-  Trash,
-  Trash2,
-} from "lucide-react"
+import { Inbox, Pencil, RotateCcw, Search, Trash, Trash2 } from "lucide-react"
 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"

@@ -15,16 +15,33 @@ export interface FetchAbsensiParams {
 }
 
 /**
+ * Tentukan status izin/cuti berdasarkan `leave_type.category`.
+ *
+ * Backend cuma punya 2 kategori leave: "cuti" dan "izin". Kalau suatu saat
+ * ada category lain (mis. "sakit") atau category yang belum dikenal FE,
+ * semuanya digabung jadi badge "izin" — cuma "cuti" yang punya badge sendiri.
+ */
+function resolveLeaveStatus(
+  leave: AbsensiCalendarEntry["leave"]
+): AttendanceStatus {
+  const category = leave?.leave_type?.category?.toLowerCase()
+  return category === "cuti" ? "cuti" : "izin"
+}
+
+/**
  * Tentukan status tampilan berdasarkan entry calendar dari backend.
  *
  * Aturan:
  * - is_weekend -> "libur" (selalu, terlepas dari ada/tidaknya record)
- * - entry.type === "attendance" -> "telat" kalau status backend "late",
- *   selain itu "hadir"
- * - entry.type === "leave" -> "sakit" kalau leave.type "sick", selain itu "izin"
- *   (TODO: sesuaikan kalau backend punya nilai leave.type lain, mis. "permit")
- * - entry null & bukan weekend & tanggal sudah lewat -> "alpha"
- * - entry null & bukan weekend & tanggal hari ini/masa depan -> "" (belum ada data)
+ * - entry.type === "leave" -> lihat resolveLeaveStatus (berdasarkan category)
+ * - entry.type === "attendance" & ada check_in/check_out -> "telat" kalau
+ *   status backend "late", selain itu "hadir"
+ * - entry.type === "attendance" tapi check_in & check_out kosong -> dianggap
+ *   tidak ada bukti hadir, lanjut ke aturan "tidak ada data" di bawah
+ * - entry null (atau attendance tanpa check_in/check_out) & bukan weekend &
+ *   tanggal sudah lewat -> "alpha"
+ * - entry null (atau attendance tanpa check_in/check_out) & bukan weekend &
+ *   tanggal hari ini/masa depan -> "" (belum ada data)
  */
 function resolveStatus(
   dateStr: string,
@@ -34,11 +51,19 @@ function resolveStatus(
   if (isWeekend) return "libur"
 
   if (entry) {
-    if (entry.type === "attendance") {
-      return entry.status === "late" ? "telat" : "hadir"
-    }
     if (entry.type === "leave") {
-      return entry.leave?.type === "sick" ? "sakit" : "izin"
+      return resolveLeaveStatus(entry.leave)
+    }
+
+    if (entry.type === "attendance") {
+      const hasCheckIn = Boolean(entry.attendance?.check_in_time)
+      const hasCheckOut = Boolean(entry.attendance?.check_out_time)
+
+      // Ada record attendance tapi tidak ada bukti masuk/pulang sama sekali
+      // -> jangan langsung "hadir", turunkan ke logic alpha di bawah.
+      if (hasCheckIn || hasCheckOut) {
+        return entry.status === "late" ? "telat" : "hadir"
+      }
     }
   }
 
@@ -71,9 +96,12 @@ export async function fetchAbsensi(
         status,
         ...(entry?.type === "attendance" && entry.attendance
           ? {
-              check_in: entry.attendance.check_in_time,
-              check_out: entry.attendance.check_out_time,
+              check_in: entry.attendance.check_in_time ?? undefined,
+              check_out: entry.attendance.check_out_time ?? undefined,
             }
+          : {}),
+        ...(entry?.type === "leave"
+          ? { leave_label: entry.label ?? entry.leave?.leave_type?.name }
           : {}),
       }
     }),

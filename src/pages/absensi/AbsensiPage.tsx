@@ -1,9 +1,10 @@
 // src/pages/absensi/AbsensiPage.tsx
-import { useEffect, useState } from "react"
-import { Search } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { RefreshCw, Search } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { PageCard, PageCardHeader } from "@/components/PageCard"
+import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { useDebounce } from "@/hooks/useDebounce"
 import {
   ABSENSI_STATUS_META,
@@ -17,13 +18,13 @@ import { PeriodeFilter } from "@/components/absensi/PeriodeFilter"
 const SEARCH_DEBOUNCE_MS = 400
 
 const LEGEND_ITEMS: {
-  key: "hadir" | "telat" | "izin" | "sakit" | "alpha"
+  key: "hadir" | "telat" | "izin" | "cuti" | "alpha"
   color: string
 }[] = [
   { key: "hadir", color: "bg-[#1E9E5E]" },
   { key: "telat", color: "bg-[#C2410C]" },
   { key: "izin", color: "bg-[#1D6FC2]" },
-  { key: "sakit", color: "bg-[#B7791F]" },
+  { key: "cuti", color: "bg-[#7C3AED]" },
   { key: "alpha", color: "bg-[#D4453B]" },
 ]
 
@@ -38,13 +39,10 @@ export function AbsensiPage() {
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
 
-  useEffect(() => {
-    // Tunggu periode terisi dulu (menunggu fetchPeriode selesai di PeriodeFilter)
-    if (!periode) return
+  const loadAbsensi = useCallback(
+    async (signal?: { cancelled: boolean }) => {
+      if (!periode) return
 
-    let cancelled = false
-
-    async function load() {
       setIsLoading(true)
       setError(null)
       try {
@@ -52,30 +50,56 @@ export function AbsensiPage() {
           periode,
           search: debouncedSearch || undefined,
         })
-        if (cancelled) return
+        if (signal?.cancelled) return
         setRows(res.rows)
         setDaysInMonth(res.days_in_month)
       } catch {
-        if (cancelled) return
+        if (signal?.cancelled) return
         setError("Gagal memuat data absensi. Coba lagi.")
         setRows([])
       } finally {
-        if (!cancelled) setIsLoading(false)
+        if (!signal?.cancelled) setIsLoading(false)
       }
-    }
+    },
+    [periode, debouncedSearch]
+  )
 
-    load()
+  useEffect(() => {
+    // Tunggu periode terisi dulu (menunggu fetchPeriode selesai di PeriodeFilter)
+    if (!periode) return
+
+    const signal = { cancelled: false }
+    loadAbsensi(signal)
     return () => {
-      cancelled = true
+      signal.cancelled = true
     }
-  }, [periode, debouncedSearch])
+  }, [loadAbsensi, periode])
+
+  function handleRefresh() {
+    if (!periode || isLoading) return
+    loadAbsensi()
+  }
 
   return (
     <div className="flex flex-col gap-4">
       <PageCard>
         <PageCardHeader title="Absensi Pegawai" />
 
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={!periode || isLoading}
+            aria-label="Refresh data absensi"
+            title="Refresh"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[5px] border border-[#EAEAEA] text-[#71808B] transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RefreshCw className={`size-4 ${isLoading ? "hidden" : ""}`} />
+            {isLoading && (
+              <LoadingSpinner size="sm" showLabel={false} className="gap-0" />
+            )}
+          </button>
+
           <PeriodeFilter value={periode} onChange={setPeriode} />
 
           <div className="relative w-full min-w-[220px] md:w-64">
