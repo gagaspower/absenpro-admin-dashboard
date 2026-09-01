@@ -90,7 +90,6 @@ export interface CreatePegawaiPayload {
   email: string
   password: string
   password_confirmation: string
-  is_active: boolean
 
   role_id: string
 
@@ -121,7 +120,6 @@ export interface UpdatePegawaiPayload {
   full_name: string
   username: string
   email: string
-  is_active: boolean
 
   password?: string
 

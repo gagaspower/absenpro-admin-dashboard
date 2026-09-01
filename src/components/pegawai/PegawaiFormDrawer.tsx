@@ -4,7 +4,6 @@ import { LoaderCircle, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Drawer,
   DrawerClose,
@@ -45,7 +44,6 @@ type FormValues = {
   email: string
   password: string
   password_confirmation: string
-  is_active: boolean
 
   role_id: string
 
@@ -73,7 +71,6 @@ const EMPTY_VALUES: FormValues = {
   email: "",
   password: "",
   password_confirmation: "",
-  is_active: true,
 
   role_id: "",
 
@@ -218,7 +215,6 @@ const pegawaiCreateSchema = yup.object({
     .string()
     .required("Konfirmasi password wajib diisi.")
     .oneOf([yup.ref("password")], "Konfirmasi password tidak sesuai."),
-  is_active: yup.boolean().required(),
   role_id: yup.string().required("Role user wajib dipilih."),
 
   ...dataPribadiPenempatanSchema,
@@ -234,7 +230,6 @@ const pegawaiEditSchema = yup.object({
     .string()
     .required("Email wajib diisi.")
     .email("Format email tidak valid."),
-  is_active: yup.boolean().required(),
   role_id: yup.string().required("Role user wajib dipilih."),
   password: yup
     .string()
@@ -310,7 +305,6 @@ export function PegawaiFormDrawer({
         ...EMPTY_VALUES,
         username: pegawai.user?.username ?? "",
         email: pegawai.user?.email ?? "",
-        is_active: pegawai.user ? Boolean(pegawai.user.is_active) : true,
         role_id: pegawai.role?.id ?? "",
 
         full_name: pegawai.name,
@@ -376,7 +370,6 @@ export function PegawaiFormDrawer({
           full_name: values.full_name.trim(),
           username: values.username.trim(),
           email: values.email.trim(),
-          is_active: values.is_active,
 
           ...(values.password ? { password: values.password } : {}),
 
@@ -415,7 +408,6 @@ export function PegawaiFormDrawer({
         email: values.email.trim(),
         password: values.password,
         password_confirmation: values.password_confirmation,
-        is_active: values.is_active,
 
         role_id: values.role_id,
 
@@ -566,15 +558,6 @@ export function PegawaiFormDrawer({
                     onLoadingChange={setLoadingFor("role")}
                   />
                 </Field>
-                <label className="flex items-center gap-2 pt-6">
-                  <Checkbox
-                    checked={values.is_active}
-                    onCheckedChange={(checked) =>
-                      changeValue("is_active", checked === true)
-                    }
-                  />
-                  <span className="text-sm text-[#374957]">Aktifkan akun</span>
-                </label>
               </div>
             </FormSection>
 
