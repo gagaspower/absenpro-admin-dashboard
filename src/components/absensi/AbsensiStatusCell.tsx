@@ -12,6 +12,7 @@ interface AbsensiStatusCellProps {
 
 const STATUS_STYLE: Record<Exclude<AttendanceStatus, "">, string> = {
   hadir: "bg-[#E7FAF0] text-[#1E9E5E]",
+  telat: "bg-[#FFEDD5] text-[#C2410C]",
   sakit: "bg-[#FFF6E0] text-[#B7791F]",
   izin: "bg-[#E7F3FF] text-[#1D6FC2]",
   alpha: "bg-[#FDEAEA] text-[#D4453B]",

@@ -17,10 +17,11 @@ import { PeriodeFilter } from "@/components/absensi/PeriodeFilter"
 const SEARCH_DEBOUNCE_MS = 400
 
 const LEGEND_ITEMS: {
-  key: "hadir" | "izin" | "sakit" | "alpha"
+  key: "hadir" | "telat" | "izin" | "sakit" | "alpha"
   color: string
 }[] = [
   { key: "hadir", color: "bg-[#1E9E5E]" },
+  { key: "telat", color: "bg-[#C2410C]" },
   { key: "izin", color: "bg-[#1D6FC2]" },
   { key: "sakit", color: "bg-[#B7791F]" },
   { key: "alpha", color: "bg-[#D4453B]" },

@@ -1,182 +1,93 @@
 // src/services/absensi/absensi.service.ts
+import { api } from "@/lib/axios"
+
 import type {
-  AbsensiDayRecord,
+  AbsensiCalendarEntry,
+  AbsensiHistoryResponse,
   AbsensiListResponse,
   AbsensiRow,
   AttendanceStatus,
 } from "@/types/absensi/absensi.types"
-import { parsePeriodeValue } from "@/types/absensi/absensi.types"
-
-// ---------------------------------------------------------------------------
-// NOTE: Ini masih data dummy (belum terhubung ke API).
-// Nanti tinggal ganti isi fungsi `fetchAbsensi` dengan pemanggilan
-// `api.get("api/reference/absensi", { params })` sesuai kontrak backend.
-// Param `periode` dikirim apa adanya (mis. "1 - 2026") — backend yang
-// bertanggung jawab memecahnya jadi bulan & tahun.
-// ---------------------------------------------------------------------------
 
 export interface FetchAbsensiParams {
   periode: string
   search?: string
-  department_id?: string
-  branch_id?: string
 }
 
-const DUMMY_EMPLOYEES: {
-  code: string
-  name: string
-  position: string
-  department: string
-}[] = [
-  {
-    code: "EMP001",
-    name: "Budi Santoso",
-    position: "Staff Produksi",
-    department: "Produksi",
-  },
-  {
-    code: "EMP002",
-    name: "Siti Aminah",
-    position: "Staff Gudang",
-    department: "Logistik",
-  },
-  {
-    code: "EMP003",
-    name: "Agus Prasetyo",
-    position: "Supervisor",
-    department: "Produksi",
-  },
-  {
-    code: "EMP004",
-    name: "Dewi Lestari",
-    position: "Admin HR",
-    department: "HRD",
-  },
-  {
-    code: "EMP005",
-    name: "Rudi Hartono",
-    position: "Teknisi",
-    department: "Maintenance",
-  },
-  {
-    code: "EMP006",
-    name: "Nurul Fadilah",
-    position: "Staff Finance",
-    department: "Keuangan",
-  },
-  {
-    code: "EMP007",
-    name: "Eko Wibowo",
-    position: "Security",
-    department: "Umum",
-  },
-  {
-    code: "EMP008",
-    name: "Rina Marlina",
-    position: "Staff QC",
-    department: "Produksi",
-  },
-  {
-    code: "EMP009",
-    name: "Hendra Gunawan",
-    position: "Driver",
-    department: "Logistik",
-  },
-  {
-    code: "EMP010",
-    name: "Yuni Kartika",
-    position: "Staff Purchasing",
-    department: "Umum",
-  },
-  {
-    code: "EMP011",
-    name: "Fajar Setiawan",
-    position: "Operator Mesin",
-    department: "Produksi",
-  },
-  {
-    code: "EMP012",
-    name: "Lina Marlina",
-    position: "Resepsionis",
-    department: "Umum",
-  },
-]
+/**
+ * Tentukan status tampilan berdasarkan entry calendar dari backend.
+ *
+ * Aturan:
+ * - is_weekend -> "libur" (selalu, terlepas dari ada/tidaknya record)
+ * - entry.type === "attendance" -> "telat" kalau status backend "late",
+ *   selain itu "hadir"
+ * - entry.type === "leave" -> "sakit" kalau leave.type "sick", selain itu "izin"
+ *   (TODO: sesuaikan kalau backend punya nilai leave.type lain, mis. "permit")
+ * - entry null & bukan weekend & tanggal sudah lewat -> "alpha"
+ * - entry null & bukan weekend & tanggal hari ini/masa depan -> "" (belum ada data)
+ */
+function resolveStatus(
+  dateStr: string,
+  isWeekend: boolean,
+  entry: AbsensiCalendarEntry | null
+): AttendanceStatus {
+  if (isWeekend) return "libur"
 
-function getDaysInMonth(month: number, year: number): number {
-  return new Date(year, month, 0).getDate()
-}
+  if (entry) {
+    if (entry.type === "attendance") {
+      return entry.status === "late" ? "telat" : "hadir"
+    }
+    if (entry.type === "leave") {
+      return entry.leave?.type === "sick" ? "sakit" : "izin"
+    }
+  }
 
-function isWeekend(day: number, month: number, year: number): boolean {
-  const dow = new Date(year, month - 1, day).getDay()
-  return dow === 0 || dow === 6
-}
-
-function randomWeekdayStatus(): AttendanceStatus {
-  const roll = Math.random()
-  if (roll < 0.86) return "hadir"
-  if (roll < 0.92) return "izin"
-  if (roll < 0.97) return "sakit"
-  return "alpha"
-}
-
-function generateDays(month: number, year: number): AbsensiDayRecord[] {
-  const daysInMonth = getDaysInMonth(month, year)
   const today = new Date()
-  const isCurrentMonth =
-    today.getMonth() + 1 === month && today.getFullYear() === year
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(dateStr)
+  target.setHours(0, 0, 0, 0)
 
-  return Array.from({ length: daysInMonth }, (_, i) => {
-    const date = i + 1
-    const isFuture = isCurrentMonth && date > today.getDate()
-
-    let status: AttendanceStatus = ""
-    if (!isFuture) {
-      status = isWeekend(date, month, year) ? "libur" : randomWeekdayStatus()
-    }
-
-    return {
-      date,
-      status,
-      ...(status === "hadir" ? { check_in: "07:55", check_out: "16:10" } : {}),
-    }
-  })
+  return target < today ? "alpha" : ""
 }
 
 export async function fetchAbsensi(
   params: FetchAbsensiParams
 ): Promise<AbsensiListResponse> {
-  // Simulasi delay network supaya loading state kelihatan natural.
-  await new Promise((resolve) => setTimeout(resolve, 300))
+  const { data } = await api.get<AbsensiHistoryResponse>(
+    "api/reference/absen/history-web",
+    { params: { periode: params.periode } }
+  )
 
-  // NOTE: parsing di bawah ini HANYA untuk keperluan generate data dummy
-  // (mensimulasikan apa yang nanti dilakukan backend). Saat sudah connect
-  // ke API asli, baris ini tidak diperlukan lagi — cukup:
-  // const { data } = await api.get("api/reference/absensi", { params })
-  const { month, year } = parsePeriodeValue(params.periode)
-  const daysInMonth = getDaysInMonth(month, year)
+  let rows: AbsensiRow[] = data.rows.map((row, index) => ({
+    id: row.employee.id || String(index + 1),
+    employee_id: row.employee.id,
+    employee_name: row.employee.name,
+    days: data.dates.map((d) => {
+      const entry = row.calendar[d.date] ?? null
+      const status = resolveStatus(d.date, d.is_weekend, entry)
 
-  let rows: AbsensiRow[] = DUMMY_EMPLOYEES.map((emp, index) => ({
-    id: String(index + 1),
-    employee_id: emp.code,
-    employee_code: emp.code,
-    employee_name: emp.name,
-    position_name: emp.position,
-    department_name: emp.department,
-    days: generateDays(month, year),
+      return {
+        date: d.day,
+        status,
+        ...(entry?.type === "attendance" && entry.attendance
+          ? {
+              check_in: entry.attendance.check_in_time,
+              check_out: entry.attendance.check_out_time,
+            }
+          : {}),
+      }
+    }),
   }))
 
+  // Backend hanya menerima param `periode`, jadi search difilter di FE.
   if (params.search) {
     const q = params.search.toLowerCase()
     rows = rows.filter((row) => row.employee_name.toLowerCase().includes(q))
   }
 
-  if (params.department_id && params.department_id !== "all") {
-    rows = rows.filter((row) => row.department_name === params.department_id)
-  }
-
   return {
     total: rows.length,
     rows,
-    days_in_month: daysInMonth,
+    days_in_month: data.periode.jumlah_hari,
   }
 }
