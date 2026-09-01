@@ -17,11 +17,7 @@ const DashboardPage = lazy(() =>
     default: m.DashboardPage,
   }))
 )
-const PlaceholderPage = lazy(() =>
-  import("@/pages/dashboard/PlaceholderPage").then((m) => ({
-    default: m.PlaceholderPage,
-  }))
-)
+
 const BranchPage = lazy(() =>
   import("@/pages/branch/BranchPage").then((m) => ({ default: m.BranchPage }))
 )
@@ -49,6 +45,13 @@ const AddLevelApprovalPage = lazy(
 const EditLevelApprovalPage = lazy(
   () => import("@/pages/level_approval/EditLevelApprovalPage")
 )
+
+const AbsensiPage = lazy(() =>
+  import("@/pages/absensi/AbsensiPage").then((m) => ({
+    default: m.AbsensiPage,
+  }))
+)
+
 const ResetPasswordPage = lazy(() =>
   import("@/pages/auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
@@ -108,10 +111,8 @@ export function AppRouter() {
               path="level-approval/edit/:id"
               element={<EditLevelApprovalPage />}
             />
-            <Route
-              path="absensi"
-              element={<PlaceholderPage title="Absensi" />}
-            />
+            <Route path="absensi" element={<AbsensiPage />} />
+
             <Route path="cuti-izin" element={<PermohonanCutiPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
           </Route>
