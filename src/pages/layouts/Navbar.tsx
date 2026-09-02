@@ -85,7 +85,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/95 px-4 shadow-sm backdrop-blur-sm md:px-6">
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/95 px-4 shadow-[0_1px_12px_-4px_rgba(15,23,42,0.06)] backdrop-blur-sm md:px-6">
         {/* Left: hamburger + breadcrumb */}
         <div className="flex items-center gap-3">
           <Button
@@ -146,7 +146,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
             <DropdownMenuContent
               align="end"
-              className="w-48 rounded-xl border-slate-200 p-1.5 shadow-lg shadow-slate-900/5"
+              className="w-48 rounded-xl border-slate-200 p-1.5 shadow-[0_12px_32px_-8px_rgba(15,23,42,0.10)]"
             >
               <DropdownMenuItem
                 className="cursor-pointer gap-2.5 rounded-lg text-slate-700 hover:text-[#1F9DA6] focus:bg-[#EAF9FA] focus:text-[#1F9DA6]"
@@ -179,7 +179,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               role="dialog"
               aria-modal="true"
               aria-labelledby="logout-dialog-title"
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/10"
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.14)]"
               onMouseDown={(event) => event.stopPropagation()}
             >
               <h2

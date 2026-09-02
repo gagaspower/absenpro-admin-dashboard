@@ -32,7 +32,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-5">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#30CCD5] to-[#5B8DEF] shadow-sm shadow-[#30CCD5]/30">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#30CCD5] to-[#5B8DEF] shadow-[0_6px_16px_-6px_rgba(48,204,213,0.45)]">
               <Fingerprint className="size-5 text-white" strokeWidth={1.75} />
             </div>
             <span className="text-lg font-semibold tracking-tight">
@@ -73,7 +73,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                           isActive
-                            ? "bg-gradient-to-r from-[#30CCD5] to-[#5B8DEF] text-white shadow-sm shadow-[#30CCD5]/25"
+                            ? "bg-gradient-to-r from-[#30CCD5] to-[#5B8DEF] text-white shadow-[0_6px_16px_-6px_rgba(48,204,213,0.4)]"
                             : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                         )}
                       >
