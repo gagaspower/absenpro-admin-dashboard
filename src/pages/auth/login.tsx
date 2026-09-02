@@ -76,15 +76,29 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-[#F7FCFA] p-6 text-sm">
-      <div className="w-full max-w-sm rounded-[10px] bg-white p-8 shadow-md">
+    <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-gradient-to-br from-[#EAF9FA] via-[#F5FBFC] to-[#EAF1FC] p-6 text-sm">
+      {/* Soft decorative glows — purely visual, no layout impact */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-24 -left-24 size-72 rounded-full bg-[#30CCD5]/20 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-20 -bottom-28 size-80 rounded-full bg-[#5B8DEF]/15 blur-3xl"
+      />
+
+      <div className="relative w-full max-w-sm rounded-2xl border border-white/60 bg-white/90 p-8 shadow-xl shadow-slate-900/5 backdrop-blur-sm">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <Fingerprint className="size-12 text-slate-800" strokeWidth={1.5} />
-          <h1 className="text-lg">
-            <span className="text-[#30CCD5]">Absen</span>
-            <span className="font-bold text-black">Pro</span>
-            <span className="text-black"> Login</span>
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#30CCD5] to-[#5B8DEF] shadow-md shadow-[#30CCD5]/30">
+            <Fingerprint className="size-8 text-white" strokeWidth={1.5} />
+          </div>
+          <h1 className="text-xl">
+            <span className="font-semibold text-[#1F9DA6]">Absen</span>
+            <span className="font-bold text-slate-900">Pro</span>
           </h1>
+          <p className="text-xs text-slate-500">
+            Masuk untuk melanjutkan ke akun Anda
+          </p>
         </div>
 
         <form
@@ -94,53 +108,88 @@ export function LoginPage() {
         >
           {/* General error */}
           {errors.general && (
-            <p className="rounded-[5px] bg-red-50 px-3 py-2 text-xs text-red-600">
+            <p
+              role="alert"
+              className="rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-xs text-red-600"
+            >
               {errors.general}
             </p>
           )}
 
           {/* Username */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="username"
+              className="px-0.5 text-xs font-medium text-slate-600"
+            >
+              Username
+            </label>
             <div
-              className={`flex items-center gap-2 rounded-[5px] bg-[#F7FCFA] px-3 py-2.5 ${
-                errors.username ? "ring-1 ring-red-400" : ""
+              className={`flex items-center gap-2.5 rounded-xl border bg-slate-50/80 px-3.5 py-3 transition-colors focus-within:border-[#30CCD5] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#30CCD5]/25 ${
+                errors.username
+                  ? "border-red-300 bg-red-50/40"
+                  : "border-slate-200"
               }`}
             >
-              <User className="size-4 shrink-0 text-slate-800" />
+              <User className="size-4 shrink-0 text-slate-400" />
               <input
+                id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Masukan Username"
+                placeholder="Masukan username"
                 autoComplete="username"
-                className="w-full border-none bg-transparent text-sm outline-none placeholder:text-[#989898]"
+                aria-invalid={!!errors.username}
+                aria-describedby={
+                  errors.username ? "username-error" : undefined
+                }
+                className="w-full border-none bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
               />
             </div>
             {errors.username && (
-              <p className="px-1 text-xs text-red-500">{errors.username}</p>
+              <p
+                id="username-error"
+                role="alert"
+                className="px-1 text-xs text-red-500"
+              >
+                {errors.username}
+              </p>
             )}
           </div>
 
           {/* Password */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="password"
+              className="px-0.5 text-xs font-medium text-slate-600"
+            >
+              Password
+            </label>
             <div
-              className={`flex items-center gap-2 rounded-[5px] bg-[#F7FCFA] px-3 py-2.5 ${
-                errors.password ? "ring-1 ring-red-400" : ""
+              className={`flex items-center gap-2.5 rounded-xl border bg-slate-50/80 px-3.5 py-3 transition-colors focus-within:border-[#30CCD5] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#30CCD5]/25 ${
+                errors.password
+                  ? "border-red-300 bg-red-50/40"
+                  : "border-slate-200"
               }`}
             >
-              <Lock className="size-4 shrink-0 text-slate-800" />
+              <Lock className="size-4 shrink-0 text-slate-400" />
               <input
+                id="password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Masukan password"
                 autoComplete="current-password"
-                className="w-full border-none bg-transparent text-sm outline-none placeholder:text-[#989898]"
+                aria-invalid={!!errors.password}
+                aria-describedby={
+                  errors.password ? "password-error" : undefined
+                }
+                className="w-full border-none bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((p) => !p)}
-                className="shrink-0 text-slate-800"
+                className="-mr-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
                 aria-label={
                   showPassword ? "Sembunyikan password" : "Tampilkan password"
                 }
@@ -153,18 +202,27 @@ export function LoginPage() {
               </button>
             </div>
             {errors.password && (
-              <p className="px-1 text-xs text-red-500">{errors.password}</p>
+              <p
+                id="password-error"
+                role="alert"
+                className="px-1 text-xs text-red-500"
+              >
+                {errors.password}
+              </p>
             )}
           </div>
 
-          <a href="#" className="self-end text-xs text-[#30CCD5]">
+          <a
+            href="#"
+            className="self-end text-xs font-medium text-[#1F9DA6] transition-colors hover:text-[#30CCD5] hover:underline"
+          >
             Lupa password?
           </a>
 
           <Button
             type="submit"
             disabled={loading}
-            className="h-11 w-full rounded-[5px] bg-[#30CCD5] font-normal text-white hover:bg-[#2ab8c0] disabled:opacity-70"
+            className="h-11 w-full rounded-xl bg-gradient-to-r from-[#30CCD5] to-[#5B8DEF] font-medium text-white shadow-md shadow-[#30CCD5]/25 transition-all hover:shadow-lg hover:shadow-[#30CCD5]/30 hover:brightness-105 disabled:opacity-70 disabled:shadow-none"
           >
             {loading ? (
               <span className="flex items-center gap-2">

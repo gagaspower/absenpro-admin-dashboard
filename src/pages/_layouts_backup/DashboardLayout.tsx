@@ -8,7 +8,7 @@ export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-svh overflow-hidden bg-[#F4F8F9]">
+    <div className="flex h-svh overflow-hidden bg-gray-50">
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -16,7 +16,7 @@ export function DashboardLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
 
-        <main className="flex-1 overflow-y-auto bg-[#F4F8F9] p-5 md:p-6">
+        <main className="flex-1 overflow-y-auto bg-[#F8F8F8] p-5 md:p-6">
           <Outlet />
         </main>
       </div>
