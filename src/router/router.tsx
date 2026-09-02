@@ -52,6 +52,12 @@ const AbsensiPage = lazy(() =>
   }))
 )
 
+const HolidayPage = lazy(() =>
+  import("@/pages/holiday/HolidayPage").then((m) => ({
+    default: m.HolidayPage,
+  }))
+)
+
 const ResetPasswordPage = lazy(() =>
   import("@/pages/auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
@@ -111,6 +117,7 @@ export function AppRouter() {
               path="level-approval/edit/:id"
               element={<EditLevelApprovalPage />}
             />
+            <Route path="hari-libur" element={<HolidayPage />} />
             <Route path="absensi" element={<AbsensiPage />} />
 
             <Route path="cuti-izin" element={<PermohonanCutiPage />} />

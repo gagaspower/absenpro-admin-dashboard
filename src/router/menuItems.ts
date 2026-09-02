@@ -10,6 +10,7 @@ import {
   CalendarOff,
   type LucideIcon,
   ListChecks,
+  PartyPopper,
 } from "lucide-react"
 
 export interface MenuItem {
@@ -48,6 +49,11 @@ export const menuGroups: MenuGroup[] = [
         label: "Level Approval",
         path: "/dashboard/level-approval",
         icon: ListChecks,
+      },
+      {
+        label: "Hari Libur",
+        path: "/dashboard/hari-libur",
+        icon: PartyPopper,
       },
     ],
   },

@@ -3,7 +3,7 @@ export interface HolidayRow {
   name: string
   start_date: string
   end_date: string
-  description: string | null
+  desc: string | null
   is_recurring: boolean
   is_trashed: boolean
 }
