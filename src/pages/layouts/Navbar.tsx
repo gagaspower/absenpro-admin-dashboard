@@ -50,7 +50,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const fullName = employee?.full_name ?? "User"
   const avatarUrl = employee?.face_profile?.reference_photo_path
     ? `${BACKEND_URL}/storage/${employee.face_profile.reference_photo_path}`
-    : ""
+    : undefined
 
   const initials = getInitials(fullName)
 
