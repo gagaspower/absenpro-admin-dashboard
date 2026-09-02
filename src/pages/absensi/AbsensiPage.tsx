@@ -14,6 +14,7 @@ import {
 import { AbsensiTable } from "@/components/absensi/AbsensiTable"
 import { fetchAbsensi } from "@/services/absensi/absensi.service"
 import { PeriodeFilter } from "@/components/absensi/PeriodeFilter"
+import { DepartemenFilter } from "@/components/absensi/DepartemenFilter"
 
 const SEARCH_DEBOUNCE_MS = 400
 
@@ -41,6 +42,7 @@ const DAY_LEGEND_ITEMS = [
 
 export function AbsensiPage() {
   const [periode, setPeriode] = useState("")
+  const [departemenId, setDepartemenId] = useState("")
   const [search, setSearch] = useState("")
 
   const [rows, setRows] = useState<AbsensiRow[]>([])
@@ -60,6 +62,7 @@ export function AbsensiPage() {
         const res = await fetchAbsensi({
           periode,
           search: debouncedSearch || undefined,
+          departemen_id: departemenId || undefined,
         })
         if (signal?.cancelled) return
         setRows(res.rows)
@@ -72,7 +75,7 @@ export function AbsensiPage() {
         if (!signal?.cancelled) setIsLoading(false)
       }
     },
-    [periode, debouncedSearch]
+    [periode, debouncedSearch, departemenId]
   )
 
   useEffect(() => {
@@ -112,6 +115,8 @@ export function AbsensiPage() {
           </button>
 
           <PeriodeFilter value={periode} onChange={setPeriode} />
+
+          <DepartemenFilter value={departemenId} onChange={setDepartemenId} />
 
           <div className="relative w-full min-w-[220px] md:w-64">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-400" />
