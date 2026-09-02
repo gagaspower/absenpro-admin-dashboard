@@ -102,8 +102,20 @@ export interface AbsensiDayRecord {
   check_out?: string
   /** Nama jenis izin/cuti (mis. "Cuti Tahunan"), untuk tooltip badge */
   leave_label?: string
-  /** Nama hari libur (mis. "Cuti Bersama Maulid Nabi"), untuk tooltip saat status "libur" */
+  /** Nama hari libur (mis. "Cuti Bersama Maulid Nabi"), untuk tooltip */
   holiday_label?: string
+  /** Deskripsi tambahan hari libur, bila tersedia */
+  holiday_description?: string
+  /** Tanggal ini merupakan hari libur dari master holiday backend */
+  is_holiday?: boolean
+}
+
+export interface AbsensiDateInfo {
+  day: number
+  date: string
+  is_weekend: boolean
+  is_holiday: boolean
+  holiday: AbsensiHolidayInfo | null
 }
 
 export interface AbsensiRow {
@@ -117,6 +129,7 @@ export interface AbsensiListResponse {
   total: number
   rows: AbsensiRow[]
   days_in_month: number
+  dates: AbsensiDateInfo[]
 }
 
 export const ABSENSI_STATUS_META: Record<
