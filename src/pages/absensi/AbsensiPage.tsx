@@ -28,6 +28,17 @@ const LEGEND_ITEMS: {
   { key: "alpha", color: "bg-[#D4453B]" },
 ]
 
+const DAY_LEGEND_ITEMS = [
+  {
+    label: "Cuti bersama / Hari Libur",
+    className: "bg-[oklch(64.5%_0.246_16.439)]",
+  },
+  {
+    label: "Hari Minggu",
+    className: "bg-[oklch(44.6%_0.03_256.802)]",
+  },
+]
+
 export function AbsensiPage() {
   const [periode, setPeriode] = useState("")
   const [search, setSearch] = useState("")
@@ -132,6 +143,17 @@ export function AbsensiPage() {
             isLoading={isLoading}
             error={error}
           />
+
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            {DAY_LEGEND_ITEMS.map((item) => (
+              <div key={item.label} className="flex items-center gap-1.5">
+                <span
+                  className={`size-3 rounded-[3px] border border-[#EAEAEA] ${item.className}`}
+                />
+                <span className="text-xs text-[#71808B]">{item.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </PageCard>
     </div>
