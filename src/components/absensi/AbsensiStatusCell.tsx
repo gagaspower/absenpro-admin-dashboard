@@ -30,7 +30,7 @@ const STATUS_STYLE: Record<Exclude<AttendanceStatus, "">, string> = {
 
 /** Susun teks tooltip sesuai jenis status. Return null kalau tidak perlu tooltip. */
 function buildTooltipText(record: AbsensiDayRecord): string | null {
-  const { status, leave_label, check_in, check_out } = record
+  const { status, leave_label, holiday_label, check_in, check_out } = record
 
   switch (status) {
     case "sakit":
@@ -51,6 +51,10 @@ function buildTooltipText(record: AbsensiDayRecord): string | null {
 
     case "alpha":
       return ABSENSI_STATUS_META.alpha.label
+
+    case "libur":
+      // Nama hari libur dari backend (mis. "Cuti Bersama Maulid Nabi")
+      return holiday_label ?? ABSENSI_STATUS_META.libur.label
 
     default:
       return null

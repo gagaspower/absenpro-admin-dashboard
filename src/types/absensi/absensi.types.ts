@@ -12,10 +12,22 @@ export interface AbsensiPeriodeResponse {
   jumlah_hari: number
 }
 
+export interface AbsensiHolidayInfo {
+  id: string
+  name: string
+  start_date: string
+  end_date: string
+  description: string
+  is_recurring: boolean
+}
+
 export interface AbsensiDateColumn {
   date: string // "2026-09-01"
   day: number
   is_weekend: boolean
+  is_holiday: boolean
+  /** Detail hari libur (nama, rentang tanggal, dst). Null kalau bukan hari libur. */
+  holiday: AbsensiHolidayInfo | null
 }
 
 export interface AbsensiAttendanceDetail {
@@ -90,6 +102,8 @@ export interface AbsensiDayRecord {
   check_out?: string
   /** Nama jenis izin/cuti (mis. "Cuti Tahunan"), untuk tooltip badge */
   leave_label?: string
+  /** Nama hari libur (mis. "Cuti Bersama Maulid Nabi"), untuk tooltip saat status "libur" */
+  holiday_label?: string
 }
 
 export interface AbsensiRow {
