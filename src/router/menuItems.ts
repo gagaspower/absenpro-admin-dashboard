@@ -29,11 +29,11 @@ export const menuGroups: MenuGroup[] = [
     items: [{ label: "Dashboard", path: "/dashboard", icon: LayoutDashboard }],
   },
   {
-    heading: "Main Menu",
+    heading: "Master Data",
     items: [
       { label: "Departemen", path: "/dashboard/departemen", icon: Building2 },
       {
-        label: "Wilayah Kerja / Branch",
+        label: "Lokasi kerja",
         path: "/dashboard/wilayah-kerja",
         icon: MapPin,
       },
