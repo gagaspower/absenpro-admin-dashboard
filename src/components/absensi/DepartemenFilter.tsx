@@ -82,7 +82,7 @@ export function DepartemenFilter({ value, onChange }: DepartemenFilterProps) {
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
         )}
       </PopoverTrigger>
-      <PopoverContent className="w-[250px] rounded-[5px] p-0">
+      <PopoverContent className="w-62.5 rounded-[5px] p-0">
         <Command>
           <CommandInput placeholder="Cari departemen..." />
           <CommandList>

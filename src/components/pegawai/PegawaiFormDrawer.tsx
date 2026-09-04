@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import * as yup from "yup"
-import { LoaderCircle, X } from "lucide-react"
+import { Info, LoaderCircle, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -678,6 +678,19 @@ export function PegawaiFormDrawer({
                     onLoadingChange={setLoadingFor("shift")}
                   />
                 </Field>
+                <div className="flex items-start gap-2 rounded-[5px] bg-[#F3F8FA] px-3 py-2.5 sm:col-span-2">
+                  <Info className="mt-0.5 size-4 shrink-0 text-[#71808B]" />
+                  <p className="text-xs leading-relaxed text-[#71808B]">
+                    Jika{" "}
+                    <span className="font-medium text-[#374957]">Shift</span>{" "}
+                    tidak dipilih, jadwal kerja pegawai akan mengikuti jadwal
+                    kerja sesuai{" "}
+                    <span className="font-medium text-[#374957]">
+                      Cabang / Lokasi Kerja
+                    </span>{" "}
+                    yang dipilih.
+                  </p>
+                </div>
               </div>
             </FormSection>
 
