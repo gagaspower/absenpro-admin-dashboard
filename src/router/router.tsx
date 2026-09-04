@@ -58,6 +58,22 @@ const HolidayPage = lazy(() =>
   }))
 )
 
+const BranchSchedulePage = lazy(() =>
+  import("@/pages/branch_schedule/BranchSchedulePage").then((m) => ({
+    default: m.BranchSchedulePage,
+  }))
+)
+const AddBranchSchedulePage = lazy(() =>
+  import("@/pages/branch_schedule/AddBranchSchedulePage").then((m) => ({
+    default: m.AddBranchSchedulePage,
+  }))
+)
+const EditBranchSchedulePage = lazy(() =>
+  import("@/pages/branch_schedule/EditBranchSchedulePage").then((m) => ({
+    default: m.EditBranchSchedulePage,
+  }))
+)
+
 const ResetPasswordPage = lazy(() =>
   import("@/pages/auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
@@ -118,6 +134,15 @@ export function AppRouter() {
               element={<EditLevelApprovalPage />}
             />
             <Route path="hari-libur" element={<HolidayPage />} />
+            <Route path="jadwal-cabang" element={<BranchSchedulePage />} />
+            <Route
+              path="jadwal-cabang/create"
+              element={<AddBranchSchedulePage />}
+            />
+            <Route
+              path="jadwal-cabang/edit/:id"
+              element={<EditBranchSchedulePage />}
+            />
             <Route path="absensi" element={<AbsensiPage />} />
 
             <Route path="cuti-izin" element={<PermohonanCutiPage />} />

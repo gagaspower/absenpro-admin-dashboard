@@ -11,6 +11,7 @@ import {
   type LucideIcon,
   ListChecks,
   PartyPopper,
+  CalendarClock,
 } from "lucide-react"
 
 export interface MenuItem {
@@ -38,7 +39,7 @@ export const menuGroups: MenuGroup[] = [
         icon: MapPin,
       },
       { label: "Jabatan", path: "/dashboard/jabatan", icon: Briefcase },
-      { label: "Jam Kerja", path: "/dashboard/jam-kerja", icon: Clock },
+      { label: "Shift", path: "/dashboard/jam-kerja", icon: Clock },
       {
         label: "Jenis Izin / Cuti",
         path: "/dashboard/jenis-izin",
@@ -54,6 +55,11 @@ export const menuGroups: MenuGroup[] = [
         label: "Hari Libur",
         path: "/dashboard/hari-libur",
         icon: PartyPopper,
+      },
+      {
+        label: "Jadwal Cabang",
+        path: "/dashboard/jadwal-cabang",
+        icon: CalendarClock,
       },
     ],
   },
