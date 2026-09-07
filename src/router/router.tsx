@@ -74,6 +74,12 @@ const EditBranchSchedulePage = lazy(() =>
   }))
 )
 
+const PegawaiDetailPage = lazy(() =>
+  import("@/pages/pegawai/PegawaiDetailPage").then((m) => ({
+    default: m.PegawaiDetailPage,
+  }))
+)
+
 const ResetPasswordPage = lazy(() =>
   import("@/pages/auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
@@ -124,6 +130,7 @@ export function AppRouter() {
             <Route path="jam-kerja" element={<ShiftPage />} />
             <Route path="jenis-izin" element={<JenisCutiPage />} />
             <Route path="karyawan" element={<PegawaiPage />} />
+            <Route path="karyawan/:id" element={<PegawaiDetailPage />} />
             <Route path="level-approval" element={<LevelApprovalPage />} />
             <Route
               path="level-approval/create"

@@ -58,6 +58,8 @@ type FormValues = {
   position_id: string
   branch_id: string
   shift_id: string
+  effective_from: string
+  effective_until: string
 
   join_date: string
   employee_status: PegawaiCreateEmployeeStatus | ""
@@ -85,6 +87,8 @@ const EMPTY_VALUES: FormValues = {
   position_id: "",
   branch_id: "",
   shift_id: "",
+  effective_from: "",
+  effective_until: "",
 
   join_date: "",
   employee_status: "",
@@ -181,6 +185,13 @@ const dataPribadiPenempatanSchema = {
   position_id: yup.string().required("Jabatan wajib dipilih."),
   branch_id: yup.string().required("Cabang wajib dipilih."),
   shift_id: yup.string().optional(),
+  effective_from: yup.string().when("shift_id", {
+    is: (value: string | undefined) => Boolean(value),
+    then: (schema) =>
+      schema.required("Tanggal mulai efektif shift wajib diisi."),
+    otherwise: (schema) => schema.optional(),
+  }),
+  effective_until: yup.string().optional(),
 
   join_date: yup.string().required("Tanggal bergabung wajib diisi."),
   employee_status: yup
@@ -319,6 +330,12 @@ export function PegawaiFormDrawer({
         position_id: pegawai.position.id,
         branch_id: pegawai.branch.id,
         shift_id: pegawai.shift?.id ?? "",
+        effective_from: toDateInputValue(
+          pegawai.shift_assignment?.effective_from
+        ),
+        effective_until: toDateInputValue(
+          pegawai.shift_assignment?.effective_until
+        ),
 
         join_date: toDateInputValue(pegawai.join_date),
         employee_status: mapRowStatusToFormStatus(pegawai.status),
@@ -348,6 +365,21 @@ export function PegawaiFormDrawer({
       ...current,
       department_id: undefined,
       position_id: undefined,
+    }))
+  }
+
+  function changeShift(value: string) {
+    setValues((current) => ({
+      ...current,
+      shift_id: value,
+      ...(value ? {} : { effective_from: "", effective_until: "" }),
+    }))
+    setErrors((current) => ({
+      ...current,
+      shift_id: undefined,
+      ...(value
+        ? {}
+        : { effective_from: undefined, effective_until: undefined }),
     }))
   }
 
@@ -387,7 +419,15 @@ export function PegawaiFormDrawer({
           department_id: values.department_id,
           position_id: values.position_id,
           branch_id: values.branch_id,
-          ...(values.shift_id ? { shift_id: values.shift_id } : {}),
+          shift_id: values.shift_id || null,
+          effective_from:
+            values.shift_id && values.effective_from
+              ? values.effective_from
+              : null,
+          effective_until:
+            values.shift_id && values.effective_until
+              ? values.effective_until
+              : null,
 
           join_date: values.join_date,
           employee_status:
@@ -424,6 +464,14 @@ export function PegawaiFormDrawer({
         position_id: values.position_id,
         branch_id: values.branch_id,
         ...(values.shift_id ? { shift_id: values.shift_id } : {}),
+        ...(values.shift_id && values.effective_from
+          ? {
+              effective_from: values.effective_from,
+              ...(values.effective_until
+                ? { effective_until: values.effective_until }
+                : {}),
+            }
+          : {}),
 
         join_date: values.join_date,
         employee_status: values.employee_status as PegawaiCreateEmployeeStatus,
@@ -674,10 +722,39 @@ export function PegawaiFormDrawer({
                 <Field label="Shift" error={errors.shift_id}>
                   <ShiftFormCombobox
                     value={values.shift_id}
-                    onChange={(value: string) => changeValue("shift_id", value)}
+                    onChange={changeShift}
                     onLoadingChange={setLoadingFor("shift")}
                   />
                 </Field>
+                {values.shift_id && (
+                  <>
+                    <Field
+                      label="Efektif Dari"
+                      error={errors.effective_from}
+                      required
+                    >
+                      <DatePicker
+                        value={values.effective_from}
+                        onChange={(value) =>
+                          changeValue("effective_from", value)
+                        }
+                        error={Boolean(errors.effective_from)}
+                      />
+                    </Field>
+                    <Field
+                      label="Efektif Sampai"
+                      error={errors.effective_until}
+                    >
+                      <DatePicker
+                        value={values.effective_until}
+                        onChange={(value) =>
+                          changeValue("effective_until", value)
+                        }
+                        error={Boolean(errors.effective_until)}
+                      />
+                    </Field>
+                  </>
+                )}
                 <div className="flex items-start gap-2 rounded-[5px] bg-[#F3F8FA] px-3 py-2.5 sm:col-span-2">
                   <Info className="mt-0.5 size-4 shrink-0 text-[#71808B]" />
                   <p className="text-xs leading-relaxed text-[#71808B]">

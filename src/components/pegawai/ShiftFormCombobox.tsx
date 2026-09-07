@@ -82,9 +82,24 @@ export function ShiftFormCombobox({
           {selected && (
             <X
               className="size-4 opacity-50 hover:opacity-100"
-              onClick={(e) => {
+              role="button"
+              tabIndex={0}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter" && e.key !== " ") return
+                e.preventDefault()
                 e.stopPropagation()
                 onChange("")
+                setOpen(false)
+              }}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onChange("")
+                setOpen(false)
               }}
             />
           )}
@@ -101,6 +116,21 @@ export function ShiftFormCombobox({
           <CommandList>
             <CommandEmpty>Shift tidak ditemukan.</CommandEmpty>
             <CommandGroup>
+              <CommandItem
+                value="__empty_shift__"
+                onSelect={() => {
+                  onChange("")
+                  setOpen(false)
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 size-4",
+                    value === "" ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                Tidak ada shift
+              </CommandItem>
               {options.map((option) => (
                 <CommandItem
                   key={option.id}

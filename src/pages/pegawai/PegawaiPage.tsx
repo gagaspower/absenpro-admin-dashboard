@@ -67,6 +67,7 @@ import {
   type ConfirmDialogType,
 } from "@/components/feedback/ConfirmDialog"
 import TableLoadingState from "@/components/data-table/TableLoadingState"
+import { useNavigate } from "react-router-dom"
 
 const BULK_OPTIONS: BulkActionOption[] = [
   { value: "restore", label: "Restore" },
@@ -107,6 +108,7 @@ export function PegawaiPage() {
   } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const controller = new AbortController()
@@ -245,7 +247,10 @@ export function PegawaiPage() {
         key: "detail",
         label: "View Detail",
         icon: Eye,
-        onClick: () => console.log("[pegawai] detail", row.id),
+        onClick: () =>
+          navigate(`/dashboard/karyawan/${row.id}`, {
+            state: { pegawai: row },
+          }),
       },
       {
         key: "edit",

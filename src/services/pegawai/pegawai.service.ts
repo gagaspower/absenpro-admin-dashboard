@@ -68,7 +68,7 @@ export async function updatePegawai(
   id: string,
   payload: UpdatePegawaiPayload
 ): Promise<UpdatePegawaiResponse> {
-  const { data } = await api.put<UpdatePegawaiResponse>(
+  const { data } = await api.patch<UpdatePegawaiResponse>(
     `api/reference/pegawai/${id}`,
     payload
   )

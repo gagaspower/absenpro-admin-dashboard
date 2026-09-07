@@ -34,6 +34,12 @@ export type PegawaiStatus = "permanent" | "contract" | "intern" | "resign"
 
 export type PegawaiGender = "L" | "P"
 
+export interface PegawaiShiftAssignment {
+  id: string
+  effective_from: string | null
+  effective_until: string | null
+}
+
 export interface PegawaiRow {
   id: string
   code: string
@@ -49,6 +55,7 @@ export interface PegawaiRow {
   face_profile: FaceProfile | null
   join_date: string
   shift: PegawaiShift
+  shift_assignment: PegawaiShiftAssignment | null
   status: PegawaiStatus
   is_trashed: boolean
   user: UserRow | null
@@ -104,6 +111,8 @@ export interface CreatePegawaiPayload {
   position_id: string
   branch_id: string
   shift_id?: string
+  effective_from?: string
+  effective_until?: string
 
   join_date: string
   employee_status: PegawaiCreateEmployeeStatus
@@ -135,7 +144,9 @@ export interface UpdatePegawaiPayload {
   department_id: string
   position_id: string
   branch_id: string
-  shift_id?: string
+  shift_id?: string | null
+  effective_from?: string | null
+  effective_until?: string | null
 
   join_date: string
   employee_status: PegawaiUpdateEmployeeStatus
