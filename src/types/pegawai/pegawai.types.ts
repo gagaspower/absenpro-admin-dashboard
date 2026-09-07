@@ -18,9 +18,20 @@ export interface PegawaiRole extends RoleOption {
   }
 }
 
-export interface PegawaiShift {
-  id: string
-  name: string
+export type PegawaiStatus = "permanent" | "contract" | "intern" | "resign"
+
+export type PegawaiGender = "L" | "P"
+
+// --- Work schedule (pengganti PegawaiShift + PegawaiShiftAssignment) ---
+export type PegawaiWorkScheduleSource = "shift" | "branch_schedule"
+
+export interface PegawaiWorkSchedule {
+  source: PegawaiWorkScheduleSource
+  shift_id: string | null
+  shift_name: string | null
+  assignment_id: string | null
+  branch_schedule_id: string | null
+  branch_schedule_day_id: string | null
   start_time: string
   end_time: string
   check_in_start: string
@@ -28,16 +39,6 @@ export interface PegawaiShift {
   check_out_start: string
   check_out_end: string
   late_tolerance_minutes: number
-}
-
-export type PegawaiStatus = "permanent" | "contract" | "intern" | "resign"
-
-export type PegawaiGender = "L" | "P"
-
-export interface PegawaiShiftAssignment {
-  id: string
-  effective_from: string | null
-  effective_until: string | null
 }
 
 export interface PegawaiRow {
@@ -54,8 +55,7 @@ export interface PegawaiRow {
   branch: PegawaiBranch
   face_profile: FaceProfile | null
   join_date: string
-  shift: PegawaiShift
-  shift_assignment: PegawaiShiftAssignment | null
+  work_schedule: PegawaiWorkSchedule | null
   status: PegawaiStatus
   is_trashed: boolean
   user: UserRow | null

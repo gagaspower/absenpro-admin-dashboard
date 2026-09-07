@@ -45,6 +45,14 @@ function formatTime(value: string) {
   return value.slice(0, 5)
 }
 
+function getWorkScheduleLabel(workSchedule: PegawaiRow["work_schedule"]) {
+  if (!workSchedule) return "-"
+
+  return workSchedule.source === "shift"
+    ? (workSchedule.shift_name ?? "Jadwal Shift")
+    : "Mengikuti jadwal branch"
+}
+
 export function PegawaiDetailPage() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -123,36 +131,36 @@ export function PegawaiDetailPage() {
             ]}
           />
 
-          {pegawai.shift && (
+          {pegawai.work_schedule && (
             <PegawaiInfoCard
-              title="Jadwal Shift"
-              description={pegawai.shift.name}
+              title="Jadwal Kerja"
+              description={getWorkScheduleLabel(pegawai.work_schedule)}
               items={[
                 {
                   icon: Clock,
                   label: "Jam Kerja",
-                  value: `${formatTime(pegawai.shift.start_time)} - ${formatTime(
-                    pegawai.shift.end_time
-                  )}`,
+                  value: `${formatTime(
+                    pegawai.work_schedule.start_time
+                  )} - ${formatTime(pegawai.work_schedule.end_time)}`,
                 },
                 {
                   icon: Clock,
-                  label: "Jendela Check-in",
+                  label: "Waktu Check-in",
                   value: `${formatTime(
-                    pegawai.shift.check_in_start
-                  )} - ${formatTime(pegawai.shift.check_in_end)}`,
+                    pegawai.work_schedule.check_in_start
+                  )} - ${formatTime(pegawai.work_schedule.check_in_end)}`,
                 },
                 {
                   icon: Clock,
-                  label: "Jendela Check-out",
+                  label: "Waktu Check-out",
                   value: `${formatTime(
-                    pegawai.shift.check_out_start
-                  )} - ${formatTime(pegawai.shift.check_out_end)}`,
+                    pegawai.work_schedule.check_out_start
+                  )} - ${formatTime(pegawai.work_schedule.check_out_end)}`,
                 },
                 {
                   icon: Clock,
                   label: "Toleransi Terlambat",
-                  value: `${pegawai.shift.late_tolerance_minutes} menit`,
+                  value: `${pegawai.work_schedule.late_tolerance_minutes} menit`,
                 },
               ]}
             />
