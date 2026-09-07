@@ -60,6 +60,7 @@ export function LoginPage() {
         access_token: response.data.access_token,
         user: response.data.user,
         permissions: response.data.permissions,
+        work_schedule: response.data.work_schedule,
       })
 
       navigate("/dashboard", { replace: true })
