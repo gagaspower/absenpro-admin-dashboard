@@ -1,5 +1,12 @@
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, Briefcase, Building2, MapPin, Pencil } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  Briefcase,
+  Building2,
+  MapPin,
+  Pencil,
+} from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -20,11 +27,13 @@ function getInitials(name: string) {
 interface PegawaiDetailHeaderProps {
   pegawai: PegawaiRow
   onEdit: () => void
+  onMutasi: () => void
 }
 
 export function PegawaiDetailHeader({
   pegawai,
   onEdit,
+  onMutasi,
 }: PegawaiDetailHeaderProps) {
   const navigate = useNavigate()
   const avatarUrl = getPegawaiAvatarUrl(
@@ -60,11 +69,11 @@ export function PegawaiDetailHeader({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#374957]">
               <span className="inline-flex items-center gap-1.5">
                 <Briefcase className="size-3.5 text-[#8B9AA5]" />
-                {pegawai.position.name}
+                {pegawai.position?.name ?? "-"}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Building2 className="size-3.5 text-[#8B9AA5]" />
-                {pegawai.department.name}
+                {pegawai.department?.name ?? "-"}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="size-3.5 text-[#8B9AA5]" />
@@ -85,14 +94,25 @@ export function PegawaiDetailHeader({
             Kembali
           </Button>
           {!pegawai.is_trashed && (
-            <Button
-              type="button"
-              onClick={onEdit}
-              className="h-10 rounded-[5px] bg-[#0F9D6C] text-sm font-normal text-white hover:bg-[#0C8058]"
-            >
-              <Pencil className="size-4" />
-              Edit Data
-            </Button>
+            <>
+              <Button
+                type="button"
+                onClick={onEdit}
+                className="h-10 rounded-[5px] bg-[#0F9D6C] text-sm font-normal text-white hover:bg-[#0C8058]"
+              >
+                <Pencil className="size-4" />
+                Edit Data
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onMutasi}
+                className="h-10 rounded-[5px] border-[#30CCD5] text-sm font-normal text-[#1FA0A8] hover:bg-[#E7FAFB]"
+              >
+                <ArrowLeftRight className="size-4" />
+                Mutasi Pegawai
+              </Button>
+            </>
           )}
         </div>
       </div>

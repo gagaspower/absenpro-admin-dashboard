@@ -506,10 +506,10 @@ export function PegawaiPage() {
                             {row.gender}
                           </TableCell>
                           <TableCell className="text-[#374957]">
-                            {row.position.name}
+                            {row.position?.name ?? "-"}
                           </TableCell>
                           <TableCell className="text-[#374957]">
-                            {row.department.name}
+                            {row.department?.name ?? "-"}
                           </TableCell>
                           <TableCell>
                             <PegawaiStatusBadge status={row.status} />

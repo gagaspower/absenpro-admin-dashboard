@@ -50,8 +50,8 @@ export interface PegawaiRow {
   birth_place: string
   birth_date: string
   address: string
-  position: PegawaiPosition
-  department: PegawaiDepartment
+  position: PegawaiPosition | null
+  department: PegawaiDepartment | null
   branch: PegawaiBranch
   face_profile: FaceProfile | null
   join_date: string
@@ -156,4 +156,19 @@ export interface UpdatePegawaiResponse {
   success: boolean
   message: string
   data: unknown
+}
+
+export interface MutasiPegawaiPayload {
+  department_id: string
+  position_id: string
+  branch_id: string
+  effective_from: string
+  effective_until?: string | null
+  reason?: string | null
+}
+
+export interface MutasiPegawaiResponse {
+  success?: boolean
+  message: string
+  data?: unknown
 }

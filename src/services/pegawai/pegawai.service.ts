@@ -2,6 +2,8 @@ import { api } from "@/lib/axios"
 import type {
   CreatePegawaiPayload,
   CreatePegawaiResponse,
+  MutasiPegawaiPayload,
+  MutasiPegawaiResponse,
   PegawaiListResponse,
   PegawaiStatus,
   UpdatePegawaiPayload,
@@ -100,4 +102,15 @@ export async function forceDeleteMultiplePegawai(ids: string[]): Promise<void> {
   await api.delete("api/reference/pegawai/force-delete-multiple", {
     data: { ids },
   })
+}
+
+export async function mutasiPegawai(
+  id: string,
+  payload: MutasiPegawaiPayload
+): Promise<MutasiPegawaiResponse> {
+  const { data } = await api.post<MutasiPegawaiResponse>(
+    `api/reference/pegawai/${id}/placements`,
+    payload
+  )
+  return data
 }

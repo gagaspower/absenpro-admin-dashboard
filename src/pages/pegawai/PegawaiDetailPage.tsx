@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button"
 
 import type { PegawaiRow } from "@/types/pegawai/pegawai.types"
+import { PegawaiMutasiModal } from "@/components/pegawai/PegawaiMutasiModal"
 
 interface PageAlert {
   type: AlertModalType
@@ -62,6 +63,7 @@ export function PegawaiDetailPage() {
 
   const pegawai = initialPegawai
   const [formDrawerOpen, setFormDrawerOpen] = useState(false)
+  const [mutasiModalOpen, setMutasiModalOpen] = useState(false)
   const [pageAlert, setPageAlert] = useState<PageAlert | null>(null)
 
   if (!pegawai) {
@@ -85,6 +87,7 @@ export function PegawaiDetailPage() {
       <PegawaiDetailHeader
         pegawai={pegawai}
         onEdit={() => setFormDrawerOpen(true)}
+        onMutasi={() => setMutasiModalOpen(true)}
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -194,6 +197,17 @@ export function PegawaiDetailPage() {
         pegawai={pegawai}
         onCreated={(message) => {
           setFormDrawerOpen(false)
+          setPageAlert({ type: "success", message })
+        }}
+        onError={(message) => setPageAlert({ type: "error", message })}
+      />
+
+      <PegawaiMutasiModal
+        open={mutasiModalOpen}
+        onOpenChange={setMutasiModalOpen}
+        pegawai={pegawai}
+        onSuccess={(message) => {
+          setMutasiModalOpen(false)
           setPageAlert({ type: "success", message })
         }}
         onError={(message) => setPageAlert({ type: "error", message })}
