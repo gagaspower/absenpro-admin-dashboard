@@ -1,11 +1,11 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Check,
   Clock,
   Download,
+  Eye,
   FileText,
   Image as ImageIcon,
-  Paperclip,
   X,
   XCircle,
 } from "lucide-react"
@@ -26,19 +26,18 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer"
-import { useMobile } from "@/hooks/use-mobile"
-import { BACKEND_URL } from "@/lib/config"
-import { downloadPermohonanCutiAttachment } from "@/services/permohonan_cuti/permohonan_cuti.service"
-import type {
-  LeaveRequestAttachment,
-  PermohonanCutiRow,
-} from "@/types/permohonan_cuti/permohonan_cuti.types"
 import { LeaveRequestStatusBadge } from "@/components/permohonan_cuti/LeaveRequestStatusBadge"
 import {
   formatDate,
   formatDateTime,
   formatTotalDays,
 } from "@/components/permohonan_cuti/format"
+import { useMobile } from "@/hooks/use-mobile"
+import { downloadPermohonanCutiAttachment } from "@/services/permohonan_cuti/permohonan_cuti.service"
+import type {
+  LeaveRequestAttachment,
+  PermohonanCutiRow,
+} from "@/types/permohonan_cuti/permohonan_cuti.types"
 
 interface PermohonanCutiDetailDrawerProps {
   open: boolean
@@ -71,7 +70,8 @@ export function PermohonanCutiDetailDrawer({
       document.body.appendChild(anchor)
       anchor.click()
       anchor.remove()
-      URL.revokeObjectURL(url)
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
     } finally {
       setDownloadingId(null)
     }
@@ -256,8 +256,8 @@ export function PermohonanCutiDetailDrawer({
       <AttachmentPreviewDialog
         attachment={previewAttachment}
         open={previewAttachment !== null}
-        onOpenChange={(open) => {
-          if (!open) setPreviewAttachment(null)
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPreviewAttachment(null)
         }}
       />
     </>
@@ -303,7 +303,7 @@ function AttachmentItem({
             aria-label={`Preview ${attachment.file_name}`}
             title="Preview"
           >
-            <Paperclip className="size-4" />
+            <Eye className="size-4" />
           </Button>
           <Button
             type="button"
@@ -331,11 +331,58 @@ function AttachmentPreviewDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open || !attachment) {
+      setPreviewUrl(null)
+      setLoading(false)
+      setError(null)
+      return
+    }
+
+    let objectUrl: string | null = null
+    let cancelled = false
+
+    const loadPreview = async () => {
+      setLoading(true)
+      setError(null)
+      setPreviewUrl(null)
+
+      try {
+        const blob = await downloadPermohonanCutiAttachment(attachment.id)
+
+        if (cancelled) return
+
+        objectUrl = URL.createObjectURL(blob)
+        setPreviewUrl(objectUrl)
+      } catch {
+        if (!cancelled) {
+          setError("Lampiran tidak dapat ditampilkan.")
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void loadPreview()
+
+    return () => {
+      cancelled = true
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  }, [open, attachment])
+
   if (!attachment) return null
 
   const isImage = attachment.file_type.startsWith("image/")
   const isPdf = attachment.file_type === "application/pdf"
-  const previewUrl = getAttachmentUrl(attachment.file_url)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -350,7 +397,20 @@ function AttachmentPreviewDialog({
         </DialogHeader>
 
         <div className="min-h-0 flex-1 bg-[#F5F7F8] p-3 sm:p-5">
-          {isImage && (
+          {loading && (
+            <div className="flex h-full items-center justify-center text-sm text-[#71808B]">
+              Memuat lampiran...
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+              <FileText className="size-10 text-[#9CA6AD]" />
+              <p className="text-sm text-[#71808B]">{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && previewUrl && isImage && (
             <div className="flex h-full items-center justify-center overflow-auto">
               <img
                 src={previewUrl}
@@ -360,7 +420,7 @@ function AttachmentPreviewDialog({
             </div>
           )}
 
-          {isPdf && (
+          {!loading && !error && previewUrl && isPdf && (
             <iframe
               src={previewUrl}
               title={`Preview ${attachment.file_name}`}
@@ -368,14 +428,24 @@ function AttachmentPreviewDialog({
             />
           )}
 
-          {!isImage && !isPdf && (
+          {!loading && !error && previewUrl && !isImage && !isPdf && (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
               <FileText className="size-10 text-[#9CA6AD]" />
               <p className="text-sm text-[#71808B]">
                 File ini tidak mendukung preview langsung.
               </p>
-              <Button type="button" onClick={() => window.open(previewUrl, "_blank")}>
-                Buka File
+              <Button
+                type="button"
+                onClick={() => {
+                  const anchor = document.createElement("a")
+                  anchor.href = previewUrl
+                  anchor.download = attachment.file_name
+                  document.body.appendChild(anchor)
+                  anchor.click()
+                  anchor.remove()
+                }}
+              >
+                Buka / Simpan File
               </Button>
             </div>
           )}
@@ -383,11 +453,6 @@ function AttachmentPreviewDialog({
       </DialogContent>
     </Dialog>
   )
-}
-
-function getAttachmentUrl(fileUrl: string) {
-  if (/^https?:\/\//i.test(fileUrl)) return fileUrl
-  return `${BACKEND_URL.replace(/\/$/, "")}/${fileUrl.replace(/^\//, "")}`
 }
 
 function Section({
