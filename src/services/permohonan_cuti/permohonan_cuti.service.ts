@@ -6,6 +6,19 @@ import {
   type PermohonanCutiListResponse,
 } from "@/types/permohonan_cuti/permohonan_cuti.types"
 
+export async function downloadPermohonanCutiAttachment(
+  attachmentId: string
+): Promise<Blob> {
+  const { data } = await api.get<Blob>(
+    `api/reference/permohonan/cuti/attachments/${attachmentId}/download`,
+    {
+      responseType: "blob",
+    }
+  )
+
+  return data
+}
+
 export interface FetchPermohonanCutiParams {
   limit?: number
   offset?: number
