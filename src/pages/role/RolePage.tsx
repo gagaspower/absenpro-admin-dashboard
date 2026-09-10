@@ -190,7 +190,7 @@ function PermissionMatrixTable({ matrix, checkedIds, onToggleCell, onToggleColum
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="border-none hover:bg-transparent">
-            <TableHead rowSpan={2} className={cn(LABEL_COLUMN_CLASS, "border-r border-[#EAEAEA] align-middle text-base font-normal text-[#374957]">)}>Permission</TableHead>
+            <TableHead rowSpan={2} className={cn(LABEL_COLUMN_CLASS, "border-r border-[#EAEAEA] align-middle text-base font-normal text-[#374957]")}>Permission</TableHead>
             {matrix.columns.map((action, i) => (
               <TableHead key={action} className={cn("text-center text-base font-normal text-[#374957]", i !== lastIndex && "border-r border-[#EAEAEA]")}>{action}</TableHead>
             ))}
