@@ -46,3 +46,13 @@ export interface RolePermissionDetailResponse {
 export interface UpdateRolePermissionPayload {
   permission_ids: string[]
 }
+
+export interface UpdateRolePermissionResponse {
+  success: boolean
+  message: string
+  data: {
+    role_id: string
+    nama_role: string
+    permissions: string[]
+  }
+}

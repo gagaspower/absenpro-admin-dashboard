@@ -1,6 +1,8 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom"
+import { useEffect, useState } from "react"
+
 import { storage } from "@/lib/storage"
-import { hasPermission } from "@/lib/permissions"
+import { hasPermission, PERMISSIONS_CHANGED_EVENT } from "@/lib/permissions"
 
 interface ProtectedRouteProps {
   children?: React.ReactNode
@@ -27,6 +29,26 @@ export function PermissionRoute({
   children,
 }: PermissionRouteProps) {
   const location = useLocation()
+  const [permissionVersion, setPermissionVersion] = useState(0)
+
+  useEffect(() => {
+    const handlePermissionsChanged = () => {
+      setPermissionVersion((prev) => prev + 1)
+    }
+
+    window.addEventListener(PERMISSIONS_CHANGED_EVENT, handlePermissionsChanged)
+
+    return () => {
+      window.removeEventListener(
+        PERMISSIONS_CHANGED_EVENT,
+        handlePermissionsChanged
+      )
+    }
+  }, [])
+
+  // Digunakan agar PermissionRoute melakukan re-render
+  // setiap kali permission berubah.
+  void permissionVersion
 
   if (!hasPermission(permission)) {
     return <Navigate to="/dashboard" replace state={{ from: location }} />

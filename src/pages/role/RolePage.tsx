@@ -30,6 +30,8 @@ import {
   flattenPermissionIds,
   type MenuMatrix,
 } from "./permission-matrix"
+import { storage } from "@/lib/storage"
+import { notifyPermissionsChanged } from "@/lib/permissions"
 
 const CHECKBOX_CLASS =
   "size-[18px] rounded-[4px] border-[1.5px] border-[#B7C1CA] shadow-sm " +
@@ -117,18 +119,39 @@ export function RolePage() {
 
   async function handleSave() {
     if (!selectedRoleId) return
+
     if (checkedIds.size === 0) {
       setValidationError("Pilih minimal 1 permission sebelum menyimpan.")
       return
     }
+
     setValidationError(null)
     setSaving(true)
     setSaveError(null)
     setSaveSuccess(false)
+
     try {
-      await updateRolePermissions(selectedRoleId, {
+      const response = await updateRolePermissions(selectedRoleId, {
         permission_ids: Array.from(checkedIds),
       })
+
+      const auth = storage.getAuth()
+
+      if (auth?.user?.roles) {
+        const isCurrentUserRole = auth.user.roles.some(
+          (role) => role.id === selectedRoleId
+        )
+
+        if (isCurrentUserRole) {
+          storage.saveAuth({
+            ...auth,
+            permissions: response.data.permissions,
+          })
+
+          notifyPermissionsChanged()
+        }
+      }
+
       setSaveSuccess(true)
     } catch {
       setSaveError("Gagal menyimpan hak akses. Coba lagi.")

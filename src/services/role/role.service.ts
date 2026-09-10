@@ -3,6 +3,7 @@ import type {
   RoleAllDataResponse,
   RolePermissionDetailResponse,
   UpdateRolePermissionPayload,
+  UpdateRolePermissionResponse,
 } from "@/types/roles/roles.types"
 
 export async function fetchRole(): Promise<RoleAllDataResponse> {
@@ -22,6 +23,11 @@ export async function fetchRolePermissions(
 export async function updateRolePermissions(
   roleId: string,
   payload: UpdateRolePermissionPayload
-): Promise<void> {
-  await api.put(`api/reference/roles/${roleId}/permissions`, payload)
+): Promise<UpdateRolePermissionResponse> {
+  const { data } = await api.put<UpdateRolePermissionResponse>(
+    `api/reference/roles/${roleId}/permissions`,
+    payload
+  )
+
+  return data
 }

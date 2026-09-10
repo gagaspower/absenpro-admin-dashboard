@@ -1,3 +1,8 @@
+export interface LoginCredentials {
+  username: string
+  password: string
+}
+
 export interface RolePermission {
   id: string
   permission_name: string
@@ -43,6 +48,7 @@ export interface AuthData {
 
 export interface LoginResponse {
   success: boolean
+  status: boolean
   message: string
   data: AuthData
 }
@@ -52,4 +58,14 @@ export interface StoredAuth {
   permissions: string[]
   work_schedule: WorkSchedule | null
   access_token: string
+}
+
+export interface ResetPasswordPayload {
+  password: string
+  password_confirmation: string
+}
+
+export interface ResetPasswordResponse {
+  status: boolean
+  message: string
 }
