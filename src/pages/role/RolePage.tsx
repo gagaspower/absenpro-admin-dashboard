@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { AlertCircle, CheckCircle2, ShieldCheck } from "lucide-react"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -187,97 +187,151 @@ interface PermissionMatrixTableProps {
 }
 
 function PermissionMatrixTable({ matrix, checkedIds, onToggleCell, onToggleColumn }: PermissionMatrixTableProps) {
+  const horizontalScrollRef = useRef<HTMLDivElement>(null)
+  const headerScrollRef = useRef<HTMLDivElement>(null)
+
+  const syncScroll = (source: "header" | "body") => {
+    const sourceElement = source === "header" ? headerScrollRef.current : horizontalScrollRef.current
+    const targetElement = source === "header" ? horizontalScrollRef.current : headerScrollRef.current
+
+    if (sourceElement && targetElement && targetElement.scrollLeft !== sourceElement.scrollLeft) {
+      targetElement.scrollLeft = sourceElement.scrollLeft
+    }
+  }
+
   const lastIndex = matrix.columns.length - 1
 
   return (
-    <div className="overflow-x-auto rounded-[8px] border border-[#EAEAEA] bg-white">
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow className="border-none hover:bg-transparent">
-            <TableHead
-              rowSpan={2}
-              className={cn(
-                LABEL_COLUMN_CLASS,
-                "sticky left-0 top-0 z-30 border-r border-[#EAEAEA] bg-white align-middle text-base font-normal text-[#374957]"
-              )}
-            >
-              Permission
-            </TableHead>
-            {matrix.columns.map((action, i) => (
-              <TableHead
-                key={action}
-                className={cn(
-                  "sticky top-0 z-20 bg-white text-center text-base font-normal text-[#374957]",
-                  i !== lastIndex && "border-r border-[#EAEAEA]"
-                )}
-              >
-                {action}
-              </TableHead>
-            ))}
-          </TableRow>
+    <div className="rounded-[8px] border border-[#EAEAEA] bg-white">
+      <div className="sticky top-0 z-30 flex bg-white">
+        <div
+          className={cn(
+            LABEL_COLUMN_CLASS,
+            "shrink-0 border-r border-[#EAEAEA] bg-white py-3 pl-4 text-base font-normal text-[#374957]"
+          )}
+        >
+          Permission
+        </div>
 
-          <TableRow className="border-b border-[#EAEAEA] hover:bg-transparent">
-            {matrix.columns.map((action, i) => {
-              const items = matrix.rows
-                .map((row) => row.cells[action])
-                .filter((item): item is RolePermissionItem => Boolean(item))
-              const checkedCount = items.filter((item) => checkedIds.has(item.id)).length
-              const allChecked = items.length > 0 && checkedCount === items.length
-              const someChecked = checkedCount > 0 && !allChecked
+        <div
+          ref={headerScrollRef}
+          onScroll={() => syncScroll("header")}
+          className="min-w-0 flex-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <Table className="table-fixed min-w-max">
+            <TableHeader>
+              <TableRow className="border-none hover:bg-transparent">
+                {matrix.columns.map((action, i) => (
+                  <TableHead
+                    key={action}
+                    className={cn(
+                      "bg-white text-center text-base font-normal text-[#374957]",
+                      i !== lastIndex && "border-r border-[#EAEAEA]"
+                    )}
+                  >
+                    {action}
+                  </TableHead>
+                ))}
+              </TableRow>
 
-              return (
-                <TableHead
-                  key={action}
-                  className={cn(
-                    "sticky top-[41px] z-20 bg-white py-3 text-center",
-                    i !== lastIndex && "border-r border-[#EAEAEA]"
-                  )}
-                >
-                  <div className="flex justify-center">
-                    <Checkbox
-                      checked={allChecked}
-                      indeterminate={someChecked}
-                      disabled={items.length === 0}
-                      onCheckedChange={() => onToggleColumn(action)}
-                      aria-label={`Pilih semua ${action}`}
-                      className={items.length === 0 ? DISABLED_CHECKBOX_CLASS : CHECKBOX_CLASS}
-                    />
-                  </div>
-                </TableHead>
-              )
-            })}
-          </TableRow>
-        </TableHeader>
+              <TableRow className="border-b border-[#EAEAEA] hover:bg-transparent">
+                {matrix.columns.map((action, i) => {
+                  const items = matrix.rows
+                    .map((row) => row.cells[action])
+                    .filter((item): item is RolePermissionItem => Boolean(item))
+                  const checkedCount = items.filter((item) => checkedIds.has(item.id)).length
+                  const allChecked = items.length > 0 && checkedCount === items.length
+                  const someChecked = checkedCount > 0 && !allChecked
 
-        <TableBody>
-          {matrix.rows.map((row) => (
-            <TableRow key={row.id} className="border-none hover:bg-[#F7FCFA]/60">
-              <TableCell
-                className={cn(
-                  LABEL_COLUMN_CLASS,
-                  "sticky left-0 z-10 truncate border-r border-[#EAEAEA] bg-white py-4 text-[#374957]"
-                )}
-              >
-                {row.entityName}
-              </TableCell>
-              {matrix.columns.map((action, i) => {
-                const item = row.cells[action]
-                return (
-                  <TableCell key={action} className={cn("py-4 text-center", i !== lastIndex && "border-r border-[#EAEAEA]")}>
-                    <div className="flex justify-center">
-                      {item ? (
-                        <Checkbox checked={checkedIds.has(item.id)} onCheckedChange={() => onToggleCell(item)} aria-label={item.permission_name} className={CHECKBOX_CLASS} />
-                      ) : (
-                        <Checkbox checked={false} disabled aria-label={`${action} tidak tersedia untuk ${row.entityName}`} className={DISABLED_CHECKBOX_CLASS} />
+                  return (
+                    <TableHead
+                      key={action}
+                      className={cn(
+                        "bg-white py-3 text-center",
+                        i !== lastIndex && "border-r border-[#EAEAEA]"
                       )}
-                    </div>
+                    >
+                      <div className="flex justify-center">
+                        <Checkbox
+                          checked={allChecked}
+                          indeterminate={someChecked}
+                          disabled={items.length === 0}
+                          onCheckedChange={() => onToggleColumn(action)}
+                          aria-label={`Pilih semua ${action}`}
+                          className={items.length === 0 ? DISABLED_CHECKBOX_CLASS : CHECKBOX_CLASS}
+                        />
+                      </div>
+                    </TableHead>
+                  )
+                })}
+              </TableRow>
+            </TableHeader>
+          </Table>
+        </div>
+      </div>
+
+      <div className="flex">
+        <div className={cn(LABEL_COLUMN_CLASS, "shrink-0 bg-white")}>
+          <Table className="table-fixed">
+            <TableBody>
+              {matrix.rows.map((row) => (
+                <TableRow key={row.id} className="border-none hover:bg-[#F7FCFA]/60">
+                  <TableCell
+                    className={cn(
+                      LABEL_COLUMN_CLASS,
+                      "truncate border-r border-[#EAEAEA] bg-white py-4 text-[#374957]"
+                    )}
+                  >
+                    {row.entityName}
                   </TableCell>
-                )
-              })}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div
+          ref={horizontalScrollRef}
+          onScroll={() => syncScroll("body")}
+          className="min-w-0 flex-1 overflow-x-auto overflow-y-hidden"
+        >
+          <Table className="table-fixed min-w-max">
+            <TableBody>
+              {matrix.rows.map((row) => (
+                <TableRow key={row.id} className="border-none hover:bg-[#F7FCFA]/60">
+                  {matrix.columns.map((action, i) => {
+                    const item = row.cells[action]
+                    return (
+                      <TableCell
+                        key={action}
+                        className={cn("py-4 text-center", i !== lastIndex && "border-r border-[#EAEAEA]")}
+                      >
+                        <div className="flex justify-center">
+                          {item ? (
+                            <Checkbox
+                              checked={checkedIds.has(item.id)}
+                              onCheckedChange={() => onToggleCell(item)}
+                              aria-label={item.permission_name}
+                              className={CHECKBOX_CLASS}
+                            />
+                          ) : (
+                            <Checkbox
+                              checked={false}
+                              disabled
+                              aria-label={`${action} tidak tersedia untuk ${row.entityName}`}
+                              className={DISABLED_CHECKBOX_CLASS}
+                            />
+                          )}
+                        </div>
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   )
 }
