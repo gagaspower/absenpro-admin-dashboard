@@ -48,6 +48,7 @@ import type { JenisCutiRow } from "@/types/jenis_cuti/jenis_cuti.types"
 import type { DepartemenOption } from "@/types/departemen/departemen.types"
 import type { RoleOption } from "@/types/roles/roles.types"
 import { SortableLevelRow } from "@/components/level_approval/SortableLevelRow"
+import { useAuth } from "@/hooks/useAuth"
 
 interface LevelDraft {
   key: string
@@ -72,6 +73,7 @@ function createEmptyLevel(): LevelDraft {
 
 export function AddLevelApprovalPage() {
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
 
   const [jenisCutiOptions, setJenisCutiOptions] = useState<JenisCutiRow[]>([])
   const [departemenOptions, setDepartemenOptions] = useState<
@@ -445,18 +447,20 @@ export function AddLevelApprovalPage() {
             Batal
           </Button>
 
-          <Button
-            type="submit"
-            disabled={isSubmitting || isLoadingOptions}
-            className="h-10 gap-1.5 rounded-[5px] bg-[#30CCD5] text-sm font-normal text-white hover:bg-[#2ab8c0] disabled:opacity-60"
-          >
-            {isSubmitting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
-            )}
-            Simpan
-          </Button>
+          {hasPermission("Create Level Approval") && (
+            <Button
+              type="submit"
+              disabled={isSubmitting || isLoadingOptions}
+              className="h-10 gap-1.5 rounded-[5px] bg-[#30CCD5] text-sm font-normal text-white hover:bg-[#2ab8c0] disabled:opacity-60"
+            >
+              {isSubmitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+              Simpan
+            </Button>
+          )}
         </div>
       </form>
 

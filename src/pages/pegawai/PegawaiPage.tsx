@@ -68,11 +68,16 @@ import {
 } from "@/components/feedback/ConfirmDialog"
 import TableLoadingState from "@/components/data-table/TableLoadingState"
 import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/hooks/useAuth"
 
 const BULK_OPTIONS: BulkActionOption[] = [
-  { value: "restore", label: "Restore" },
-  { value: "delete", label: "Hapus" },
-  { value: "delete_permanent", label: "Hapus Permanen" },
+  { value: "restore", label: "Restore", permission: "Restore Karyawan" },
+  { value: "delete", label: "Hapus", permission: "Delete Karyawan" },
+  {
+    value: "delete_permanent",
+    label: "Hapus Permanen",
+    permission: "Force Delete Karyawan",
+  },
 ]
 
 const SEARCH_DEBOUNCE_MS = 400
@@ -83,6 +88,7 @@ interface PageAlert {
 }
 
 export function PegawaiPage() {
+  const { hasPermission } = useAuth()
   const [bulkValue, setBulkValue] = useState("")
   const [filters, setFilters] = useState<PegawaiFilterState>(
     DEFAULT_PEGAWAI_FILTER
@@ -260,7 +266,7 @@ export function PegawaiPage() {
           setEditTarget(row)
           setFormDrawerOpen(true)
         },
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Edit Karyawan"),
       },
       {
         key: "delete",
@@ -295,7 +301,7 @@ export function PegawaiPage() {
               }
             },
           }),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Delete Karyawan"),
       },
       {
         key: "restore",
@@ -329,7 +335,7 @@ export function PegawaiPage() {
               }
             },
           }),
-        hidden: !row.is_trashed,
+        hidden: !row.is_trashed || !hasPermission("Restore Karyawan"),
       },
       {
         key: "delete-permanent",
@@ -364,6 +370,7 @@ export function PegawaiPage() {
               }
             },
           }),
+        hidden: !row.is_trashed || !hasPermission("Force Delete Karyawan"),
       },
     ]
   }
@@ -374,7 +381,8 @@ export function PegawaiPage() {
         <PageCardHeader
           title="Data Pegawai"
           actions={
-            !showEmptyState && (
+            !showEmptyState &&
+            hasPermission("Create Karyawan") && (
               <AddButton
                 onClick={() => {
                   setEditTarget(null)
@@ -391,12 +399,14 @@ export function PegawaiPage() {
             title="Belum ada data pegawai"
             description="Tambahkan pegawai pertama untuk mulai mengelola data."
             action={
-              <AddButton
-                onClick={() => {
-                  setEditTarget(null)
-                  setFormDrawerOpen(true)
-                }}
-              />
+              hasPermission("Create Karyawan") && (
+                <AddButton
+                  onClick={() => {
+                    setEditTarget(null)
+                    setFormDrawerOpen(true)
+                  }}
+                />
+              )
             }
           />
         ) : (

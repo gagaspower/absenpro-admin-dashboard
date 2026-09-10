@@ -21,7 +21,7 @@ export interface MenuItem {
 }
 
 export interface MenuGroup {
-  label?: string
+  heading?: string
   items: MenuItem[]
 }
 
@@ -36,7 +36,7 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    label: "Master Data",
+    heading: "Master Data",
     items: [
       {
         label: "Departemen",
@@ -95,7 +95,7 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    label: "Transaksi",
+    heading: "Transaksi",
     items: [
       {
         label: "Absensi",

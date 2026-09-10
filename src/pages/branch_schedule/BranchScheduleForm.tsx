@@ -20,6 +20,7 @@ import type {
 } from "@/types/branch_schedule/branch_schedule.types"
 import { WEEKDAY_LABELS } from "@/constants/weekday"
 import { DatePicker } from "@/components/ui/date-picker"
+import { useAuth } from "@/hooks/useAuth"
 
 type DayFormValues = {
   weekday: Weekday
@@ -164,6 +165,7 @@ export function BranchScheduleForm({
   scheduleId,
 }: BranchScheduleFormProps) {
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
   const isEdit = mode === "edit"
 
   const [values, setValues] = useState<FormValues>(() =>
@@ -370,14 +372,18 @@ export function BranchScheduleForm({
           >
             Batal
           </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="h-10 flex-1 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0] md:flex-none md:px-8"
-          >
-            {isSubmitting && <LoaderCircle className="size-4 animate-spin" />}
-            {isEdit ? "Perbarui" : "Simpan"}
-          </Button>
+          {hasPermission(
+            isEdit ? "Edit Branch Schedule" : "Create Branch Schedule"
+          ) && (
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-10 flex-1 rounded-[5px] bg-[#30CCD5] text-white hover:bg-[#28B8C0] md:flex-none md:px-8"
+            >
+              {isSubmitting && <LoaderCircle className="size-4 animate-spin" />}
+              {isEdit ? "Perbarui" : "Simpan"}
+            </Button>
+          )}
         </div>
       </form>
     </PageCard>

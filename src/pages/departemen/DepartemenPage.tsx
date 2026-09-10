@@ -60,6 +60,7 @@ import { AddButton } from "@/components/AddButton"
 import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 import { TableEmptyState } from "@/components/data-table/TableEmptyState"
 import TableLoadingState from "@/components/data-table/TableLoadingState"
+import { useAuth } from "@/hooks/useAuth"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -69,9 +70,21 @@ const FILTER_OPTIONS: FilterCheckboxOption[] = [
 
 // Bulk action API belum tersedia. UI disiapkan lebih dulu sesuai scope.
 const BULK_OPTIONS: BulkActionOption[] = [
-  { value: "restore", label: "Restore" },
-  { value: "delete", label: "Hapus" },
-  { value: "delete_permanent", label: "Hapus Permanen" },
+  {
+    value: "restore",
+    label: "Restore",
+    permission: "Restore Departemen",
+  },
+  {
+    value: "delete",
+    label: "Hapus",
+    permission: "Delete Departemen",
+  },
+  {
+    value: "delete_permanent",
+    label: "Hapus Permanen",
+    permission: "Force Delete Departemen",
+  },
 ]
 
 const SEARCH_DEBOUNCE_MS = 400
@@ -105,6 +118,7 @@ export function DepartemenPage() {
   } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
+  const { hasPermission } = useAuth()
   const statusFilter: DepartemenStatusFilter =
     (filterSelected[0] as DepartemenStatusFilter) ?? "active"
 
@@ -244,7 +258,7 @@ export function DepartemenPage() {
         onClick: () => {
           openEditDrawer(row)
         },
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Edit Departemen"),
       },
       {
         key: "delete",
@@ -279,7 +293,7 @@ export function DepartemenPage() {
               }
             },
           }),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Delete Departemen"),
       },
       {
         key: "restore",
@@ -313,7 +327,7 @@ export function DepartemenPage() {
               }
             },
           }),
-        hidden: !row.is_trashed,
+        hidden: !row.is_trashed || !hasPermission("Restore Departemen"),
       },
       {
         key: "delete-permanent",
@@ -348,6 +362,7 @@ export function DepartemenPage() {
               }
             },
           }),
+        hidden: !row.is_trashed || !hasPermission("Force Delete Departemen"),
       },
     ]
   }
@@ -358,7 +373,7 @@ export function DepartemenPage() {
         <PageCardHeader
           title="Departemen"
           actions={
-            showFullEmptyState ? undefined : (
+            showFullEmptyState && hasPermission("Create Departemen") ? null : (
               <AddButton onClick={openCreateDrawer} />
             )
           }
@@ -369,7 +384,11 @@ export function DepartemenPage() {
             icon={Building2}
             title="Belum ada departemen"
             description="Tambahkan departemen pertama untuk mulai mengelola data."
-            action={<AddButton onClick={openCreateDrawer} />}
+            action={
+              hasPermission("Create Departemen") ? (
+                <AddButton onClick={openCreateDrawer} />
+              ) : null
+            }
           />
         ) : (
           <>

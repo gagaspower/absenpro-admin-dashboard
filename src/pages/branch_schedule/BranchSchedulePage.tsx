@@ -63,6 +63,7 @@ import {
 import type { BranchSchedule } from "@/types/branch_schedule/branch_schedule.types"
 import { AddButton } from "@/components/AddButton"
 import TableLoadingState from "@/components/data-table/TableLoadingState"
+import { useAuth } from "@/hooks/useAuth"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -71,9 +72,13 @@ const FILTER_OPTIONS: FilterCheckboxOption[] = [
 ]
 
 const BULK_OPTIONS: BulkActionOption[] = [
-  { value: "restore", label: "Restore" },
-  { value: "delete", label: "Hapus" },
-  { value: "delete_permanent", label: "Hapus Permanen" },
+  { value: "restore", label: "Restore", permission: "Restore Jadwal Cabang" },
+  { value: "delete", label: "Hapus", permission: "Delete Jadwal Cabang" },
+  {
+    value: "delete_permanent",
+    label: "Hapus Permanen",
+    permission: "Force Delete Jadwal Cabang",
+  },
 ]
 
 const SEARCH_DEBOUNCE_MS = 400
@@ -101,6 +106,7 @@ function formatEffectiveDate(row: BranchSchedule) {
 export function BranchSchedulePage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { hasPermission } = useAuth()
 
   const [bulkValue, setBulkValue] = useState("")
   const [filterSelected, setFilterSelected] = useState<string[]>(["active"])
@@ -280,7 +286,7 @@ export function BranchSchedulePage() {
         label: "Edit",
         icon: Pencil,
         onClick: () => goToEdit(row),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Edit Jadwal Cabang"),
       },
       {
         key: "delete",
@@ -305,7 +311,7 @@ export function BranchSchedulePage() {
               }
             },
           }),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Delete Jadwal Cabang"),
       },
       {
         key: "restore",
@@ -329,7 +335,7 @@ export function BranchSchedulePage() {
               }
             },
           }),
-        hidden: !row.is_trashed,
+        hidden: !row.is_trashed || !hasPermission("Restore Jadwal Cabang"),
       },
       {
         key: "delete-permanent",
@@ -354,6 +360,7 @@ export function BranchSchedulePage() {
               }
             },
           }),
+        hidden: !row.is_trashed || !hasPermission("Force Delete Jadwal Cabang"),
       },
     ]
   }
@@ -363,7 +370,12 @@ export function BranchSchedulePage() {
       <PageCard>
         <PageCardHeader
           title="Jadwal Cabang"
-          actions={!showEmptyState && <AddButton onClick={goToCreate} />}
+          actions={
+            !showEmptyState &&
+            hasPermission("Create Jadwal Cabang") && (
+              <AddButton onClick={goToCreate} />
+            )
+          }
         />
 
         {showEmptyState ? (
@@ -371,7 +383,11 @@ export function BranchSchedulePage() {
             icon={Inbox}
             title="Belum ada data jadwal cabang"
             description="Tambahkan jadwal pertama untuk mulai mengelola jam kerja cabang."
-            action={<AddButton onClick={goToCreate} />}
+            action={
+              hasPermission("Create Jadwal Cabang") && (
+                <AddButton onClick={goToCreate} />
+              )
+            }
           />
         ) : (
           <>

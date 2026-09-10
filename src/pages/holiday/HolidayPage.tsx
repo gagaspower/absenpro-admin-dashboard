@@ -61,6 +61,7 @@ import { AddButton } from "@/components/AddButton"
 import type { ConfirmDialogType } from "@/components/feedback/ConfirmDialog"
 import { TableEmptyState } from "@/components/data-table/TableEmptyState"
 import TableLoadingState from "@/components/data-table/TableLoadingState"
+import { useAuth } from "@/hooks/useAuth"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -69,9 +70,13 @@ const FILTER_OPTIONS: FilterCheckboxOption[] = [
 ]
 
 const BULK_OPTIONS: BulkActionOption[] = [
-  { value: "restore", label: "Restore" },
-  { value: "delete", label: "Hapus" },
-  { value: "delete_permanent", label: "Hapus Permanen" },
+  { value: "restore", label: "Restore", permission: "Restore Hari Libur" },
+  { value: "delete", label: "Hapus", permission: "Delete Hari Libur" },
+  {
+    value: "delete_permanent",
+    label: "Hapus Permanen",
+    permission: "Force Delete Hari Libur",
+  },
 ]
 
 const SEARCH_DEBOUNCE_MS = 400
@@ -119,6 +124,7 @@ export function HolidayPage() {
   } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
+  const { hasPermission } = useAuth()
   const statusFilter: HolidayStatusFilter =
     (filterSelected[0] as HolidayStatusFilter) ?? "active"
 
@@ -262,7 +268,7 @@ export function HolidayPage() {
         onClick: () => {
           openEditDrawer(row)
         },
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Edit Hari Libur"),
       },
       {
         key: "delete",
@@ -297,7 +303,7 @@ export function HolidayPage() {
               }
             },
           }),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Delete Hari Libur"),
       },
       {
         key: "restore",
@@ -331,7 +337,7 @@ export function HolidayPage() {
               }
             },
           }),
-        hidden: !row.is_trashed,
+        hidden: !row.is_trashed || !hasPermission("Restore Hari Libur"),
       },
       {
         key: "delete-permanent",
@@ -366,6 +372,7 @@ export function HolidayPage() {
               }
             },
           }),
+        hidden: !row.is_trashed || !hasPermission("Force Delete Hari Libur"),
       },
     ]
   }
@@ -375,7 +382,12 @@ export function HolidayPage() {
       <PageCard>
         <PageCardHeader
           title="Hari Libur"
-          actions={!showEmptyState && <AddButton onClick={openCreateDrawer} />}
+          actions={
+            !showEmptyState &&
+            hasPermission("Create Hari Libur") && (
+              <AddButton onClick={openCreateDrawer} />
+            )
+          }
         />
 
         {showEmptyState ? (
@@ -383,7 +395,11 @@ export function HolidayPage() {
             icon={PartyPopper}
             title="Belum ada hari libur"
             description="Tambahkan hari libur pertama untuk mulai mengelola data."
-            action={<AddButton onClick={openCreateDrawer} />}
+            action={
+              hasPermission("Create Hari Libur") && (
+                <AddButton onClick={openCreateDrawer} />
+              )
+            }
           />
         ) : (
           <>

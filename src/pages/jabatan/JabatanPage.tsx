@@ -54,6 +54,7 @@ import {
 import type { JabatanRow } from "@/types/jabatan/jabatan.types"
 import { AddButton } from "@/components/AddButton"
 import TableLoadingState from "@/components/data-table/TableLoadingState"
+import { useAuth } from "@/hooks/useAuth"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -63,9 +64,13 @@ const FILTER_OPTIONS: FilterCheckboxOption[] = [
 
 // Bulk action API belum tersedia. UI disiapkan lebih dulu sesuai scope.
 const BULK_OPTIONS: BulkActionOption[] = [
-  { value: "restore", label: "Restore" },
-  { value: "delete", label: "Hapus" },
-  { value: "delete_permanent", label: "Hapus Permanen" },
+  { value: "restore", label: "Restore", permission: "Restore Jabatan" },
+  { value: "delete", label: "Hapus", permission: "Delete Jabatan" },
+  {
+    value: "delete_permanent",
+    label: "Hapus Permanen",
+    permission: "Force Delete Jabatan",
+  },
 ]
 
 const SEARCH_DEBOUNCE_MS = 400
@@ -100,6 +105,7 @@ export function JabatanPage() {
   } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
+  const { hasPermission } = useAuth()
   const statusFilter: JabatanStatusFilter =
     (filterSelected[0] as JabatanStatusFilter) ?? "active"
 
@@ -250,7 +256,7 @@ export function JabatanPage() {
         label: "Edit",
         icon: Pencil,
         onClick: () => openEditDrawer(row),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Edit Jabatan"),
       },
       {
         key: "delete",
@@ -275,7 +281,7 @@ export function JabatanPage() {
               }
             },
           }),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Delete Jabatan"),
       },
       {
         key: "restore",
@@ -299,7 +305,7 @@ export function JabatanPage() {
               }
             },
           }),
-        hidden: !row.is_trashed,
+        hidden: !row.is_trashed || !hasPermission("Restore Jabatan"),
       },
       {
         key: "delete-permanent",
@@ -324,6 +330,7 @@ export function JabatanPage() {
               }
             },
           }),
+        hidden: !row.is_trashed || !hasPermission("Force Delete Jabatan"),
       },
     ]
   }

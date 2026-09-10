@@ -60,6 +60,7 @@ import {
   RequiresAttachmentBadge,
 } from "@/components/jenis_cuti/JenisCutiBadges"
 import TableLoadingState from "@/components/data-table/TableLoadingState"
+import { useAuth } from "@/hooks/useAuth"
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
   { id: "all", label: "Semua" },
@@ -68,9 +69,17 @@ const FILTER_OPTIONS: FilterCheckboxOption[] = [
 ]
 
 const BULK_OPTIONS: BulkActionOption[] = [
-  { value: "restore", label: "Restore" },
-  { value: "delete", label: "Hapus" },
-  { value: "delete_permanent", label: "Hapus Permanen" },
+  {
+    value: "restore",
+    label: "Restore",
+    permission: "Restore Jenis Cuti / Izin",
+  },
+  { value: "delete", label: "Hapus", permission: "Delete Jenis Cuti / Izin" },
+  {
+    value: "delete_permanent",
+    label: "Hapus Permanen",
+    permission: "Force Delete Jenis Cuti / Izin",
+  },
 ]
 
 const SEARCH_DEBOUNCE_MS = 400
@@ -106,6 +115,7 @@ export function JenisCutiPage() {
   } | null>(null)
 
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
+  const { hasPermission } = useAuth()
   const statusFilter: JenisCutiStatusFilter =
     (filterSelected[0] as JenisCutiStatusFilter) ?? "active"
 
@@ -249,7 +259,7 @@ export function JenisCutiPage() {
         label: "Edit",
         icon: Pencil,
         onClick: () => openEditDrawer(row),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Edit Jenis Cuti / Izin"),
       },
       {
         key: "delete",
@@ -274,7 +284,7 @@ export function JenisCutiPage() {
               }
             },
           }),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Delete Jenis Cuti / Izin"),
       },
       {
         key: "restore",
@@ -298,7 +308,7 @@ export function JenisCutiPage() {
               }
             },
           }),
-        hidden: !row.is_trashed,
+        hidden: !row.is_trashed || !hasPermission("Restore Jenis Cuti / Izin"),
       },
       {
         key: "delete-permanent",
@@ -323,6 +333,8 @@ export function JenisCutiPage() {
               }
             },
           }),
+        hidden:
+          !row.is_trashed || !hasPermission("Force Delete Jenis Cuti / Izin"),
       },
     ]
   }
@@ -332,7 +344,12 @@ export function JenisCutiPage() {
       <PageCard>
         <PageCardHeader
           title="Jenis Cuti"
-          actions={!showEmptyState && <AddButton onClick={openCreateDrawer} />}
+          actions={
+            !showEmptyState &&
+            hasPermission("Create Jenis Cuti / Izin") && (
+              <AddButton onClick={openCreateDrawer} />
+            )
+          }
         />
 
         {showEmptyState ? (
@@ -340,7 +357,11 @@ export function JenisCutiPage() {
             icon={Inbox}
             title="Belum ada data jenis cuti"
             description="Tambahkan jenis cuti pertama untuk mulai mengelola data."
-            action={<AddButton onClick={openCreateDrawer} />}
+            action={
+              hasPermission("Create Jenis Cuti / Izin") ? (
+                <AddButton onClick={openCreateDrawer} />
+              ) : null
+            }
           />
         ) : (
           <>

@@ -55,11 +55,16 @@ import {
 } from "@/services/branch/branch.service"
 import type { BranchRow } from "@/types/branch/branch.types"
 import { AddButton } from "@/components/AddButton"
+import { useAuth } from "@/hooks/useAuth"
 
 const BULK_OPTIONS: BulkActionOption[] = [
-  { value: "restore", label: "Restore" },
-  { value: "delete", label: "Hapus" },
-  { value: "delete_permanent", label: "Hapus Permanen" },
+  { value: "restore", label: "Restore", permission: "Restore Lokasi Kerja" },
+  { value: "delete", label: "Hapus", permission: "Delete Lokasi Kerja" },
+  {
+    value: "delete_permanent",
+    label: "Hapus Permanen",
+    permission: "Force Delete Lokasi Kerja",
+  },
 ]
 
 const FILTER_OPTIONS: FilterCheckboxOption[] = [
@@ -97,6 +102,7 @@ export function BranchPage() {
   const [error, setError] = useState<string | null>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS)
+  const { hasPermission } = useAuth()
 
   const statusFilter: BranchStatusFilter =
     (filterSelected[0] as BranchStatusFilter) ?? "active"
@@ -225,7 +231,7 @@ export function BranchPage() {
           setEditingBranch(row)
           setDrawerOpen(true)
         },
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Edit Lokasi Kerja"),
       },
       {
         key: "delete",
@@ -260,7 +266,7 @@ export function BranchPage() {
               }
             },
           }),
-        hidden: row.is_trashed,
+        hidden: row.is_trashed || !hasPermission("Delete Lokasi Kerja"),
       },
       {
         key: "restore",
@@ -294,7 +300,7 @@ export function BranchPage() {
               }
             },
           }),
-        hidden: !row.is_trashed,
+        hidden: !row.is_trashed || !hasPermission("Restore Lokasi Kerja"),
       },
       {
         key: "delete-permanent",
@@ -329,6 +335,7 @@ export function BranchPage() {
               }
             },
           }),
+        hidden: !row.is_trashed || !hasPermission("Force Delete Lokasi Kerja"),
       },
     ]
   }
@@ -339,14 +346,16 @@ export function BranchPage() {
         <PageCardHeader
           title="Wilayah Kerja / Branch"
           actions={
-            !showEmptyState && (
-              <AddButton
-                onClick={() => {
-                  setEditingBranch(null)
-                  setDrawerOpen(true)
-                }}
-              />
-            )
+            !showEmptyState ? (
+              hasPermission("Create Lokasi Kerja") ? (
+                <AddButton
+                  onClick={() => {
+                    setEditingBranch(null)
+                    setDrawerOpen(true)
+                  }}
+                />
+              ) : null
+            ) : null
           }
         />
 
@@ -356,12 +365,14 @@ export function BranchPage() {
             title="Belum ada data wilayah kerja"
             description="Tambahkan branch pertama untuk mulai mengelola data."
             action={
-              <AddButton
-                onClick={() => {
-                  setEditingBranch(null)
-                  setDrawerOpen(true)
-                }}
-              />
+              hasPermission("Create Lokasi Kerja") ? (
+                <AddButton
+                  onClick={() => {
+                    setEditingBranch(null)
+                    setDrawerOpen(true)
+                  }}
+                />
+              ) : null
             }
           />
         ) : (

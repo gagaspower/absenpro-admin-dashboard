@@ -51,6 +51,7 @@ import type { JenisCutiRow } from "@/types/jenis_cuti/jenis_cuti.types"
 import type { DepartemenOption } from "@/types/departemen/departemen.types"
 import type { RoleOption } from "@/types/roles/roles.types"
 import { SortableLevelRow } from "@/components/level_approval/SortableLevelRow"
+import { useAuth } from "@/hooks/useAuth"
 
 interface LevelDraft {
   key: string
@@ -75,6 +76,7 @@ function createLevel(roleId = ""): LevelDraft {
 
 export function EditLevelApprovalPage() {
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
   const { id } = useParams<{ id: string }>()
 
   const [jenisCutiOptions, setJenisCutiOptions] = useState<JenisCutiRow[]>([])
@@ -479,18 +481,20 @@ export function EditLevelApprovalPage() {
             Batal
           </Button>
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="h-10 gap-1.5 rounded-[5px] bg-[#30CCD5] text-sm font-normal text-white hover:bg-[#2ab8c0] disabled:opacity-60"
-          >
-            {isSubmitting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
-            )}
-            Simpan Perubahan
-          </Button>
+          {hasPermission("Edit Level Approval") && (
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-10 gap-1.5 rounded-[5px] bg-[#30CCD5] text-sm font-normal text-white hover:bg-[#2ab8c0] disabled:opacity-60"
+            >
+              {isSubmitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+              Simpan Perubahan
+            </Button>
+          )}
         </div>
       </form>
 

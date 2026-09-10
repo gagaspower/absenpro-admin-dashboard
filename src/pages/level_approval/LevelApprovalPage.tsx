@@ -41,6 +41,7 @@ import {
 } from "@/types/jenis_cuti/jenis_cuti.types"
 import { Button } from "@/components/ui/button"
 import LevelApprovalFilterDrawer from "@/components/level_approval/LevelApprovalFilterDrawer"
+import { useAuth } from "@/hooks/useAuth"
 
 const COL_SPAN = 3
 
@@ -71,6 +72,7 @@ export function LevelApprovalPage() {
   )
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+  const { hasPermission } = useAuth()
 
   useEffect(() => {
     const controller = new AbortController()
@@ -140,6 +142,7 @@ export function LevelApprovalPage() {
         label: "Edit",
         icon: Pencil,
         onClick: () => navigate(`/dashboard/level-approval/edit/${row.id}`),
+        hidden: !hasPermission("Edit Level Approval"),
       },
       {
         key: "delete",
@@ -147,6 +150,7 @@ export function LevelApprovalPage() {
         icon: Trash2,
         destructive: true,
         onClick: () => setDeleteRow(row),
+        hidden: !hasPermission("Delete Level Approval"),
       },
     ]
   }
@@ -196,7 +200,9 @@ export function LevelApprovalPage() {
                   Filter
                 </Button>
 
-                <AddButton onClick={openCreate} />
+                {hasPermission("Create Level Approval") && (
+                  <AddButton onClick={openCreate} />
+                )}
               </div>
             )
           }
@@ -207,7 +213,11 @@ export function LevelApprovalPage() {
             icon={Inbox}
             title="Belum ada data level approval"
             description="Tambahkan level approval pertama untuk mulai mengelola data."
-            action={<AddButton onClick={openCreate} />}
+            action={
+              hasPermission("Create Level Approval") ? (
+                <AddButton onClick={openCreate} />
+              ) : null
+            }
           />
         ) : (
           <>
