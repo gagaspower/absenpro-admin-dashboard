@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react"
 import { Loader2 } from "lucide-react"
 import { Navigate, Route, Routes } from "react-router-dom"
 
-import { GuestRoute, ProtectedRoute } from "./guard"
+import { GuestRoute, PermissionRoute, ProtectedRoute } from "./guard"
 
 const LoginPage = lazy(() =>
   import("@/pages/auth/login").then((m) => ({ default: m.LoginPage }))
@@ -41,23 +41,19 @@ const LevelApprovalPage = lazy(
 const AddLevelApprovalPage = lazy(
   () => import("@/pages/level_approval/AddLevelApprovalPage")
 )
-
 const EditLevelApprovalPage = lazy(
   () => import("@/pages/level_approval/EditLevelApprovalPage")
 )
-
 const AbsensiPage = lazy(() =>
   import("@/pages/absensi/AbsensiPage").then((m) => ({
     default: m.AbsensiPage,
   }))
 )
-
 const HolidayPage = lazy(() =>
   import("@/pages/holiday/HolidayPage").then((m) => ({
     default: m.HolidayPage,
   }))
 )
-
 const BranchSchedulePage = lazy(() =>
   import("@/pages/branch_schedule/BranchSchedulePage").then((m) => ({
     default: m.BranchSchedulePage,
@@ -73,13 +69,11 @@ const EditBranchSchedulePage = lazy(() =>
     default: m.EditBranchSchedulePage,
   }))
 )
-
 const PegawaiDetailPage = lazy(() =>
   import("@/pages/pegawai/PegawaiDetailPage").then((m) => ({
     default: m.PegawaiDetailPage,
   }))
 )
-
 const ResetPasswordPage = lazy(() =>
   import("@/pages/auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
@@ -124,35 +118,96 @@ export function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardPage />} />
-            <Route path="departemen" element={<DepartemenPage />} />
-            <Route path="wilayah-kerja" element={<BranchPage />} />
-            <Route path="jabatan" element={<JabatanPage />} />
-            <Route path="jam-kerja" element={<ShiftPage />} />
-            <Route path="jenis-izin" element={<JenisCutiPage />} />
-            <Route path="karyawan" element={<PegawaiPage />} />
-            <Route path="karyawan/:id" element={<PegawaiDetailPage />} />
-            <Route path="level-approval" element={<LevelApprovalPage />} />
-            <Route
-              path="level-approval/create"
-              element={<AddLevelApprovalPage />}
-            />
-            <Route
-              path="level-approval/edit/:id"
-              element={<EditLevelApprovalPage />}
-            />
-            <Route path="hari-libur" element={<HolidayPage />} />
-            <Route path="jadwal-cabang" element={<BranchSchedulePage />} />
-            <Route
-              path="jadwal-cabang/create"
-              element={<AddBranchSchedulePage />}
-            />
-            <Route
-              path="jadwal-cabang/edit/:id"
-              element={<EditBranchSchedulePage />}
-            />
-            <Route path="absensi" element={<AbsensiPage />} />
 
-            <Route path="cuti-izin" element={<PermohonanCutiPage />} />
+            <Route element={<PermissionRoute permission="View Departemen" />}>
+              <Route path="departemen" element={<DepartemenPage />} />
+            </Route>
+
+            <Route element={<PermissionRoute permission="View Lokasi Kerja" />}>
+              <Route path="wilayah-kerja" element={<BranchPage />} />
+            </Route>
+
+            <Route element={<PermissionRoute permission="View Jabatan" />}>
+              <Route path="jabatan" element={<JabatanPage />} />
+            </Route>
+
+            <Route element={<PermissionRoute permission="View Shift" />}>
+              <Route path="jam-kerja" element={<ShiftPage />} />
+            </Route>
+
+            <Route
+              element={
+                <PermissionRoute permission="View Jenis Cuti / Izin" />
+              }
+            >
+              <Route path="jenis-izin" element={<JenisCutiPage />} />
+            </Route>
+
+            <Route element={<PermissionRoute permission="View Karyawan" />}>
+              <Route path="karyawan" element={<PegawaiPage />} />
+              <Route path="karyawan/:id" element={<PegawaiDetailPage />} />
+            </Route>
+
+            <Route
+              element={<PermissionRoute permission="View Level Approval" />}
+            >
+              <Route path="level-approval" element={<LevelApprovalPage />} />
+            </Route>
+
+            <Route
+              element={<PermissionRoute permission="Create Level Approval" />}
+            >
+              <Route
+                path="level-approval/create"
+                element={<AddLevelApprovalPage />}
+              />
+            </Route>
+
+            <Route
+              element={<PermissionRoute permission="Edit Level Approval" />}
+            >
+              <Route
+                path="level-approval/edit/:id"
+                element={<EditLevelApprovalPage />}
+              />
+            </Route>
+
+            <Route element={<PermissionRoute permission="View Hari Libur" />}>
+              <Route path="hari-libur" element={<HolidayPage />} />
+            </Route>
+
+            <Route
+              element={<PermissionRoute permission="View Jadwal Cabang" />}
+            >
+              <Route path="jadwal-cabang" element={<BranchSchedulePage />} />
+            </Route>
+
+            <Route
+              element={<PermissionRoute permission="Create Jadwal Cabang" />}
+            >
+              <Route
+                path="jadwal-cabang/create"
+                element={<AddBranchSchedulePage />}
+              />
+            </Route>
+
+            <Route
+              element={<PermissionRoute permission="Edit Jadwal Cabang" />}
+            >
+              <Route
+                path="jadwal-cabang/edit/:id"
+                element={<EditBranchSchedulePage />}
+              />
+            </Route>
+
+            <Route element={<PermissionRoute permission="View Absensi" />}>
+              <Route path="absensi" element={<AbsensiPage />} />
+            </Route>
+
+            <Route element={<PermissionRoute permission="View Cuti & Izin" />}>
+              <Route path="cuti-izin" element={<PermohonanCutiPage />} />
+            </Route>
+
             <Route path="reset-password" element={<ResetPasswordPage />} />
           </Route>
         </Route>
