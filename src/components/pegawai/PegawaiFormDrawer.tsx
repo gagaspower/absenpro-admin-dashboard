@@ -328,7 +328,7 @@ export function PegawaiFormDrawer({
 
         department_id: pegawai.department?.id ?? "",
         position_id: pegawai.position?.id ?? "",
-        branch_id: pegawai.branch.id,
+        branch_id: pegawai.branch?.id ?? "",
         shift_id: pegawai.shift?.id ?? "",
         effective_from: toDateInputValue(
           pegawai.shift_assignment?.effective_from

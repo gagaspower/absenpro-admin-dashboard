@@ -51,6 +51,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const avatarUrl = employee?.face_profile?.reference_photo_path
     ? `${BACKEND_URL}/storage/${employee.face_profile.reference_photo_path}`
     : undefined
+  const positionName = employee?.position?.name ?? ""
 
   const initials = getInitials(fullName)
 
@@ -117,6 +118,11 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
         {/* Right: bell + user */}
         <div className="flex items-center gap-2">
+          {positionName && (
+            <span className="hidden text-sm font-medium text-slate-600 sm:block">
+              {positionName}
+            </span>
+          )}
           {/* Bell */}
           <Button
             variant="ghost"
