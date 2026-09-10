@@ -190,7 +190,7 @@ function PermissionMatrixTable({ matrix, checkedIds, onToggleCell, onToggleColum
   const lastIndex = matrix.columns.length - 1
 
   return (
-    <div className="max-h-[calc(100vh-300px)] overflow-auto rounded-[8px] border border-[#EAEAEA] bg-white">
+    <div className="overflow-x-auto rounded-[8px] border border-[#EAEAEA] bg-white">
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="border-none hover:bg-transparent">
@@ -263,25 +263,12 @@ function PermissionMatrixTable({ matrix, checkedIds, onToggleCell, onToggleColum
               {matrix.columns.map((action, i) => {
                 const item = row.cells[action]
                 return (
-                  <TableCell
-                    key={action}
-                    className={cn("py-4 text-center", i !== lastIndex && "border-r border-[#EAEAEA]")}
-                  >
+                  <TableCell key={action} className={cn("py-4 text-center", i !== lastIndex && "border-r border-[#EAEAEA]")}>
                     <div className="flex justify-center">
                       {item ? (
-                        <Checkbox
-                          checked={checkedIds.has(item.id)}
-                          onCheckedChange={() => onToggleCell(item)}
-                          aria-label={item.permission_name}
-                          className={CHECKBOX_CLASS}
-                        />
+                        <Checkbox checked={checkedIds.has(item.id)} onCheckedChange={() => onToggleCell(item)} aria-label={item.permission_name} className={CHECKBOX_CLASS} />
                       ) : (
-                        <Checkbox
-                          checked={false}
-                          disabled
-                          aria-label={`${action} tidak tersedia untuk ${row.entityName}`}
-                          className={DISABLED_CHECKBOX_CLASS}
-                        />
+                        <Checkbox checked={false} disabled aria-label={`${action} tidak tersedia untuk ${row.entityName}`} className={DISABLED_CHECKBOX_CLASS} />
                       )}
                     </div>
                   </TableCell>
