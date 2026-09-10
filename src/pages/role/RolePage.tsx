@@ -19,6 +19,10 @@ const CHECKBOX_CLASS =
   "data-[state=checked]:border-[#0BC5EA] data-[state=checked]:bg-[#0BC5EA] " +
   "data-[state=checked]:text-white data-[indeterminate]:border-[#0BC5EA] data-[indeterminate]:bg-[#0BC5EA]"
 
+const DISABLED_CHECKBOX_CLASS =
+  "size-[18px] rounded-[4px] border-[1.5px] border-[#D5D9DE] bg-[#F1F3F5] " +
+  "text-[#B8BEC5] opacity-100 shadow-none cursor-not-allowed"
+
 const LABEL_COLUMN_CLASS = "w-56 min-w-[224px] max-w-[224px]"
 
 export function RolePage() {
@@ -206,7 +210,14 @@ function PermissionMatrixTable({ matrix, checkedIds, onToggleCell, onToggleColum
               return (
                 <TableHead key={action} className={cn("py-3 text-center", i !== lastIndex && "border-r border-[#EAEAEA]")}>
                   <div className="flex justify-center">
-                    <Checkbox checked={allChecked} indeterminate={someChecked} onCheckedChange={() => onToggleColumn(action)} aria-label={`Pilih semua ${action}`} className={CHECKBOX_CLASS} disabled={items.length === 0} />
+                    <Checkbox
+                      checked={allChecked}
+                      indeterminate={someChecked}
+                      disabled={items.length === 0}
+                      onCheckedChange={() => onToggleColumn(action)}
+                      aria-label={`Pilih semua ${action}`}
+                      className={items.length === 0 ? DISABLED_CHECKBOX_CLASS : CHECKBOX_CLASS}
+                    />
                   </div>
                 </TableHead>
               )
@@ -223,13 +234,11 @@ function PermissionMatrixTable({ matrix, checkedIds, onToggleCell, onToggleColum
                 return (
                   <TableCell key={action} className={cn("py-4 text-center", i !== lastIndex && "border-r border-[#EAEAEA]")}>
                     <div className="flex justify-center">
-                      <Checkbox
-                        checked={item ? checkedIds.has(item.id) : false}
-                        onCheckedChange={() => item && onToggleCell(item)}
-                        aria-label={item?.permission_name ?? `${action} ${row.entityName}`}
-                        className={CHECKBOX_CLASS}
-                        disabled={!item}
-                      />
+                      {item ? (
+                        <Checkbox checked={checkedIds.has(item.id)} onCheckedChange={() => onToggleCell(item)} aria-label={item.permission_name} className={CHECKBOX_CLASS} />
+                      ) : (
+                        <Checkbox checked={false} disabled aria-label={`${action} tidak tersedia untuk ${row.entityName}`} className={DISABLED_CHECKBOX_CLASS} />
+                      )}
                     </div>
                   </TableCell>
                 )
