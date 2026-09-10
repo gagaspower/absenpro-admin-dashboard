@@ -3,8 +3,9 @@ import type {
   RolePermissionMenu,
 } from "@/types/roles/roles.types"
 
-// Fixed display order requested: View | Create | Edit | Delete | Restore | Force Delete.
-// Anything else (Approve, Reject, ...) is appended after, in first-seen order.
+// Fixed display order for common CRUD/system actions.
+// Any new action (Approve, Reject, Archive, Publish, etc.) is automatically
+// appended after these columns in the order it is first encountered.
 const CANONICAL_COLUMN_ORDER = [
   "View",
   "Create",
@@ -14,9 +15,8 @@ const CANONICAL_COLUMN_ORDER = [
   "Force Delete",
 ]
 
-// Longest-first, only for parsing "{Action} {Entity}" prefixes correctly
-// (e.g. "Force Delete" must be matched before "Delete").
-const MATCH_ACTIONS = [...CANONICAL_COLUMN_ORDER, "Approve", "Reject"].sort(
+// Longest-first so "Force Delete" is matched before "Delete".
+const MATCH_ACTIONS = CANONICAL_COLUMN_ORDER.sort(
   (a, b) => b.length - a.length
 )
 
@@ -30,50 +30,70 @@ function parsePermissionName(name: string): { action: string; entity: string } {
       return { action, entity: name.slice(action.length + 1) }
     }
   }
+
   const [firstWord, ...rest] = name.split(" ")
-  return { action: firstWord, entity: rest.join(" ") || name }
+  return {
+    action: firstWord,
+    entity: rest.join(" ") || name,
+  }
 }
 
-export interface MatrixRow {
-  parentId: string
+export interface PermissionMatrixRow {
+  id: string
   entityName: string
   cells: Record<string, RolePermissionItem | undefined>
 }
 
-export interface MenuMatrix {
-  menuId: string
-  menuName: string
+export interface PermissionMatrix {
   columns: string[]
-  rows: MatrixRow[]
+  rows: PermissionMatrixRow[]
 }
 
-export function buildMenuMatrix(menu: RolePermissionMenu): MenuMatrix {
+/**
+ * Builds one global permission matrix from every menu.
+ *
+ * There is intentionally no menu/parent grouping here. Every permission
+ * parent becomes a row in the same table and every action becomes a column.
+ * This also makes newly-added actions (Approve, Reject, etc.) appear as
+ * additional columns automatically without changing the UI component.
+ */
+export function buildPermissionMatrix(
+  menus: RolePermissionMenu[]
+): PermissionMatrix {
   const columnsSet = new Set<string>()
+  const rows: PermissionMatrixRow[] = []
 
-  const rows: MatrixRow[] = menu.permission_parents.map((parent) => {
-    const cells: Record<string, RolePermissionItem> = {}
-    let entityName = parent.nama_parent ?? ""
+  for (const menu of menus) {
+    for (const parent of menu.permission_parents) {
+      const cells: Record<string, RolePermissionItem> = {}
+      let entityName = parent.nama_parent ?? ""
 
-    for (const perm of parent.permissions) {
-      const { action, entity } = parsePermissionName(perm.permission_name)
-      cells[action] = perm
-      columnsSet.add(action)
-      if (!entityName) entityName = entity
+      for (const perm of parent.permissions) {
+        const { action, entity } = parsePermissionName(perm.permission_name)
+
+        cells[action] = perm
+        columnsSet.add(action)
+
+        if (!entityName) {
+          entityName = entity
+        }
+      }
+
+      rows.push({
+        id: parent.id,
+        entityName: entityName || "Umum",
+        cells,
+      })
     }
+  }
 
-    return { parentId: parent.id, entityName: entityName || "Umum", cells }
-  })
-
-  // Stable sort: canonical actions first in fixed order, everything else
-  // after, keeping the relative order they were first seen in (Set preserves
-  // insertion order, Array.sort is stable in modern JS engines).
   const columns = Array.from(columnsSet).sort((a, b) => {
     const ai = CANONICAL_RANK.get(a) ?? 999
     const bi = CANONICAL_RANK.get(b) ?? 999
     return ai - bi
   })
 
-  return { menuId: menu.id, menuName: menu.nama_menu, columns, rows }
+  return { columns, rows }
 }
 
 export function flattenPermissionIds(
@@ -81,6 +101,7 @@ export function flattenPermissionIds(
   predicate: (item: RolePermissionItem) => boolean
 ): string[] {
   const ids: string[] = []
+
   for (const menu of menus) {
     for (const parent of menu.permission_parents) {
       for (const perm of parent.permissions) {
@@ -88,5 +109,6 @@ export function flattenPermissionIds(
       }
     }
   }
+
   return ids
 }
