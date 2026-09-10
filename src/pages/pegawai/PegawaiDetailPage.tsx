@@ -115,16 +115,20 @@ export function PegawaiDetailPage() {
           <PegawaiInfoCard
             title="Informasi Pekerjaan"
             items={[
-              { icon: User, label: "Jabatan", value: pegawai.position.name },
+              {
+                icon: User,
+                label: "Jabatan",
+                value: pegawai.position?.name ?? "-",
+              },
               {
                 icon: Shield,
                 label: "Departemen",
-                value: pegawai.department.name,
+                value: pegawai.department?.name ?? "-",
               },
               {
                 icon: MapPinned,
                 label: "Lokasi Kerja",
-                value: pegawai.branch.name,
+                value: pegawai.branch?.name ?? "-",
               },
               {
                 icon: Calendar,

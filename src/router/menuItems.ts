@@ -117,7 +117,7 @@ export const menuGroups: MenuGroup[] = [
     heading: "Setting",
     items: [
       {
-        label: "Role",
+        label: "Hak Akses",
         path: "/dashboard/role",
         icon: ShieldCheck,
         permission: "View Hak Akses Pengguna",

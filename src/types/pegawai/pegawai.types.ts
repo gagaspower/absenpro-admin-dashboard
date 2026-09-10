@@ -22,16 +22,28 @@ export type PegawaiStatus = "permanent" | "contract" | "intern" | "resign"
 
 export type PegawaiGender = "L" | "P"
 
-// --- Work schedule (pengganti PegawaiShift + PegawaiShiftAssignment) ---
+// --- Work schedule ---
+// Digunakan untuk menampung jadwal kerja pegawai,
+// baik yang berasal dari Shift maupun Branch Schedule.
 export type PegawaiWorkScheduleSource = "shift" | "branch_schedule"
 
 export interface PegawaiWorkSchedule {
   source: PegawaiWorkScheduleSource
+
+  // Shift
   shift_id: string | null
   shift_name: string | null
+
+  // Assignment
   assignment_id: string | null
+  effective_from: string | null
+  effective_until: string | null
+
+  // Branch Schedule
   branch_schedule_id: string | null
   branch_schedule_day_id: string | null
+
+  // Jam kerja
   start_time: string
   end_time: string
   check_in_start: string
@@ -50,14 +62,20 @@ export interface PegawaiRow {
   birth_place: string
   birth_date: string
   address: string
+
   position: PegawaiPosition | null
   department: PegawaiDepartment | null
   branch: PegawaiBranch
+
   face_profile: FaceProfile | null
+
   join_date: string
+
   work_schedule: PegawaiWorkSchedule | null
+
   status: PegawaiStatus
   is_trashed: boolean
+
   user: UserRow | null
   role: PegawaiRole | null
 }
@@ -68,6 +86,7 @@ export interface PegawaiListResponse {
 }
 
 export type PegawaiStatusFilterValue = PegawaiStatus | "all"
+
 export type PegawaiTrashFilterValue = "all" | "active" | "trashed"
 
 export interface PegawaiFilterState {
@@ -110,6 +129,9 @@ export interface CreatePegawaiPayload {
   department_id: string
   position_id: string
   branch_id: string
+
+  // Shift bersifat opsional.
+  // Jika shift_id diisi, effective_from wajib dikirim.
   shift_id?: string
   effective_from?: string
   effective_until?: string
@@ -144,6 +166,9 @@ export interface UpdatePegawaiPayload {
   department_id: string
   position_id: string
   branch_id: string
+
+  // Shift dapat dihapus saat edit dengan null.
+  // Jika shift_id diisi, effective_from dapat dikirim.
   shift_id?: string | null
   effective_from?: string | null
   effective_until?: string | null
