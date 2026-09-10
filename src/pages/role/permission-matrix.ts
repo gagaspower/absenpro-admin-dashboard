@@ -4,8 +4,8 @@ import type {
 } from "@/types/roles/roles.types"
 
 // Fixed display order for common CRUD/system actions.
-// Any new action (Approve, Reject, Archive, Publish, etc.) is automatically
-// appended after these columns in the order it is first encountered.
+// Any new action (Archive, Publish, etc.) is automatically appended after
+// these columns in the order it is first encountered.
 const CANONICAL_COLUMN_ORDER = [
   "View",
   "Create",
@@ -13,6 +13,8 @@ const CANONICAL_COLUMN_ORDER = [
   "Delete",
   "Restore",
   "Force Delete",
+  "Approve",
+  "Reject",
 ]
 
 // Longest-first so "Force Delete" is matched before "Delete".
@@ -55,8 +57,7 @@ export interface PermissionMatrix {
  *
  * There is intentionally no menu/parent grouping here. Every permission
  * parent becomes a row in the same table and every action becomes a column.
- * This also makes newly-added actions (Approve, Reject, etc.) appear as
- * additional columns automatically without changing the UI component.
+ * New actions are automatically appended after the canonical columns above.
  */
 export function buildPermissionMatrix(
   menus: RolePermissionMenu[]
