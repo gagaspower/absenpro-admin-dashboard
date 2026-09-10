@@ -190,25 +190,49 @@ function PermissionMatrixTable({ matrix, checkedIds, onToggleCell, onToggleColum
   const lastIndex = matrix.columns.length - 1
 
   return (
-    <div className="overflow-x-auto rounded-[8px] border border-[#EAEAEA] bg-white">
+    <div className="max-h-[calc(100vh-300px)] overflow-auto rounded-[8px] border border-[#EAEAEA] bg-white">
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="border-none hover:bg-transparent">
-            <TableHead rowSpan={2} className={cn(LABEL_COLUMN_CLASS, "border-r border-[#EAEAEA] align-middle text-base font-normal text-[#374957]")}>Permission</TableHead>
+            <TableHead
+              rowSpan={2}
+              className={cn(
+                LABEL_COLUMN_CLASS,
+                "sticky left-0 top-0 z-30 border-r border-[#EAEAEA] bg-white align-middle text-base font-normal text-[#374957]"
+              )}
+            >
+              Permission
+            </TableHead>
             {matrix.columns.map((action, i) => (
-              <TableHead key={action} className={cn("text-center text-base font-normal text-[#374957]", i !== lastIndex && "border-r border-[#EAEAEA]")}>{action}</TableHead>
+              <TableHead
+                key={action}
+                className={cn(
+                  "sticky top-0 z-20 bg-white text-center text-base font-normal text-[#374957]",
+                  i !== lastIndex && "border-r border-[#EAEAEA]"
+                )}
+              >
+                {action}
+              </TableHead>
             ))}
           </TableRow>
 
           <TableRow className="border-b border-[#EAEAEA] hover:bg-transparent">
             {matrix.columns.map((action, i) => {
-              const items = matrix.rows.map((row) => row.cells[action]).filter((item): item is RolePermissionItem => Boolean(item))
+              const items = matrix.rows
+                .map((row) => row.cells[action])
+                .filter((item): item is RolePermissionItem => Boolean(item))
               const checkedCount = items.filter((item) => checkedIds.has(item.id)).length
               const allChecked = items.length > 0 && checkedCount === items.length
               const someChecked = checkedCount > 0 && !allChecked
 
               return (
-                <TableHead key={action} className={cn("py-3 text-center", i !== lastIndex && "border-r border-[#EAEAEA]")}>
+                <TableHead
+                  key={action}
+                  className={cn(
+                    "sticky top-[41px] z-20 bg-white py-3 text-center",
+                    i !== lastIndex && "border-r border-[#EAEAEA]"
+                  )}
+                >
                   <div className="flex justify-center">
                     <Checkbox
                       checked={allChecked}
@@ -228,16 +252,36 @@ function PermissionMatrixTable({ matrix, checkedIds, onToggleCell, onToggleColum
         <TableBody>
           {matrix.rows.map((row) => (
             <TableRow key={row.id} className="border-none hover:bg-[#F7FCFA]/60">
-              <TableCell className={cn(LABEL_COLUMN_CLASS, "truncate border-r border-[#EAEAEA] py-4 text-[#374957]")}>{row.entityName}</TableCell>
+              <TableCell
+                className={cn(
+                  LABEL_COLUMN_CLASS,
+                  "sticky left-0 z-10 truncate border-r border-[#EAEAEA] bg-white py-4 text-[#374957]"
+                )}
+              >
+                {row.entityName}
+              </TableCell>
               {matrix.columns.map((action, i) => {
                 const item = row.cells[action]
                 return (
-                  <TableCell key={action} className={cn("py-4 text-center", i !== lastIndex && "border-r border-[#EAEAEA]")}>
+                  <TableCell
+                    key={action}
+                    className={cn("py-4 text-center", i !== lastIndex && "border-r border-[#EAEAEA]")}
+                  >
                     <div className="flex justify-center">
                       {item ? (
-                        <Checkbox checked={checkedIds.has(item.id)} onCheckedChange={() => onToggleCell(item)} aria-label={item.permission_name} className={CHECKBOX_CLASS} />
+                        <Checkbox
+                          checked={checkedIds.has(item.id)}
+                          onCheckedChange={() => onToggleCell(item)}
+                          aria-label={item.permission_name}
+                          className={CHECKBOX_CLASS}
+                        />
                       ) : (
-                        <Checkbox checked={false} disabled aria-label={`${action} tidak tersedia untuk ${row.entityName}`} className={DISABLED_CHECKBOX_CLASS} />
+                        <Checkbox
+                          checked={false}
+                          disabled
+                          aria-label={`${action} tidak tersedia untuk ${row.entityName}`}
+                          className={DISABLED_CHECKBOX_CLASS}
+                        />
                       )}
                     </div>
                   </TableCell>
