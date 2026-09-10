@@ -2,6 +2,7 @@ import { Fingerprint, X } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { menuGroups } from "@/router/menuItems"
+import { useAuth } from "@/hooks/useAuth"
 
 interface SidebarProps {
   open: boolean
@@ -10,6 +11,16 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const location = useLocation()
+  const { hasPermission } = useAuth()
+
+  const filteredMenuGroups = menuGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) => !item.permission || hasPermission(item.permission)
+      ),
+    }))
+    .filter((group) => group.items.length > 0)
 
   return (
     <>
@@ -51,7 +62,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
-          {menuGroups.map((group, gi) => (
+          {filteredMenuGroups.map((group, gi) => (
             <div key={gi}>
               {group.heading && (
                 <p className="mb-2 px-3 text-[10px] font-bold tracking-widest text-slate-400 uppercase">

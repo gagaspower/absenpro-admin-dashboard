@@ -1,14 +1,46 @@
-import { Navigate, Outlet } from "react-router-dom"
-import { useAuth } from "@/hooks/useAuth"
+import { Navigate, Outlet, useLocation } from "react-router-dom"
+import { storage } from "@/lib/storage"
+import { hasPermission } from "@/lib/permissions"
 
-/** Hanya bisa diakses jika sudah login. Jika belum, redirect ke /login */
-export function ProtectedRoute() {
-  const { isAuthenticated } = useAuth()
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />
+interface ProtectedRouteProps {
+  children?: React.ReactNode
 }
 
-/** Hanya bisa diakses jika belum login (guest). Jika sudah login, redirect ke /dashboard */
-export function GuestRoute() {
-  const { isAuthenticated } = useAuth()
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Outlet />
+export function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const auth = storage.getAuth()
+  const location = useLocation()
+
+  if (!auth?.access_token) {
+    return <Navigate to="/login" replace state={{ from: location }} />
+  }
+
+  return children ? children : <Outlet />
+}
+
+interface PermissionRouteProps {
+  permission: string
+  children?: React.ReactNode
+}
+
+export function PermissionRoute({
+  permission,
+  children,
+}: PermissionRouteProps) {
+  const location = useLocation()
+
+  if (!hasPermission(permission)) {
+    return <Navigate to="/dashboard" replace state={{ from: location }} />
+  }
+
+  return children ? children : <Outlet />
+}
+
+export function GuestRoute({ children }: { children?: React.ReactNode }) {
+  const auth = storage.getAuth()
+
+  if (auth?.access_token) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return children ? children : <Outlet />
 }
