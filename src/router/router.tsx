@@ -79,6 +79,10 @@ const ResetPasswordPage = lazy(() =>
     default: m.ResetPasswordPage,
   }))
 )
+
+const RolePage = lazy(() =>
+  import("@/pages/role/RolePage").then((m) => ({ default: m.RolePage }))
+)
 const NotFoundPage = lazy(() =>
   import("@/pages/errors/NotFoundPage").then((m) => ({
     default: m.NotFoundPage,
@@ -136,9 +140,7 @@ export function AppRouter() {
             </Route>
 
             <Route
-              element={
-                <PermissionRoute permission="View Jenis Cuti / Izin" />
-              }
+              element={<PermissionRoute permission="View Jenis Cuti / Izin" />}
             >
               <Route path="jenis-izin" element={<JenisCutiPage />} />
             </Route>
@@ -206,6 +208,12 @@ export function AppRouter() {
 
             <Route element={<PermissionRoute permission="View Cuti & Izin" />}>
               <Route path="cuti-izin" element={<PermohonanCutiPage />} />
+            </Route>
+
+            <Route
+              element={<PermissionRoute permission="View Hak Akses Pengguna" />}
+            >
+              <Route path="role" element={<RolePage />} />
             </Route>
 
             <Route path="reset-password" element={<ResetPasswordPage />} />

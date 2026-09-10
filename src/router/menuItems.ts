@@ -11,6 +11,7 @@ import {
   CalendarClock,
   ClipboardCheck,
   FileClock,
+  ShieldCheck,
 } from "lucide-react"
 
 export interface MenuItem {
@@ -95,7 +96,7 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    heading: "Transaksi",
+    heading: "Kehadiran",
     items: [
       {
         label: "Absensi",
@@ -108,6 +109,18 @@ export const menuGroups: MenuGroup[] = [
         path: "/dashboard/cuti-izin",
         icon: FileClock,
         permission: "View Cuti & Izin",
+      },
+    ],
+  },
+
+  {
+    heading: "Setting",
+    items: [
+      {
+        label: "Role",
+        path: "/dashboard/role",
+        icon: ShieldCheck,
+        permission: "View Hak Akses Pengguna",
       },
     ],
   },
