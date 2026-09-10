@@ -16,7 +16,8 @@ const CANONICAL_COLUMN_ORDER = [
 ]
 
 // Longest-first so "Force Delete" is matched before "Delete".
-const MATCH_ACTIONS = CANONICAL_COLUMN_ORDER.sort(
+// Copy the array so the canonical display order is not mutated.
+const MATCH_ACTIONS = [...CANONICAL_COLUMN_ORDER].sort(
   (a, b) => b.length - a.length
 )
 
