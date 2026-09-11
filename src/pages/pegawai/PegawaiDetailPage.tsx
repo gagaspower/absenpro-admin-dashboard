@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button"
 
 import type { PegawaiRow } from "@/types/pegawai/pegawai.types"
 import { PegawaiMutasiModal } from "@/components/pegawai/PegawaiMutasiModal"
+import { useAuth } from "@/hooks/useAuth"
 
 interface PageAlert {
   type: AlertModalType
@@ -57,6 +58,7 @@ function getWorkScheduleLabel(workSchedule: PegawaiRow["work_schedule"]) {
 export function PegawaiDetailPage() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
 
   const initialPegawai =
     (location.state as { pegawai?: PegawaiRow } | null)?.pegawai ?? null
@@ -86,8 +88,16 @@ export function PegawaiDetailPage() {
     <div className="flex flex-col gap-4">
       <PegawaiDetailHeader
         pegawai={pegawai}
-        onEdit={() => setFormDrawerOpen(true)}
-        onMutasi={() => setMutasiModalOpen(true)}
+        onEdit={
+          hasPermission("Edit Karyawan")
+            ? () => setFormDrawerOpen(true)
+            : undefined
+        }
+        onMutasi={
+          hasPermission("Mutasi Karyawan")
+            ? () => setMutasiModalOpen(true)
+            : undefined
+        }
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

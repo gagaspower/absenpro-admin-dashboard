@@ -15,6 +15,7 @@ const CANONICAL_COLUMN_ORDER = [
   "Force Delete",
   "Approve",
   "Reject",
+  "Mutasi",
 ]
 
 // Longest-first so "Force Delete" is matched before "Delete".

@@ -26,8 +26,8 @@ function getInitials(name: string) {
 
 interface PegawaiDetailHeaderProps {
   pegawai: PegawaiRow
-  onEdit: () => void
-  onMutasi: () => void
+  onEdit?: () => void
+  onMutasi?: () => void
 }
 
 export function PegawaiDetailHeader({
