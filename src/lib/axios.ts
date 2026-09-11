@@ -21,15 +21,24 @@ api.interceptors.request.use((config) => {
 })
 
 // Response — handle 401: clear auth + redirect login (skip untuk request login sendiri)
+// Response — handle 401 & 403
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const isLoginRequest = error.config?.url?.includes("create-session")
+    const status = error.response?.status
 
-    if (error.response?.status === 401 && !isLoginRequest) {
+    if (status === 401 && !isLoginRequest) {
       storage.clearAuth()
       window.location.replace("/login")
+      return Promise.reject(error)
     }
+
+    if (status === 403 && window.location.pathname !== "/forbidden") {
+      window.location.replace("/forbidden")
+      return Promise.reject(error)
+    }
+
     return Promise.reject(error)
   }
 )

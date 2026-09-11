@@ -88,6 +88,11 @@ const NotFoundPage = lazy(() =>
     default: m.NotFoundPage,
   }))
 )
+const ForbiddenPage = lazy(() =>
+  import("@/pages/errors/ForbiddenPage").then((m) => ({
+    default: m.ForbiddenPage,
+  }))
+)
 
 function PageFallback() {
   return (
@@ -218,6 +223,7 @@ export function AppRouter() {
 
             <Route path="reset-password" element={<ResetPasswordPage />} />
           </Route>
+          <Route path="forbidden" element={<ForbiddenPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

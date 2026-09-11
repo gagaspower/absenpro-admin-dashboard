@@ -51,7 +51,7 @@ export function PermissionRoute({
   void permissionVersion
 
   if (!hasPermission(permission)) {
-    return <Navigate to="/dashboard" replace state={{ from: location }} />
+    return <Navigate to="/forbidden" replace state={{ from: location }} />
   }
 
   return children ? children : <Outlet />
